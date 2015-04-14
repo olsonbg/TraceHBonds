@@ -1,0 +1,3 @@
+// the configured options and settings
+#define TraceHBonds_VERSION_MAJOR @TraceHBonds_VERSION_MAJOR@
+#define TraceHBonds_VERSION_MINOR @TraceHBonds_VERSION_MINOR@

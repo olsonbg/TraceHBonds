@@ -3,7 +3,7 @@
 #include "TraceHBonds.h"
 #include "Print.h"
 
-bool thbVERBOSE = false;
+bool THB_VERBOSE = false;
 
 int main(int argc, char *argv[])
 {
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 		return(1);
 	}
 
-	if ( flag_verbose ) thbVERBOSE=true;
+	if ( flag_verbose ) THB_VERBOSE=true;
 	// Done reading command line arguments
 	doAllFiles(argv[0],
 	           fPrefix , fSuffix, fidx_f, fidx_l,

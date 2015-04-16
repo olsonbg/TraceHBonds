@@ -1,7 +1,14 @@
 #include "Print.h"
 #include "OutputFormat.h"
 
-extern bool thbVERBOSE;
+extern bool THB_VERBOSE;
+
+// Macros
+
+typedef std::vector<unsigned int> vui;
+typedef std::vector< vui > vvui;
+
+// Read code
 
 int doAllFiles(char *progname,
                char *fPrefix , char *fSuffix, int first, int last,
@@ -15,6 +22,8 @@ int doAllFiles(char *progname,
 		std::stringstream ofile;
 		
 		ifile << fPrefix  << fidx << fSuffix;
+		// Send to stdout, '-', is ofPrefix and ofSuffix are not
+		// specified.
 		if ( (ofPrefix == NULL) && (ofSuffix == NULL) )
 			ofile << "-";
 		else
@@ -26,21 +35,33 @@ int doAllFiles(char *progname,
 			return(1);
 		}
 
-		if ( thbVERBOSE &&
+		/*
+		 * If VERBOSE was requested, show number of file processed, updated 
+		 * every 50.
+		 */
+		if ( THB_VERBOSE &&
 		     ((filecounter%50 == 0) || (filecounter == 1)) )
-			std::cout << "Processing file " << filecounter << "/" << last-first+1 << ".\r" << std::flush;
+			std::cout << "Processing file " << filecounter << "/" 
+			          << last-first+1 << ".\r" << std::flush;
 
 		doFrame(ifile.str().c_str(), ofile.str().c_str(), NumBins, POVRAY);
 		filecounter++;
 	}
-	if ( thbVERBOSE)
-			std::cout << "Processing file " << last-first+1 << "/" << last-first+1 << "." << std::endl;;
+
+	if ( THB_VERBOSE)
+			std::cout << "Processing file "
+			          << last-first+1 << "/"
+			          << last-first+1 << "." << std::endl;
 
 	return(0);
 }
-// Make sure v is of size nelem, if not, initialize the needed number of 
-// elements to val.
-bool alloc_vector(std::vector<unsigned int> *v,
+
+/*
+ * Make sure v is of size nelem, if not, initialize the needed number of
+ * elements to val. Make sure not to touch/change any values that are already
+ * in v.
+ */
+bool alloc_vector(vui *v,
                   unsigned int val,
                   unsigned int nelem)
 {
@@ -60,9 +81,11 @@ bool alloc_vector(std::vector<unsigned int> *v,
 	return true;
 }
 
-// Make sure v is of size nelem*melen, if not, initialize the needed number of 
-// elements to val.
-bool alloc_vector(std::vector< std::vector<unsigned int> >*v,
+/*
+ * Make sure v is of size nelem*melem, if not, initialize the needed number of
+ * elements to val. Make sure we don't adjust the values already stored in v.
+ */
+bool alloc_vector(vvui *v,
                   unsigned int val,
                   unsigned int nelem,
                   unsigned int melem)
@@ -71,33 +94,70 @@ bool alloc_vector(std::vector< std::vector<unsigned int> >*v,
 	{
 		if ( n == v->size() )
 		{
-			std::vector<unsigned int>Zero( nelem, 0);
-			v->push_back(Zero);
+			try
+			{
+				vui Zero( nelem, 0);
+				v->push_back(Zero);
+			}
+			catch( std::exception const &e)
+			{
+				std::cout << "exception: " << e.what();
+				std::cout << ". ran out of memory?" << std::endl;
+				return false;
+			}
 		}
 		else
 		{
-			for ( unsigned int m=v[n].size(); m < melem; m++)
-			{
-				try
-				{
-					v->at(n).push_back(val);
-				}
-				catch( std::exception const &e)
-				{
-					std::cout << "exception: " << e.what();
-					std::cout << ". ran out of memory?" << std::endl;
-					return false;
-				}
-			}
+			bool ret = alloc_vector(&(v->at(n)), val, melem);
+
+			if ( ret == false )
+				return false;
 		}
 	}
+	return true;
+}
+
+/*
+ * Add to the counts in h[bin], making sure enough space is allocated.
+ * Also record the maximum bin. max may already be assigned a value.
+*/
+bool Bin(vui *h, unsigned int *max, unsigned int bin)
+{
+	if ( alloc_vector(h, 0U, bin+1) )
+		h->at(bin)++;
+	else
+		return 1;
+
+	if ( bin > *max)
+		*max = bin;
+
+	return true;
+}
+
+/*
+ * Add to the counts in the h[bini_i][bin_j] h, making sure enough space is
+ * allocated. Also record the maximum bin_j in hmax, making sure enough space
+ * is allocated. hmax may already be assigned a value.
+*/
+bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
+{
+
+	if( alloc_vector(h, 0U, hb+1, c+1))
+		(h->at(hb)).at(c)++;
+	else
+		return false;
+
+	if( !alloc_vector(hmax, 0U, hb+1) )
+		return 1;
+
+	if (c > hmax->at(hb))
+		hmax->at(hb) = c;
 	return true;
 }
 
 int doFrame(const char *ifile, const char *ofile,
             unsigned int NumBins, bool POVRAY)
 {
-
 	// Redirect to either a file, or std::cout.
 	std::streambuf *buf;
 	std::ofstream ofs;
@@ -164,18 +224,6 @@ int doFrame(const char *ifile, const char *ofile,
 	out <<CC<< " Donor Oxygen atoms    : " << vec_dO.size() << std::endl;
 	out <<CC<< " Hydrogen atoms        : " << vec_H.size() << std::endl;
 	out <<CC<< " Acceptor Oxygen atoms : " << vec_aO.size() << std::endl;
-
-	if (POVRAY)
-	{
-		out << "#version 3.6;" << std::endl;
-		out << "global_settings {  assumed_gamma 1.0 }" << std::endl;
-		out << "Camera_LookAt( " << Cell->x << ", "
-		                               << Cell->y << ", "
-		                               << Cell->z << " )" << std::endl;
-		out << "PBC( " << Cell->x << ", "
-		                     << Cell->y << ", "
-		                     << Cell->z << " )" << std::endl;
-	}
 
 	// Each element of the vector points to a string of hbonds.
 	// ListOfHBonds is a strings of hbonds.
@@ -377,6 +425,7 @@ void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
 		iter_H = iter_Hmain+1;
 		iter_aO = iter_aOmain+1;
 		iter_dO = iter_dOmain+1;
+
 		for( ; iter_H < H->end(); ++iter_H, ++iter_aO, ++iter_dO )
 		{
 			// If this is already marked as a duplicate, skip it.
@@ -521,84 +570,70 @@ int makeHistograms( std::ostream *out,
 	unsigned int MaxChainLength = 0;
 	unsigned int MaxLoopSize = 0;
 	double EndToEndLength;
-	//Go through the vector of HBond strings and tabulate:
-	//  Chain Lengths
-	//  Closed Loops
-	//  Molecule Switches
-	//  Molecules
-	//
-	// Zero all histogram bins
-	// Set 20 elements initially.
-	std::vector<unsigned int>ChainLength_hist(20,0);
-	std::vector<unsigned int>ClosedLoop_hist(20,0);
-	
-	std::vector< std::vector<unsigned int> >SwitchesInChain_hist(
-	                                      20,
-	                                      std::vector<unsigned int>(20,0)
-	                                      );
-	std::vector< std::vector<unsigned int> >MoleculesInChain_hist(
-	                                      20,
-	                                      std::vector<unsigned int>(20,0)
-	                                      );
 
-	std::vector<unsigned int>MaxSwitchesInChain(20,0);
-	std::vector<unsigned int>MaxMoleculesInChain(20,0);
+
+	/*
+	 * Go through the vector of HBond strings and:
+	 *  Bin Chain Lengths                             (1D)
+	 *  Bin Chain Lengths of only Closed Loops        (1D)
+	 *  Bin Molecule Switches for each Chain Length   (2D)
+	 *  Bin Molecules in Chain, for each Chain Length (2D)
+	 */
+
+	// Zero all histogram bins. Set 20 elements initially.
+	vui hChainLength(20,0);
+	vui hClosedLoop(20,0);
+	
+	vvui hSwitchesInChain( 20, vui (20,0));
+	vvui hMoleculesInChain( 20, vui (20,0));
+
+	vui MaxSwitchesInChain(20,0);
+	vui MaxMoleculesInChain(20,0);
 	// All histograms zeroed.
 
 	for( unsigned int i=0; i < HBStrings.size(); i++ )
 	{
-		unsigned int HBCount = HBStrings[i]->Count();
+		unsigned int HBCount        = HBStrings[i]->Count();
 		unsigned int SwitchingCount = HBStrings[i]->SwitchingCount();
-		unsigned int MoleculeCount = HBStrings[i]->MoleculeCount();
+		unsigned int MoleculeCount  = HBStrings[i]->MoleculeCount();
 
-		// Tabulate the chain lengths.
-		if ( alloc_vector(&ChainLength_hist,0, HBCount+1) )
-			ChainLength_hist.at(HBCount)++;
-		else
+		// Bin the chain lengths.
+		if( !Bin(&hChainLength, &MaxChainLength, HBCount) )
 			return 1;
 
-		if ( HBCount > MaxChainLength)
-			MaxChainLength = HBCount;
-
-		// If this is a closed loop, tabulate it.
+		// Bin the chain lengths for only closed loops.
 		if ( HBStrings[i]->ClosedLoop() )
 		{
-			if ( alloc_vector(&ClosedLoop_hist, 0, HBCount+1) )
-				ClosedLoop_hist.at(HBCount)++;
-			else
+			if( !Bin(&hClosedLoop, &MaxLoopSize, HBCount) )
 				return 1;
-
-			if ( HBCount > MaxLoopSize )
-				MaxLoopSize = HBCount;
 		}
 
-		// Tabulate the number of molecule switches for each chain length.
-		if( alloc_vector(&SwitchesInChain_hist, 0, HBCount+1, SwitchingCount+1))
-		{
-			SwitchesInChain_hist[HBCount][SwitchingCount]++;
-		}
-		else
+		// Bin the number of molecule switches for each chain length.
+		if( !Bin(&hSwitchesInChain, &MaxSwitchesInChain,
+		         HBCount, SwitchingCount) )
 			return 1;
-
-		if( !alloc_vector(&MaxSwitchesInChain, 0, HBCount+1) )
-			return 1;
-
-		if (SwitchingCount > MaxSwitchesInChain[HBCount])
-			MaxSwitchesInChain[HBCount] = SwitchingCount;
 
 		// Tabulate the number of molecules in each chain length.
-		if( alloc_vector(&MoleculesInChain_hist, 0, HBCount+1, MoleculeCount+1))
-			MoleculesInChain_hist[HBCount][MoleculeCount]++;
-		else
+		if ( !Bin(&hMoleculesInChain,&MaxMoleculesInChain,
+		          HBCount,MoleculeCount) )
 			return 1;
-
-		if( !alloc_vector(&MaxMoleculesInChain, 0, HBCount+1) )
-			return 1;
-
-		if (MoleculeCount > MaxMoleculesInChain[HBCount])
-			MaxMoleculesInChain[HBCount] = MoleculeCount;
 	}
+
 	OFmt colE2E(0,6);
+
+	// Header for povray file.
+	if (POVRAY)
+	{
+		*out << "#version 3.6;" << std::endl;
+		*out << "global_settings {  assumed_gamma 1.0 }" << std::endl;
+		*out << "Camera_LookAt( " << Cell->x << ", "
+		                          << Cell->y << ", "
+		                          << Cell->z << " )" << std::endl;
+		*out << "PBC( " << Cell->x << ", "
+		                << Cell->y << ", "
+		                << Cell->z << " )" << std::endl;
+	}
+
 	// Printout information about each hbond string.
 	for( unsigned int i=0; i < HBStrings.size(); i++ )
 	{
@@ -639,7 +674,7 @@ int makeHistograms( std::ostream *out,
 	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
-	                     ChainLength_hist,
+	                     hChainLength,
 	                     MaxChainLength, 3,
 	                     2, MaxBarLength,
 	                     NumBins,CC);
@@ -650,7 +685,7 @@ int makeHistograms( std::ostream *out,
 	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
-	                     ClosedLoop_hist,
+	                     hClosedLoop,
 	                     MaxLoopSize, 3,
 	                     2, MaxBarLength,
 	                     NumBins,CC);
@@ -664,10 +699,6 @@ int makeHistograms( std::ostream *out,
 		MaxChainL = NumBins;
 	else
 		MaxChainL = MaxChainLength;
-	// if ( MaxChainLength < NumBins )
-	//     MaxChainL = NumBins;
-	// else
-	//     MaxChainL = MaxChainLength;
 
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
@@ -678,18 +709,18 @@ int makeHistograms( std::ostream *out,
 
 		if ( chainL > MaxChainLength )
 		{
-			std::vector<unsigned int>dummy;
+			vui dummy;
 			PrintHistogramMolecules( out,
 			                         dummy,
-			                         0, (unsigned int)0,
-			                         (unsigned int)1, MaxBarLength,
+			                         0, 0,
+			                         1, MaxBarLength,
 			                         NumBins, CC);
 		}
 		else
 			PrintHistogramMolecules( out,
-									 SwitchesInChain_hist[chainL],
-									 MaxSwitchesInChain[chainL],(unsigned int)0,
-									 (unsigned int)1, MaxBarLength,
+									 hSwitchesInChain[chainL],
+									 MaxSwitchesInChain[chainL],0,
+									 1, MaxBarLength,
 									 NumBins, CC);
 	}
 
@@ -709,7 +740,7 @@ int makeHistograms( std::ostream *out,
 
 		if ( chainL > MaxChainLength)
 		{
-			std::vector<unsigned int>dummy;
+			vui dummy;
 			PrintHistogramMolecules( out,
 									 dummy,
 									 0, 1,
@@ -718,7 +749,7 @@ int makeHistograms( std::ostream *out,
 		}
 		else
 			PrintHistogramMolecules( out,
-									 MoleculesInChain_hist[chainL],
+									 hMoleculesInChain[chainL],
 									 MaxMoleculesInChain[chainL], 1,
 									 1, MaxBarLength,
 									 NumBins, CC);

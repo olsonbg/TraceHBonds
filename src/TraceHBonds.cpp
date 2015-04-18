@@ -186,30 +186,30 @@ int doFrame(const char *ifile, const char *ofile,
 	else
 		CC = CC1;
 
-	std::vector<struct HBondAtom *> vec_H;
-	std::vector<struct HBondAtom *> vec_aO;
-	std::vector<struct HBondAtom *> vec_dO;
+	std::vector<struct HydrogenBond *> hb;
+	std::vector<struct thbAtom *> atom;
 	struct PBC *Cell;
 
 	// Reserve space to prevent reallocation. If more than
-	// 5000 atoms, it will start reallocation.
-	vec_H.reserve(5000);
-	vec_aO.reserve(5000);
-	vec_dO.reserve(5000);
+	// 5000 hydrogen bonds, it will start reallocation.
+	hb.reserve(5000);
+	// Reserve space to prevent reallocation. If more than
+	// 15000 atoms, it will start reallocation.
+	atom.reserve(15000);
 
 	Cell = new struct PBC;
 
-	ReadData( ifile, &vec_H, &vec_aO, &vec_dO, Cell );
+	ReadData( ifile, &hb, &atom, Cell );
 
 	/*
 	 * Show some initial information
 	 */
 	out <<CC<< "--- Before removing duplicates." << std::endl;
-	out <<CC<< " Donor Oxygen atoms    : " << vec_dO.size() << std::endl;
-	out <<CC<< " Hydrogen atoms        : " << vec_H.size() << std::endl;
-	out <<CC<< " Acceptor Oxygen atoms : " << vec_aO.size() << std::endl;
+	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << std::endl;
+	out <<CC<< " Hydrogen atoms        : " << hb.size() << std::endl;
+	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << std::endl;
 
-	RemoveDuplicates ( &vec_H, &vec_aO, &vec_dO );
+	RemoveDuplicates ( &hb );
 
 	/*
 	 * Show some more information
@@ -221,19 +221,19 @@ int doFrame(const char *ifile, const char *ofile,
 	out <<CC<< " PBC " << Cell->x << " " << Cell->y << " " << Cell->z 
 	          << " " << Cell->alpha << " " << Cell->beta << " " << Cell->gamma
 	          << std::endl;
-	out <<CC<< " Donor Oxygen atoms    : " << vec_dO.size() << std::endl;
-	out <<CC<< " Hydrogen atoms        : " << vec_H.size() << std::endl;
-	out <<CC<< " Acceptor Oxygen atoms : " << vec_aO.size() << std::endl;
+	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << std::endl;
+	out <<CC<< " Hydrogen atoms        : " << hb.size() << std::endl;
+	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << std::endl;
 
 	// Each element of the vector points to a string of hbonds.
 	// ListOfHBonds is a strings of hbonds.
 	std::vector<ListOfHBonds *>HBStrings;
 
 	//Find all the strings.
-	for( unsigned int i=0; i < vec_H.size(); i++ )
+	for( unsigned int i=0; i < hb.size(); i++ )
 	{
 		ListOfHBonds *HBonds = new ListOfHBonds();
-		if ( Trace( &HBonds, vec_H, vec_aO, vec_dO, i) )
+		if ( Trace( &HBonds, hb, i) )
 			HBStrings.push_back(HBonds);
 		else
 			delete HBonds;
@@ -243,12 +243,10 @@ int doFrame(const char *ifile, const char *ofile,
 	makeHistograms( &out, HBStrings, CC, NumBins, POVRAY, Cell);
 
 	// Cleanup.
-	DeleteVectorPointers(vec_H);
-	DeleteVectorPointers(vec_aO);
-	DeleteVectorPointers(vec_dO);
-	vec_H.clear();
-	vec_aO.clear();
-	vec_dO.clear();
+	DeleteVectorPointers(hb);
+	DeleteVectorPointers(atom);
+	hb.clear();
+	atom.clear();
 
 	delete Cell;
 
@@ -263,36 +261,40 @@ int doFrame(const char *ifile, const char *ofile,
 	return(0);
 }
 
-void DeleteVectorPointers( std::vector<struct HBondAtom *> v)
+void DeleteVectorPointers( std::vector<struct HydrogenBond *> v)
 {
 	for(unsigned int i =0; i < v.size(); ++i)
 		delete v[i];
 }
 
-void removeMarked( std::vector<struct HBondAtom *> *H,
-                   std::vector<struct HBondAtom *> *aO,
-                   std::vector<struct HBondAtom *> *dO )
+void DeleteVectorPointers( std::vector<struct thbAtom *> v)
 {
-	std::vector<struct HBondAtom *>::iterator iter_H  = H->begin();
-	std::vector<struct HBondAtom *>::iterator iter_aO = aO->begin();
-	std::vector<struct HBondAtom *>::iterator iter_dO = dO->begin();
+	for(unsigned int i =0; i < v.size(); ++i)
+		delete v[i];
+}
+// void removeMarked( std::vector<struct HBondAtom *> *H,
+//                    std::vector<struct HBondAtom *> *aO,
+//                    std::vector<struct HBondAtom *> *dO )
+void removeMarked( std::vector<struct HydrogenBond *> *hb )
+{
+	std::vector<struct HydrogenBond *>::iterator iter_hb = hb->begin();
+	// std::vector<struct HBondAtom *>::iterator iter_H  = H->begin();
+	// std::vector<struct HBondAtom *>::iterator iter_aO = aO->begin();
+	// std::vector<struct HBondAtom *>::iterator iter_dO = dO->begin();
 
-	for( ; iter_H < H->end(); )
+	for( ; iter_hb < hb->end(); )
 	{
-		if ( (*iter_H)->markedDuplicate )
+		if ( (*iter_hb)->markedDuplicate )
 		{
-			delete *iter_H;
-			delete *iter_aO;
-			delete *iter_dO;
-			iter_H  = H->erase(iter_H);
-			iter_aO = aO->erase(iter_aO);
-			iter_dO = dO->erase(iter_dO);
+			delete *iter_hb;
+			iter_hb  = hb->erase(iter_hb);
 		}
 		else
 		{
-			++iter_H;
-			++iter_aO;
-			++iter_dO;
+			++iter_hb;
+			// ++iter_H;
+			// ++iter_aO;
+			// ++iter_dO;
 		}
 	}
 }
@@ -308,9 +310,10 @@ void removeMarked( std::vector<struct HBondAtom *> *H,
  * aO->length is the distance between H...aO (HBond length)
  */
 
-void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
-                       std::vector<struct HBondAtom *> *aO,
-                       std::vector<struct HBondAtom *> *dO )
+// void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
+//                        std::vector<struct HBondAtom *> *aO,
+//                        std::vector<struct HBondAtom *> *dO )
+void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb )
 {
 	/*
 	 * H  : Hydrogen
@@ -325,73 +328,66 @@ void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
 
 	double MinLength;
 	// bool duplicate;
-	std::vector<struct HBondAtom *>::iterator iter_Hmain;
-	std::vector<struct HBondAtom *>::iterator iter_aOmain;
-	std::vector<struct HBondAtom *>::iterator iter_dOmain;
+	std::vector<struct HydrogenBond *>::iterator iter_hbmain;
+	std::vector<struct HydrogenBond *>::iterator iter_hb;
+	std::vector<struct HydrogenBond *>::iterator iter_hbmin;
 
-	std::vector<struct HBondAtom *>::iterator iter_H;
-	std::vector<struct HBondAtom *>::iterator iter_aO;
-	std::vector<struct HBondAtom *>::iterator iter_dO;
+	// std::vector<struct HBondAtom *>::iterator iter_Hmain;
+	// std::vector<struct HBondAtom *>::iterator iter_aOmain;
+	// std::vector<struct HBondAtom *>::iterator iter_dOmain;
 
-	std::vector<struct HBondAtom *>::iterator iter_Hmin;
-	std::vector<struct HBondAtom *>::iterator iter_aOmin;
-	std::vector<struct HBondAtom *>::iterator iter_dOmin;
+	// std::vector<struct HBondAtom *>::iterator iter_H;
+	// std::vector<struct HBondAtom *>::iterator iter_aO;
+	// std::vector<struct HBondAtom *>::iterator iter_dO;
+
+	// std::vector<struct HBondAtom *>::iterator iter_Hmin;
+	// std::vector<struct HBondAtom *>::iterator iter_aOmin;
+	// std::vector<struct HBondAtom *>::iterator iter_dOmin;
+
 	/*
 	 * Look for aO duplicates
 	 */
-	iter_Hmain = H->begin();
-	iter_aOmain = aO->begin();
-	iter_dOmain = dO->begin();
+	iter_hbmain = hb->begin();
+	// iter_Hmain = H->begin();
+	// iter_aOmain = aO->begin();
+	// iter_dOmain = dO->begin();
 
-	for( ; iter_Hmain < H->end()-1; ++iter_Hmain, ++iter_aOmain, ++iter_dOmain )
+	for( ; iter_hbmain < hb->end()-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
-		if ( (*iter_Hmain)->markedDuplicate )
+		if ( (*iter_hbmain)->markedDuplicate )
 			continue;
 
 		// Save the iterators for the minimum distance HBond atoms.
 		// Set them to iter_?main initially.
-		iter_Hmin  = iter_Hmain;
-		iter_aOmin = iter_aOmain;
-		iter_dOmin = iter_dOmain;
-		MinLength = (*iter_aOmin)->length;
+		iter_hbmin = iter_hbmain;
+		MinLength = (*iter_hbmin)->length;
 
 		/*
 		 * Go through entire vector looking for duplicate of
-		 * iter_aOmain, and find the one with the shortest length
+		 * iter_hbmain acceptor, and find the one with the shortest length
 		 */
-		// duplicate = false;
-		iter_H = iter_Hmain+1;
-		iter_aO = iter_aOmain+1;
-		iter_dO = iter_dOmain+1;
-		for( ; iter_H < H->end(); ++iter_H, ++iter_aO, ++iter_dO )
+		iter_hb = iter_hbmain+1;
+		for( ; iter_hb < hb->end(); ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
-			if ( (*iter_H)->markedDuplicate )
+			if ( (*iter_hb)->markedDuplicate )
 				continue;
 
-			if ( SameAtom( *iter_aOmain, *iter_aO) )
+			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) )
 			{
 				// duplicate = true;
-				if ( (*iter_aO)->length < MinLength )
+				if ( (*iter_hb)->length < MinLength )
 				{
-					MinLength  = (*iter_aO)->length;
+					MinLength  = (*iter_hb)->length;
 					// Mark the old iter_?min as duplicated;
-					(*iter_Hmin)->markedDuplicate = true;
-					(*iter_aOmin)->markedDuplicate = true;
-					(*iter_dOmin)->markedDuplicate = true;
-					// Update the iterators for the minimum distance
-					// HBond atoms.
-					iter_Hmin  = iter_H;
-					iter_aOmin = iter_aO;
-					iter_dOmin = iter_dO;
+					(*iter_hbmin)->markedDuplicate = true;
+					iter_hbmin = iter_hb;
 				}
 				else
 				{
 					// Mark this one as duplicated;
-					(*iter_H)->markedDuplicate = true;
-					(*iter_aO)->markedDuplicate = true;
-					(*iter_dO)->markedDuplicate = true;
+					(*iter_hb)->markedDuplicate = true;
 				}
 			}
 		}
@@ -400,81 +396,62 @@ void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
 	//
 	// Look for H duplicates
 	//
-	iter_Hmain = H->begin();
-	iter_aOmain = aO->begin();
-	iter_dOmain = dO->begin();
+	iter_hbmain = hb->begin();
 
-	for( ; iter_Hmain < H->end()-1; ++iter_Hmain, ++iter_aOmain, ++iter_dOmain )
+	for( ; iter_hbmain < hb->end()-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
-		if ( (*iter_Hmain)->markedDuplicate )
+		if ( (*iter_hbmain)->markedDuplicate )
 			continue;
 
-		// Save the iterators for the minimum distance HBond atoms.
+		// Save the iterator for the minimum distance HBond atoms.
 		// Set them to iter_?main initially.
-		iter_Hmin  = iter_Hmain;
-		iter_aOmin = iter_aOmain;
-		iter_dOmin = iter_dOmain;
-		MinLength = (*iter_aOmin)->length;
+		iter_hbmin = iter_hbmain;
+		MinLength = (*iter_hbmin)->length;
 
 		/*
 		 * Go through entire vector looking for duplicate of
 		 * iter_Hmain, and find the one with the shortest length
 		 */
-		// duplicate = false;
-		iter_H = iter_Hmain+1;
-		iter_aO = iter_aOmain+1;
-		iter_dO = iter_dOmain+1;
+		iter_hb = iter_hbmain+1;
 
-		for( ; iter_H < H->end(); ++iter_H, ++iter_aO, ++iter_dO )
+		for( ; iter_hb < hb->end(); ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
-			if ( (*iter_H)->markedDuplicate )
+			if ( (*iter_hb)->markedDuplicate )
 				continue;
 
-			if ( SameAtom( *iter_Hmain, *iter_H) )
+			if ( SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
 			{
 				// duplicate = true;
-				if ( (*iter_aO)->length < MinLength )
+				if ( (*iter_hb)->length < MinLength )
 				{
-					MinLength = (*iter_aO)->length;
+					MinLength = (*iter_hb)->length;
 					// Mark the old iter_?min as duplicated;
-					(*iter_Hmin)->markedDuplicate = true;
-					(*iter_aOmin)->markedDuplicate = true;
-					(*iter_dOmin)->markedDuplicate = true;
-					// Update the iterators for the minimum distance
-					// HBond atoms.
-					iter_Hmin  = iter_H;
-					iter_aOmin = iter_aO;
-					iter_dOmin = iter_dO;
+					(*iter_hbmin)->markedDuplicate = true;
+					iter_hbmin = iter_hb;
 				}
 				else
 				{
 					// This one isn't the minimum length.
 					// Mark this one as duplicated;
-					(*iter_H)->markedDuplicate = true;
-					(*iter_aO)->markedDuplicate = true;
-					(*iter_dO)->markedDuplicate = true;
+					(*iter_hb)->markedDuplicate = true;
 				}
 			}
 		}
 	}
 
-	removeMarked(H, aO, dO);
+	removeMarked(hb);
 	return;
 }
 
-bool SameAtom( struct HBondAtom *A,
-               struct HBondAtom *B)
+bool SameAtom( struct thbAtom *A,
+               struct thbAtom *B)
 {
-	// if ( (A->x == B->x) &&
-	//      (A->y == B->y) &&
-	//      (A->z == B->z) )
-	//     return true;
 
-	// Safer to compare strings, rather than floats/doubles.
-	if ( !strcmp(A->Name, B->Name) && !strcmp(A->dendrimer,B->dendrimer) )
-		return true;
+	if ( A == B )
+		return(true);
+
 
 	return(false);
 }
@@ -487,9 +464,7 @@ bool SameAtom( struct HBondAtom *A,
  *
  */
 bool Trace( ListOfHBonds **HBonds,
-            std::vector<struct HBondAtom *> H,
-            std::vector<struct HBondAtom *> aO,
-            std::vector<struct HBondAtom *> dO,
+            std::vector<struct HydrogenBond *> hb,
             unsigned int current)
 {
 	// H : Hydrogen
@@ -498,60 +473,44 @@ bool Trace( ListOfHBonds **HBonds,
 	// DonorO --- Hydrogen ... AcceptorO
 	// ... Denotes the Hydrogen bond.
 	//
-	std::vector<struct HBondAtom *>::iterator iter_Hmain;
-	std::vector<struct HBondAtom *>::iterator iter_aOmain;
-	std::vector<struct HBondAtom *>::iterator iter_dOmain;
-
-	std::vector<struct HBondAtom *>::iterator iter_H;
-	std::vector<struct HBondAtom *>::iterator iter_aO;
-	std::vector<struct HBondAtom *>::iterator iter_dO;
+	std::vector<struct HydrogenBond *>::iterator iter_hbmain;
+	std::vector<struct HydrogenBond *>::iterator iter_hb;
 
 	// Check that requested element is not beyond the size
 	// of the vector.
-	if ( current >= aO.size() )
+	if ( current >= hb.size() )
 		return(false);
 
-	iter_aOmain = aO.begin()+current;
-	iter_dOmain = dO.begin()+current;
-	iter_Hmain = H.begin()+current;
+	iter_hbmain = hb.begin()+current;
 
-	// If this atom triplet has already been assigned to a chain, skip it
-	// Checking for only the H is sufficient.
-	if ( ( (*iter_Hmain)->Next != NULL) && ( (*iter_Hmain)->Previous != NULL) )
+	// If this hydrogen bond has already been assigned to a chain, skip it
+	if ( ( (*iter_hbmain)->Next != NULL) || ( (*iter_hbmain)->Previous != NULL) )
 		return(false);
 
 	// Starting a new chain.
-	(*HBonds)->AddAtStart(*iter_aOmain);
-	(*HBonds)->AddAtStart(*iter_Hmain);
-	(*HBonds)->AddAtStart(*iter_dOmain);
+	(*HBonds)->AddAtStart(*iter_hbmain);
 
 	bool StillLooking = true;
 	while ( StillLooking )
 	{
-		iter_H = H.begin();
-		iter_aO = aO.begin();
-		iter_dO = dO.begin();
+		iter_hb = hb.begin();
 		bool FoundOne = false;
-		for( ; iter_H < H.end(); ++iter_H, ++iter_aO, ++iter_dO )
+		for( ; iter_hb < hb.end(); ++iter_hb )
 		{
-			// Check that this triplet is not in the chain, already.
+			// Check that this hydrogen bond is not in the chain already.
 			// Checking for only the H is sufficient.
-			if ( !(*HBonds)->Find(*iter_H)  )
+			if ( !(*HBonds)->Find(*iter_hb)  )
 			{
-				if ( (*HBonds)->IsSameAsFirst(*iter_aO) )
+				if ( (*HBonds)->IsSameAsFirst(*iter_hb) )
 				{
 					// Found a new link at the beginning of the chain.
-					(*HBonds)->AddAtStart(*iter_H);
-					(*HBonds)->AddAtStart(*iter_dO);
-					(*iter_aO)->Next = (*iter_aO)->Previous = NULL;
+					(*HBonds)->AddAtStart(*iter_hb);
 					FoundOne = true;
 				} 
-				else if ( (*HBonds)->IsSameAsLast(*iter_dO) )
+				else if ( (*HBonds)->IsSameAsLast(*iter_hb) )
 				{
 					// Found a new link at the end of the chain.
-					(*HBonds)->AddAtEnd(*iter_H);
-					(*HBonds)->AddAtEnd(*iter_aO);
-					(*iter_dO)->Next = (*iter_dO)->Previous = NULL;
+					(*HBonds)->AddAtEnd(*iter_hb);
 					FoundOne = true;
 				}
 			}
@@ -559,6 +518,7 @@ bool Trace( ListOfHBonds **HBonds,
 		StillLooking = FoundOne;
 	}
 
+//	std::cout << " Size: " << (*HBonds)->AtomCount();
 	return(true);
 }
 
@@ -593,7 +553,7 @@ int makeHistograms( std::ostream *out,
 
 	for( unsigned int i=0; i < HBStrings.size(); i++ )
 	{
-		unsigned int HBCount        = HBStrings[i]->Count();
+		unsigned int HBCount        = HBStrings[i]->AtomCount();
 		unsigned int SwitchingCount = HBStrings[i]->SwitchingCount();
 		unsigned int MoleculeCount  = HBStrings[i]->MoleculeCount();
 
@@ -639,7 +599,7 @@ int makeHistograms( std::ostream *out,
 	{
 		*out << std::endl << std::endl;
 		*out << CC << " Current Element : " << i << std::endl;
-		*out << CC << " Atoms in Chain : " << HBStrings[i]->Count();
+		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
 		*out << std::endl;
 
 		// Note if this is a closed loop.

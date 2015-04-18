@@ -1,23 +1,20 @@
 #include "ReadData.h"
 
 double Vector_Length( struct HBondAtom *a, struct HBondAtom *b );
+struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
+                                     struct thbAtom *find);
 
 int ReadData( const char *filename,
-              std::vector<struct HBondAtom *> *Atoms1,
-              std::vector<struct HBondAtom *> *Atoms2,
-              std::vector<struct HBondAtom *> *Atoms3,
+              std::vector<struct HydrogenBond *> *hb,
+              std::vector<struct thbAtom *> *atom,
               struct PBC *Cell)
 {
 	char line[256];
-	struct HBondAtom *Atom1, *Atom2, *Atom3;
+	struct HydrogenBond *HBond;
+	struct thbAtom *hydrogen, *acceptor, *donor;
 
 	// Donor --- Hydrogen ... Acceptor
 	// ... Denotes the Hydrogen bond.
-//	Atom1 = new struct HBondAtom; // Hydrogen
-//	Atom2 = new struct HBondAtom; // Acceptor Oxygen
-//	Atom3 = new struct HBondAtom; // Donor Oxygen
-//	Atom1->Length = Hydrogen - Donor Length.
-//	Atom2->Length = Hydrogen - Acceptor Length (HBond length).
 
 	// store the 1st 6 bytes of file to determine the filetype (magic number).
 	uint8_t magic[6];
@@ -100,35 +97,91 @@ int ReadData( const char *filename,
 	in.getline(line,255);
 
 	int linen=1;
+	char acceptorForceField[80];
+	char hydrogenName[80];
+	char acceptorName[80];
+	char donorName[80];
+	char acceptorMolecule[80];
+	char hydrogenMolecule[80];
 	while ( !in.eof() )
 	{
 		// Donor --- Hydrogen ... Acceptor
 		// ... Denotes the Hydrogen bond.
-		Atom1 = new struct HBondAtom; // Hydrogen
-		Atom2 = new struct HBondAtom; // Acceptor Oxygen
-		Atom3 = new struct HBondAtom; // Donor Oxygen
+		hydrogen = new struct thbAtom; // Hydrogen - Atom1
+		acceptor = new struct thbAtom; // Acceptor Oxygen - Atom2
+		donor    = new struct thbAtom; // Donor Oxygen - Atom3
+		HBond    = new struct HydrogenBond;
+
 		n = sscanf( line,
 		            "%78s\t%78s\t%78s\t%78s\t{%le %le %le}\t{%le %le %le}\t{%le %le %le}\t%le\t%le\t%78s\t%78s",
-		            Atom1->Name, Atom2->Name, Atom3->Name,
-		            Atom3->ffType,
-		            &Atom1->x, &Atom1->y, &Atom1->z,
-		            &Atom2->x, &Atom2->y, &Atom2->z,
-		            &Atom3->x, &Atom3->y, &Atom3->z,
-		            &Atom2->length, &Atom2->angle,
-		            Atom1->dendrimer, Atom2->dendrimer);
+		            hydrogenName, acceptorName, donorName,
+		            acceptorForceField,
+		            &hydrogen->x, &hydrogen->y, &hydrogen->z,
+		            &acceptor->x, &acceptor->y, &acceptor->z,
+		            &donor->x, &donor->y, &donor->z,
+		            &HBond->length, &HBond->angle,
+		            hydrogenMolecule, acceptorMolecule);
 		linen++;
 		if ( n == 17 )
 		{
-			strncpy(Atom3->dendrimer,Atom1->dendrimer,80) ;
-			Atom1->Hydrogen = true;
-			Atom2->Hydrogen = Atom3->Hydrogen = false;
-			Atom1->length = Vector_Length( Atom1, Atom3 );
-			strcpy(Atom1->ffType,"h1o");
-			strcpy(Atom2->ffType,"o2h");
-			// Save atoms to the vector.
-			Atoms1->push_back(Atom1);
-			Atoms2->push_back(Atom2);
-			Atoms3->push_back(Atom3);
+			donor->Name        = donorName;
+			hydrogen->Name     = hydrogenName;
+			acceptor->Name     = acceptorName;
+
+			donor->Type        = "O";
+			hydrogen->Type     = "H";
+			acceptor->Type     = "O";
+			donor->Molecule    = hydrogenMolecule;
+			hydrogen->Molecule = hydrogenMolecule;
+			acceptor->Molecule = acceptorMolecule;
+			
+			acceptor->ForceField  = acceptorForceField;
+			// The next two are an assumption, since we can not determine the 
+			// correct values from the datafile.
+			hydrogen->ForceField = "h1o";
+			donor->ForceField = "o2h";
+
+			// Save atoms to the vector, unless the same atom has already been saved.
+			struct thbAtom *duplicate;
+			
+			duplicate = AlreadyRecordedAtom(*atom, donor);
+			if ( duplicate == NULL )
+			{
+				atom->push_back(donor);
+				HBond->donor = donor;
+			}
+			else
+			{
+				HBond->donor = duplicate;
+				// delete donor;
+			}
+
+			duplicate = AlreadyRecordedAtom(*atom, hydrogen);
+			if ( duplicate == NULL )
+			{
+				atom->push_back(hydrogen);
+				HBond->hydrogen = hydrogen;
+			}
+			else
+			{
+				HBond->hydrogen = duplicate;
+				delete hydrogen;
+			}
+
+			duplicate = AlreadyRecordedAtom(*atom, acceptor);
+			if ( duplicate == NULL )
+			{
+				atom->push_back(acceptor);
+				HBond->acceptor = acceptor;
+			}
+			else
+			{
+				HBond->acceptor = duplicate;
+				delete acceptor;
+			}
+
+			// Save the hydrogen bond to the vector.
+			hb->push_back(HBond);
 		}
 		else // Not an Hbond line.
 		{
@@ -145,9 +198,10 @@ int ReadData( const char *filename,
 			return(1);
 			}
 
-			delete Atom1;
-			delete Atom2;
-			delete Atom3;
+			delete donor;
+			delete hydrogen;
+			delete acceptor;
+			delete HBond;
 		}
 		in.getline(line,255);
 	}
@@ -156,7 +210,7 @@ int ReadData( const char *filename,
 	return(0);
 }
 
-double Vector_Length( struct HBondAtom *a, struct HBondAtom *b )
+double Vector_Length( struct thbAtom *a, struct thbAtom *b )
 {
 	double length;
 
@@ -167,4 +221,18 @@ double Vector_Length( struct HBondAtom *a, struct HBondAtom *b )
 	length = sqrt(length);
 
 	return(length);
+}
+
+struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
+                                     struct thbAtom *find)
+{
+	std::vector<struct thbAtom *>::iterator ai;
+
+	for(ai=atom.begin(); ai < atom.end(); ++ai)
+	{
+		if ( ( (*ai)->Name == find->Name ) &&
+		     ( (*ai)->Molecule == find->Molecule) )
+			return( *ai );
+	}
+	return(NULL);
 }

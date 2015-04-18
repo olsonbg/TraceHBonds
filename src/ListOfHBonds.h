@@ -12,29 +12,59 @@ struct PBC
 	double alpha, beta, gamma;
 };
 
-struct HBondAtom
+struct thbAtom
 {
-	double x,y,z;
-	double length;
-	double angle;
-	char dendrimer[80];
-	struct HBondAtom *Next;
-	struct HBondAtom *Previous;
-	bool Hydrogen;
-	char ffType[80];
-	char Name[80];
-	bool markedDuplicate;
+	// Store the coordinates for many frames(snapshots)
+	// std::vector<double> x, y, z;
+	double x, y, z;
+
+	// These should not change with different frames(snapshots).
+	std::string Type; // E.g., C, H, N, Au.
+	std::string Name;
+	std::string Residue;
+	unsigned int ResidueNum;
+	std::string Molecule;
+	std::string ForceField;
+	float BondOrder;
+	// Atoms connected to this one.
+	std::vector<struct thbAtom *> Connected;
 
 	// Assign default values
 	public:
-	HBondAtom()
+	thbAtom()
 	{
-		Hydrogen = false;
+		// Hydrogen = false;
+		x = y = z = 0.0;
+		// length = angle = 0.0;
+		// markedDuplicate = false;
+	}
+};
+
+//struct HBondAtom
+struct HydrogenBond
+{
+	double length;
+	double angle;
+	struct thbAtom *hydrogen;
+	struct thbAtom *donor;
+	struct thbAtom *acceptor;
+	// char dendrimer[80];
+	struct HydrogenBond *Next;
+	struct HydrogenBond *Previous;
+	// bool Hydrogen;
+	// char Name[80];
+	bool markedDuplicate;
+//
+
+	// Assign default values
+	public:
+	HydrogenBond()
+	{
 		Next = Previous = NULL;
+		hydrogen = NULL;
+		donor = NULL;
+		acceptor = NULL;
 		length = angle = 0.0;
-		x = 0.0;
-		y = 0.0;
-		z = 0.0;
 		markedDuplicate = false;
 	}
 };
@@ -43,29 +73,32 @@ class ListOfHBonds
 {
 	private:
 		int size;
-		struct HBondAtom *Start;
+		struct HydrogenBond *Start;
 		double Round (double r);
 		double Round (double r, double f);
 
 	public:
 		// List Builder
 		ListOfHBonds();
-		unsigned int Count();
+		unsigned int AtomCount();
 		// List Operations
-		int AddAtEnd(struct HBondAtom *Item);
-		int AddAtStart(struct HBondAtom *Item);
-		struct HBondAtom *Retrive(int pos);
-		struct HBondAtom *Last();
-		struct HBondAtom *First();
+		int AddAtEnd(struct HydrogenBond *Item);
+		int AddAtStart(struct HydrogenBond *Item);
+		struct HydrogenBond *Retrive(int pos);
+		struct HydrogenBond *Last();
+		struct HydrogenBond *First();
 		bool DeleteList();
-		bool Find( struct HBondAtom *Item);
+		bool Find( struct HydrogenBond *Item);
 		unsigned int SwitchingCount();
 		unsigned int ForcefieldCount();
 		unsigned int MoleculeCount();
-		unsigned int CountUniqStr( std::vector<char *>s );
-		bool IsSameAsFirst( struct HBondAtom *Item);
-		bool IsSameAsLast( struct HBondAtom *Item);
+		unsigned int CountUniqStr( std::vector< std::string >s );
+		bool IsSameAsFirst( struct HydrogenBond *Item);
+		bool IsSameAsLast( struct HydrogenBond *Item);
 		bool ClosedLoop(void);
+		std::vector<double> MinimumImage( struct thbAtom *A,
+		                                  std::vector<double> r,
+		                                  struct PBC Cell);
 		void PrintAll(void);
 		void PrintAllPovRay(void);
 		double PrintAll(std::ostream *out, struct PBC Cell, bool POVRAY);

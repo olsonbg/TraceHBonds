@@ -61,9 +61,9 @@ int doAllFiles(char *progname,
  * elements to val. Make sure not to touch/change any values that are already
  * in v.
  */
-bool alloc_vector(vui *v,
-                  unsigned int val,
-                  unsigned int nelem)
+template<class T> bool alloc_vector( std::vector<T> *v,
+                                     T val,
+                                     unsigned int nelem)
 {
 	for ( unsigned int n=v->size(); n < nelem; n++)
 	{
@@ -79,6 +79,42 @@ bool alloc_vector(vui *v,
 		}
 	}
 	return true;
+}
+
+/*
+ * Make sure x,y, and z coordinates of atom are each of size nelem, if not,
+ * initialize the needed number of elements to val. Make sure not to
+ * touch/change any values that are already in atom.
+ */
+bool alloc_vector(struct thbAtom *atom,
+                  double val,
+                  unsigned int nelem)
+{
+	if ( !alloc_vector( &(atom->x), val, nelem) ) return(false);
+	if ( !alloc_vector( &(atom->y), val, nelem) ) return(false);
+	if ( !alloc_vector( &(atom->z), val, nelem) ) return(false);
+
+	return(true);
+}
+
+/*
+ * Make sure the PBC parameters in cell are each of size nelem, if not,
+ * initialize the needed number of elements to val. Make sure not to
+ * touch/change any values that are already in cell.
+ */
+bool alloc_vector(struct PBC *cell,
+                  double val,
+                  unsigned int nelem)
+{
+	if ( !alloc_vector( &(cell->x), val, nelem) ) return(false);
+	if ( !alloc_vector( &(cell->y), val, nelem) ) return(false);
+	if ( !alloc_vector( &(cell->z), val, nelem) ) return(false);
+
+	if ( !alloc_vector( &(cell->alpha), val, nelem) ) return(false);
+	if ( !alloc_vector( &(cell->beta) , val, nelem) ) return(false);
+	if ( !alloc_vector( &(cell->gamma), val, nelem) ) return(false);
+
+	return(true);
 }
 
 /*
@@ -155,6 +191,32 @@ bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
 	return true;
 }
 
+// Save Iterators which point to just past the end of a Trajectory Index.
+// TrjIdx_iter.at(1) points to first element of TrjIdx 1. TrjIdx_iter.at(2)
+// points to just past the last element of TrjIdx 1, or the first element
+// of TrjIdx 2.
+std::vector< std::vector<struct HydrogenBond *>::iterator >
+TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb)
+{
+	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
+
+	TrjIdx_iter.push_back( hb->begin() );
+
+	unsigned int counter=1;
+	std::vector<struct HydrogenBond *>::iterator it_hb;
+	for(it_hb = hb->begin(); it_hb < hb->end(); ++it_hb)
+	{
+		if ( (*it_hb)->TrajIdx == counter )
+		{
+			TrjIdx_iter.push_back( it_hb );
+			counter++;
+		}
+	}
+	TrjIdx_iter.push_back( hb->end() );
+
+	return(TrjIdx_iter);
+}
+
 int doFrame(const char *ifile, const char *ofile,
             unsigned int NumBins, bool POVRAY)
 {
@@ -199,28 +261,47 @@ int doFrame(const char *ifile, const char *ofile,
 
 	Cell = new struct PBC;
 
-	ReadData( ifile, &hb, &atom, Cell );
+	unsigned int NumFramesInTrajectory = 0;
+	NumFramesInTrajectory = ReadData( ifile, &hb, &atom, Cell );
+
+	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
+	TrjIdx_iter = TrajectoryIndexIterator( &hb );
 
 	/*
 	 * Show some initial information
 	 */
-	out <<CC<< "--- Before removing duplicates." << std::endl;
-	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << std::endl;
-	out <<CC<< " Hydrogen atoms        : " << hb.size() << std::endl;
-	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << std::endl;
+	out << CC << "--- Before removing duplicates." << std::endl;
+	out << CC << " Donor Oxygen atoms    : " << hb.size() << std::endl;
+	out << CC << " Hydrogen atoms        : " << hb.size() << std::endl;
+	out << CC << " Acceptor Oxygen atoms : " << hb.size() << std::endl;
 
-	RemoveDuplicates ( &hb );
+	std::cout << "Removing duplicates: "<<hb.size() << std::endl;
+	RemoveDuplicates ( &hb, &TrjIdx_iter );
+	std::cout << "Duplicates Removed: " <<hb.size() << " Remaining." << std::endl;
+	// Update TrjIdx_iter after removing elements.
+	TrjIdx_iter = TrajectoryIndexIterator( &hb );
+
 
 	/*
 	 * Show some more information
 	 */
-	out <<CC<< "--- Removed duplicates." << std::endl;
-	out <<CC<< " Filename : " << ifile << std::endl;
+	out << CC << "--- Removed duplicates." << std::endl;
+	out << CC << " Filename : " << ifile << std::endl;
 	if ( NumBins != 0 )
 		out <<CC<< " Minimum # of bins set to : " <<NumBins << std::endl;
-	out <<CC<< " PBC " << Cell->x << " " << Cell->y << " " << Cell->z 
-	          << " " << Cell->alpha << " " << Cell->beta << " " << Cell->gamma
-	          << std::endl;
+
+	unsigned int TrjIdx = 0;
+
+	out << CC
+	    << " PBC "
+	    << Cell->x.at(TrjIdx)     << " "
+	    << Cell->y.at(TrjIdx)     << " "
+	    << Cell->z.at(TrjIdx)     << " "
+	    << Cell->alpha.at(TrjIdx) << " "
+	    << Cell->beta.at(TrjIdx)  << " "
+	    << Cell->gamma.at(TrjIdx)
+	    << std::endl;
+
 	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << std::endl;
 	out <<CC<< " Hydrogen atoms        : " << hb.size() << std::endl;
 	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << std::endl;
@@ -230,18 +311,23 @@ int doFrame(const char *ifile, const char *ofile,
 	std::vector<ListOfHBonds *>HBStrings;
 
 	//Find all the strings.
+	// std::cout << "Tracing HB strings." << std::endl;
 	for( unsigned int i=0; i < hb.size(); i++ )
 	{
 		ListOfHBonds *HBonds = new ListOfHBonds();
-		if ( Trace( &HBonds, hb, i) )
+		if ( Trace( &HBonds, &TrjIdx_iter, hb.begin()+i) )
 			HBStrings.push_back(HBonds);
 		else
 			delete HBonds;
 	}
+	// std::cout << "Done tracing HB strings." << std::endl;
 
-	//Make histograms, and printout the results.
-	makeHistograms( &out, HBStrings, CC, NumBins, POVRAY, Cell);
-
+	for( ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
+	{
+		//Make histograms, and printout the results.
+		makeHistograms( &out, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
+		out << CC << "NEXT" <<std::endl;
+	}
 	// Cleanup.
 	DeleteVectorPointers(hb);
 	DeleteVectorPointers(atom);
@@ -287,9 +373,6 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
 		else
 		{
 			++iter_hb;
-			// ++iter_H;
-			// ++iter_aO;
-			// ++iter_dO;
 		}
 	}
 }
@@ -301,53 +384,25 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
  *   - Hydrogen (H) with a single acceptor Oxygen (aO)
  *
  * Find the all duplicates and keep the shortest Hydrogen Bond length.
- *
- * aO->length is the distance between H...aO (HBond length)
  */
 
-// void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
-//                        std::vector<struct HBondAtom *> *aO,
-//                        std::vector<struct HBondAtom *> *dO )
-void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb )
+void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
+                       std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter)
 {
-	/*
-	 * H  : Hydrogen
-	 * aO : acceptor Oxygen
-	 * dO : donor Oxygen
-	 *
-	 * DonorO --- Hydrogen ... AcceptorO
-	 * ... Denotes the Hydrogen bond.
-	 * 
-	 * aO->length : Hydrogen - Acceptor Length (HBond Length)
-	 */
-
 	double MinLength;
-	// bool duplicate;
+
 	std::vector<struct HydrogenBond *>::iterator iter_hbmain;
 	std::vector<struct HydrogenBond *>::iterator iter_hb;
 	std::vector<struct HydrogenBond *>::iterator iter_hbmin;
 
-	// std::vector<struct HBondAtom *>::iterator iter_Hmain;
-	// std::vector<struct HBondAtom *>::iterator iter_aOmain;
-	// std::vector<struct HBondAtom *>::iterator iter_dOmain;
-
-	// std::vector<struct HBondAtom *>::iterator iter_H;
-	// std::vector<struct HBondAtom *>::iterator iter_aO;
-	// std::vector<struct HBondAtom *>::iterator iter_dO;
-
-	// std::vector<struct HBondAtom *>::iterator iter_Hmin;
-	// std::vector<struct HBondAtom *>::iterator iter_aOmin;
-	// std::vector<struct HBondAtom *>::iterator iter_dOmin;
+	std::vector<struct HydrogenBond *>::iterator iter_begin;
+	std::vector<struct HydrogenBond *>::iterator iter_end;
 
 	/*
-	 * Look for aO duplicates
+	 * Look for acceptor duplicates
 	 */
-	iter_hbmain = hb->begin();
-	// iter_Hmain = H->begin();
-	// iter_aOmain = aO->begin();
-	// iter_dOmain = dO->begin();
 
-	for( ; iter_hbmain < hb->end()-1; ++iter_hbmain )
+	for( iter_hbmain = hb->begin(); iter_hbmain < hb->end()-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
 		if ( (*iter_hbmain)->markedDuplicate )
@@ -358,12 +413,14 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb )
 		iter_hbmin = iter_hbmain;
 		MinLength = (*iter_hbmin)->length;
 
+		// The Range of HydrogenBonds to search.
+		iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx+1 );
+
 		/*
 		 * Go through entire vector looking for duplicate of
 		 * iter_hbmain acceptor, and find the one with the shortest length
 		 */
-		iter_hb = iter_hbmain+1;
-		for( ; iter_hb < hb->end(); ++iter_hb )
+		for( iter_hb = iter_hbmain+1; iter_hb < iter_end; ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
@@ -391,9 +448,9 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb )
 	//
 	// Look for H duplicates
 	//
-	iter_hbmain = hb->begin();
+	// iter_hbmain = hb->begin();
 
-	for( ; iter_hbmain < hb->end()-1; ++iter_hbmain )
+	for(iter_hbmain = hb->begin(); iter_hbmain < hb->end()-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
 		if ( (*iter_hbmain)->markedDuplicate )
@@ -404,13 +461,13 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb )
 		iter_hbmin = iter_hbmain;
 		MinLength = (*iter_hbmin)->length;
 
-		/*
-		 * Go through entire vector looking for duplicate of
-		 * iter_Hmain, and find the one with the shortest length
-		 */
-		iter_hb = iter_hbmain+1;
+		// The Range of HydrogenBonds to search.
+		iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx+1 );
 
-		for( ; iter_hb < hb->end(); ++iter_hb )
+		// Go through entire vector looking for duplicate of
+		// iter_Hmain, and find the one with the shortest length
+
+		for( iter_hb = iter_hbmain+1 ; iter_hb < iter_end; ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
@@ -459,28 +516,32 @@ bool SameAtom( struct thbAtom *A,
  *
  */
 bool Trace( ListOfHBonds **HBonds,
-            std::vector<struct HydrogenBond *> hb,
-            unsigned int current)
+            std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
+            std::vector<struct HydrogenBond *>::iterator iter_hbmain)
 {
-	// H : Hydrogen
-	// aO : acceptor Oxygen
-	// dO : donor Oxygen
 	// DonorO --- Hydrogen ... AcceptorO
 	// ... Denotes the Hydrogen bond.
-	//
-	std::vector<struct HydrogenBond *>::iterator iter_hbmain;
+
+	// std::vector<struct HydrogenBond *>::iterator iter_hbmain;
 	std::vector<struct HydrogenBond *>::iterator iter_hb;
 
-	// Check that requested element is not beyond the size
-	// of the vector.
-	if ( current >= hb.size() )
-		return(false);
+	// Check that requested element is not beyond the size of the vector.
+	// if ( current >= hb->size() )
+	//     return(false);
 
-	iter_hbmain = hb.begin()+current;
+	// iter_hbmain = hb->begin()+current;
+
+	std::vector<struct HydrogenBond *>::iterator iter_begin;
+	std::vector<struct HydrogenBond *>::iterator iter_end;
+
 
 	// If this hydrogen bond has already been assigned to a chain, skip it
 	if ( ( (*iter_hbmain)->Next != NULL) || ( (*iter_hbmain)->Previous != NULL) )
 		return(false);
+
+	// The Range of HydrogenBonds to search.
+	iter_begin = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx );
+	iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx+1 );
 
 	// Starting a new chain.
 	(*HBonds)->AddAtBegin(*iter_hbmain);
@@ -488,10 +549,15 @@ bool Trace( ListOfHBonds **HBonds,
 	bool StillLooking = true;
 	while ( StillLooking )
 	{
-		iter_hb = hb.begin();
 		bool FoundOne = false;
-		for( ; iter_hb < hb.end(); ++iter_hb )
+		for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
 		{
+			// If this hydrogen bond has already been fully assigned to a
+			// chain, skip it
+			if ( ( (*iter_hb)->Next != NULL) &&
+			     ( (*iter_hb)->Previous != NULL) )
+				continue;
+
 			// Check that this hydrogen bond is not in the chain already.
 			// Checking for only the H is sufficient.
 			if ( !(*HBonds)->Find(*iter_hb)  )
@@ -501,7 +567,7 @@ bool Trace( ListOfHBonds **HBonds,
 					// Found a new link at the beginning of the chain.
 					(*HBonds)->AddAtBegin(*iter_hb);
 					FoundOne = true;
-				} 
+				}
 				else if ( (*HBonds)->linksAtEnd(*iter_hb) )
 				{
 					// Found a new link at the end of the chain.
@@ -513,19 +579,18 @@ bool Trace( ListOfHBonds **HBonds,
 		StillLooking = FoundOne;
 	}
 
-//	std::cout << " Size: " << (*HBonds)->AtomCount();
 	return(true);
 }
 
 int makeHistograms( std::ostream *out,
                      std::vector<ListOfHBonds *> HBStrings,
                      std::string CC, unsigned int NumBins,
-                     bool POVRAY, struct PBC *Cell)
+                     struct PBC *Cell, unsigned int TrjIdx,
+                     bool POVRAY)
 {
 	unsigned int MaxChainLength = 0;
 	unsigned int MaxLoopSize = 0;
 	double EndToEndLength;
-
 
 	/*
 	 * Go through the vector of HBond strings and:
@@ -548,6 +613,9 @@ int makeHistograms( std::ostream *out,
 
 	for( unsigned int i=0; i < HBStrings.size(); i++ )
 	{
+		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
+			continue;
+
 		unsigned int HBCount        = HBStrings[i]->AtomCount();
 		unsigned int SwitchingCount = HBStrings[i]->SwitchingCount();
 		unsigned int MoleculeCount  = HBStrings[i]->MoleculeCount();
@@ -581,17 +649,19 @@ int makeHistograms( std::ostream *out,
 	{
 		*out << "#version 3.6;" << std::endl;
 		*out << "global_settings {  assumed_gamma 1.0 }" << std::endl;
-		*out << "Camera_LookAt( " << Cell->x << ", "
-		                          << Cell->y << ", "
-		                          << Cell->z << " )" << std::endl;
-		*out << "PBC( " << Cell->x << ", "
-		                << Cell->y << ", "
-		                << Cell->z << " )" << std::endl;
+		*out << "Camera_LookAt( " << Cell->x.at(TrjIdx) << ", "
+		                          << Cell->y.at(TrjIdx) << ", "
+		                          << Cell->z.at(TrjIdx) << " )" << std::endl;
+		*out << "PBC( " << Cell->x.at(TrjIdx) << ", "
+		                << Cell->y.at(TrjIdx) << ", "
+		                << Cell->z.at(TrjIdx) << " )" << std::endl;
 	}
 
 	// Printout information about each hbond string.
 	for( unsigned int i=0; i < HBStrings.size(); i++ )
 	{
+		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
+			continue;
 		*out << std::endl << std::endl;
 		*out << CC << " Current Element : " << i << std::endl;
 		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
@@ -614,7 +684,7 @@ int makeHistograms( std::ostream *out,
 		*out << CC << " Periodic boundary conditions applied."
 		          << std::endl;
 		// Show the Chain atoms, molecules and coordinates
-		EndToEndLength = HBStrings[i]->PrintAll(out, *Cell, POVRAY);
+		EndToEndLength = HBStrings[i]->PrintAll(out, *Cell, TrjIdx, POVRAY);
 		*out << CC << " Chain end-to-end distance: ";
 		*out << colE2E << EndToEndLength << std::endl;
 	}

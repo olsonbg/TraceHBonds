@@ -8,6 +8,7 @@
 #include <vector>
 #include <math.h>
 #include "ListOfHBonds.h"
+#include "TraceHBonds.h"
 
 int ReadData( const char *filename, 
               std::vector<struct HydrogenBond *> *hb,

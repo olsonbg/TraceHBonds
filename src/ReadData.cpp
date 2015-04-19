@@ -1,17 +1,18 @@
 #include "ReadData.h"
 
-double Vector_Length( struct HBondAtom *a, struct HBondAtom *b );
+// double Vector_Length( struct HBondAtom *a, struct HBondAtom *b );
 struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
                                      struct thbAtom *find);
 
 int ReadData( const char *filename,
               std::vector<struct HydrogenBond *> *hb,
               std::vector<struct thbAtom *> *atom,
-              struct PBC *Cell)
+              struct PBC *Cell )
 {
 	char line[256];
 	struct HydrogenBond *HBond;
 	struct thbAtom *hydrogen, *acceptor, *donor;
+	unsigned int TrjIdx = 0;
 
 	// Donor --- Hydrogen ... Acceptor
 	// ... Denotes the Hydrogen bond.
@@ -80,10 +81,13 @@ int ReadData( const char *filename,
 	int n;
 	if ( !in.eof() )
 	{
+		double CellX, CellY, CellZ;
+		double CellAlpha, CellBeta, CellGamma;
+
 		n = sscanf( line,
 		            "%le %le %le %le %le %le",
-		            &Cell->x, &Cell->y, &Cell->z,
-		            &Cell->alpha, &Cell->beta, &Cell->gamma);
+		            &CellX, &CellY, &CellZ,
+		            &CellAlpha, &CellBeta, &CellGamma);
 		if ( n != 6 )
 		{
 			std::cerr << "Error on line 1. Expected 6 arguments, read " << n;
@@ -91,6 +95,16 @@ int ReadData( const char *filename,
 			std::cerr << " L1: '" << line << "'" << std::endl;
 			ifp.close();
 			return(1);
+		}
+		if ( alloc_vector(Cell, 0.0, TrjIdx+1) )
+		{
+			Cell->x.at(TrjIdx) = CellX;
+			Cell->y.at(TrjIdx) = CellY;
+			Cell->z.at(TrjIdx) = CellZ;
+
+			Cell->alpha.at(TrjIdx) = CellAlpha;
+			Cell->beta.at(TrjIdx)  = CellBeta;
+			Cell->gamma.at(TrjIdx) = CellGamma;
 		}
 	}
 
@@ -103,6 +117,9 @@ int ReadData( const char *filename,
 	char donorName[80];
 	char acceptorMolecule[80];
 	char hydrogenMolecule[80];
+	double donorX, donorY, donorZ;
+	double hydrogenX, hydrogenY, hydrogenZ;
+	double acceptorX, acceptorY, acceptorZ;
 	while ( !in.eof() )
 	{
 		// Donor --- Hydrogen ... Acceptor
@@ -116,9 +133,9 @@ int ReadData( const char *filename,
 		            "%78s\t%78s\t%78s\t%78s\t{%le %le %le}\t{%le %le %le}\t{%le %le %le}\t%le\t%le\t%78s\t%78s",
 		            hydrogenName, acceptorName, donorName,
 		            acceptorForceField,
-		            &hydrogen->x, &hydrogen->y, &hydrogen->z,
-		            &acceptor->x, &acceptor->y, &acceptor->z,
-		            &donor->x, &donor->y, &donor->z,
+		            &hydrogenX, &hydrogenY, &hydrogenZ,
+		            &acceptorX, &acceptorY, &acceptorZ,
+		            &donorX   , &donorY   , &donorZ,
 		            &HBond->length, &HBond->angle,
 		            hydrogenMolecule, acceptorMolecule);
 		linen++;
@@ -131,6 +148,7 @@ int ReadData( const char *filename,
 			donor->Type        = "O";
 			hydrogen->Type     = "H";
 			acceptor->Type     = "O";
+			
 			donor->Molecule    = hydrogenMolecule;
 			hydrogen->Molecule = hydrogenMolecule;
 			acceptor->Molecule = acceptorMolecule;
@@ -147,11 +165,24 @@ int ReadData( const char *filename,
 			duplicate = AlreadyRecordedAtom(*atom, donor);
 			if ( duplicate == NULL )
 			{
+				if ( alloc_vector(donor, 0.0, TrjIdx+1) )
+				{
+					donor->x.at(TrjIdx)    = donorX;
+					donor->y.at(TrjIdx)    = donorY;
+					donor->z.at(TrjIdx)    = donorZ;
+				}
+
 				atom->push_back(donor);
 				HBond->donor = donor;
 			}
 			else
 			{
+				if ( alloc_vector(duplicate, 0.0, TrjIdx+1) )
+				{
+					duplicate->x.at(TrjIdx)    = donorX;
+					duplicate->y.at(TrjIdx)    = donorY;
+					duplicate->z.at(TrjIdx)    = donorZ;
+				}
 				HBond->donor = duplicate;
 				delete donor;
 			}
@@ -159,11 +190,25 @@ int ReadData( const char *filename,
 			duplicate = AlreadyRecordedAtom(*atom, hydrogen);
 			if ( duplicate == NULL )
 			{
+				if ( alloc_vector(hydrogen, 0.0, TrjIdx+1) )
+				{
+					hydrogen->x.at(TrjIdx) = hydrogenX;
+					hydrogen->y.at(TrjIdx) = hydrogenY;
+					hydrogen->z.at(TrjIdx) = hydrogenZ;
+				}
+
 				atom->push_back(hydrogen);
 				HBond->hydrogen = hydrogen;
 			}
 			else
 			{
+				if ( alloc_vector(duplicate, 0.0, TrjIdx+1) )
+				{
+					duplicate->x.at(TrjIdx) = hydrogenX;
+					duplicate->y.at(TrjIdx) = hydrogenY;
+					duplicate->z.at(TrjIdx) = hydrogenZ;
+				}
+
 				HBond->hydrogen = duplicate;
 				delete hydrogen;
 			}
@@ -171,25 +216,42 @@ int ReadData( const char *filename,
 			duplicate = AlreadyRecordedAtom(*atom, acceptor);
 			if ( duplicate == NULL )
 			{
+				if ( alloc_vector(acceptor, 0.0, TrjIdx+1) )
+				{
+					acceptor->x.at(TrjIdx) = acceptorX;
+					acceptor->y.at(TrjIdx) = acceptorY;
+					acceptor->z.at(TrjIdx) = acceptorZ;
+				}
 				atom->push_back(acceptor);
 				HBond->acceptor = acceptor;
 			}
 			else
 			{
+				if ( alloc_vector(duplicate, 0.0, TrjIdx+1) )
+				{
+					duplicate->x.at(TrjIdx) = acceptorX;
+					duplicate->y.at(TrjIdx) = acceptorY;
+					duplicate->z.at(TrjIdx) = acceptorZ;
+				}
+
 				HBond->acceptor = duplicate;
 				delete acceptor;
 			}
 
 			// Save the hydrogen bond to the vector.
+			HBond->TrajIdx = TrjIdx;
 			hb->push_back(HBond);
 		}
 		else // Not an Hbond line.
 		{
 			// Check if this line is another PBC line.
+			double CellX, CellY, CellZ;
+			double CellAlpha, CellBeta, CellGamma;
+
 			n = sscanf( line,
 			            "%le %le %le %le %le %le",
-			            &Cell->x, &Cell->y, &Cell->z,
-			            &Cell->alpha, &Cell->beta, &Cell->gamma);
+			            &CellX, &CellY, &CellZ,
+			            &CellAlpha, &CellBeta, &CellGamma);
 			if ( n != 6 ) // Unknown line, abort.
 			{
 			std::cerr << "Error on line " << linen;
@@ -198,6 +260,22 @@ int ReadData( const char *filename,
 			return(1);
 			}
 
+			if ( alloc_vector(Cell, 0.0, TrjIdx+1) )
+			{
+				// Start another frame of the trajectory.
+				TrjIdx++;
+
+				if ( alloc_vector(Cell, 0.0, TrjIdx+1) )
+				{
+					Cell->x.at(TrjIdx) = CellX;
+					Cell->y.at(TrjIdx) = CellY;
+					Cell->z.at(TrjIdx) = CellZ;
+
+					Cell->alpha.at(TrjIdx) = CellAlpha;
+					Cell->beta.at(TrjIdx)  = CellBeta;
+					Cell->gamma.at(TrjIdx) = CellGamma;
+				}
+			}
 			delete donor;
 			delete hydrogen;
 			delete acceptor;
@@ -207,21 +285,21 @@ int ReadData( const char *filename,
 	}
 	ifp.close();
 
-	return(0);
+	return(TrjIdx+1);
 }
 
-double Vector_Length( struct thbAtom *a, struct thbAtom *b )
-{
-	double length;
+// double Vector_Length( struct thbAtom *a, struct thbAtom *b )
+// {
+//     double length;
 
-	length = pow(a->x - b->x,2) +
-	         pow(a->y - b->y,2) +
-	         pow(a->z - b->z,2);
+//     length = pow(a->x - b->x,2) +
+//              pow(a->y - b->y,2) +
+//              pow(a->z - b->z,2);
 
-	length = sqrt(length);
+//     length = sqrt(length);
 
-	return(length);
-}
+//     return(length);
+// }
 
 struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
                                      struct thbAtom *find)

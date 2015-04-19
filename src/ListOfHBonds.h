@@ -8,15 +8,15 @@
 
 struct PBC
 {
-	double x, y, z;
-	double alpha, beta, gamma;
+	// Store the PBC parameters for many frames(snapshots) in a trajectory.
+	std::vector<double> x, y, z;
+	std::vector<double> alpha, beta, gamma;
 };
 
 struct thbAtom
 {
-	// Store the coordinates for many frames(snapshots)
-	// std::vector<double> x, y, z;
-	double x, y, z;
+	// Store the coordinates for many frames(snapshots) in a trajectory.
+	std::vector<double> x, y, z;
 
 	// These should not change with different frames(snapshots).
 	std::string Type; // E.g., C, H, N, Au.
@@ -34,7 +34,7 @@ struct thbAtom
 	thbAtom()
 	{
 		// Hydrogen = false;
-		x = y = z = 0.0;
+		// x = y = z = 0.0;
 		// length = angle = 0.0;
 		// markedDuplicate = false;
 	}
@@ -48,13 +48,17 @@ struct HydrogenBond
 	struct thbAtom *hydrogen;
 	struct thbAtom *donor;
 	struct thbAtom *acceptor;
+	// Index of the coordinates in thbAtom for the hydrogen, donor, and
+	// acceptor atoms. All three are at the same index. The same index is used
+	// for the coordinates and angles in the PBC struct too.
+	unsigned int TrajIdx;
+
 	// char dendrimer[80];
 	struct HydrogenBond *Next;
 	struct HydrogenBond *Previous;
 	// bool Hydrogen;
 	// char Name[80];
 	bool markedDuplicate;
-//
 
 	// Assign default values
 	public:
@@ -90,6 +94,7 @@ class ListOfHBonds
 		struct HydrogenBond *First();
 		bool DeleteList();
 		bool Find( struct HydrogenBond *Item);
+		unsigned int TrajectoryIndex();
 		unsigned int SwitchingCount();
 		unsigned int ForcefieldCount();
 		unsigned int MoleculeCount();
@@ -98,10 +103,14 @@ class ListOfHBonds
 		bool linksAtEnd  ( struct HydrogenBond *Item);
 		bool ClosedLoop(void);
 		std::vector<double> MinimumImage( struct thbAtom *A,
+		                                  unsigned int TrjIdx,
 		                                  std::vector<double> r,
 		                                  struct PBC Cell);
-		void PrintAll(void);
-		void PrintAllPovRay(void);
-		double PrintAll(std::ostream *out, struct PBC Cell, bool POVRAY);
+		void PrintAll(unsigned int TrjIdx);
+		void PrintAllPovRay(unsigned int TrjIdx);
+		double PrintAll(std::ostream *out,
+		                struct PBC Cell,
+		                unsigned int TrjIdx,
+		                bool POVRAY);
 };
 #endif

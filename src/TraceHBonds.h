@@ -21,26 +21,41 @@ int doFrame(const char *ifile, const char *ofile,
 
 int makeHistograms( std::ostream *out,
                      std::vector<ListOfHBonds *> HBStrings,
-                     std::string CC, unsigned int NumBins, 
-                     bool POVRAY, struct PBC *Cell);
+                     std::string CC, unsigned int NumBins,
+                     struct PBC *Cell, unsigned int TrjIdx,
+                     bool POVRAY);
 
-bool alloc_vector(std::vector<unsigned int> *v,
+bool alloc_vector(std::vector< std::vector<unsigned int> > *v,
                   unsigned int val,
                   unsigned int nelem,
                   unsigned int melem);
 
-bool alloc_vector(std::vector< std::vector<unsigned int> > *v,
-                  unsigned int val,
+template<class T> bool alloc_vector( std::vector<T> *v,
+                                     T val,
+                                     unsigned int nelem);
+
+bool alloc_vector(struct thbAtom *v,
+                  double val,
+                  unsigned int nelem);
+
+bool alloc_vector(struct PBC *v,
+                  double val,
                   unsigned int nelem);
 
 bool SameAtom( struct thbAtom *A,
                struct thbAtom *B);
 
+// bool Trace( ListOfHBonds **HBonds,
+//             std::vector< std::vector<struct HydrogenBond *>::iterator > *,
+//             std::vector<struct HydrogenBond *> *hb,
+//             unsigned int current);
 bool Trace( ListOfHBonds **HBonds,
-            std::vector<struct HydrogenBond *> hb,
-            unsigned int current);
+            std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
+            std::vector<struct HydrogenBond *>::iterator iter_hbmain);
 
-void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb );
+void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
+            std::vector< std::vector<struct HydrogenBond *>::iterator > *);
+
 
 // void DeleteVectorPointers( std::vector<struct HydrogenBond *> v);
 // void DeleteVectorPointers( std::vector<struct thbAtom *> v);

@@ -261,17 +261,12 @@ int doFrame(const char *ifile, const char *ofile,
 	return(0);
 }
 
-void DeleteVectorPointers( std::vector<struct HydrogenBond *> v)
+template<class T> void DeleteVectorPointers( T v )
 {
 	for(unsigned int i =0; i < v.size(); ++i)
 		delete v[i];
 }
 
-void DeleteVectorPointers( std::vector<struct thbAtom *> v)
-{
-	for(unsigned int i =0; i < v.size(); ++i)
-		delete v[i];
-}
 // void removeMarked( std::vector<struct HBondAtom *> *H,
 //                    std::vector<struct HBondAtom *> *aO,
 //                    std::vector<struct HBondAtom *> *dO )

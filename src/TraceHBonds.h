@@ -42,7 +42,8 @@ bool Trace( ListOfHBonds **HBonds,
 
 void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb );
 
-void DeleteVectorPointers( std::vector<struct HydrogenBond *> v);
-void DeleteVectorPointers( std::vector<struct thbAtom *> v);
+// void DeleteVectorPointers( std::vector<struct HydrogenBond *> v);
+// void DeleteVectorPointers( std::vector<struct thbAtom *> v);
+template<class T> void DeleteVectorPointers( T v );
 
 #endif

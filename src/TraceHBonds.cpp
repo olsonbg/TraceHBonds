@@ -483,7 +483,7 @@ bool Trace( ListOfHBonds **HBonds,
 		return(false);
 
 	// Starting a new chain.
-	(*HBonds)->AddAtStart(*iter_hbmain);
+	(*HBonds)->AddAtBegin(*iter_hbmain);
 
 	bool StillLooking = true;
 	while ( StillLooking )
@@ -496,13 +496,13 @@ bool Trace( ListOfHBonds **HBonds,
 			// Checking for only the H is sufficient.
 			if ( !(*HBonds)->Find(*iter_hb)  )
 			{
-				if ( (*HBonds)->IsSameAsFirst(*iter_hb) )
+				if ( (*HBonds)->linksAtBegin(*iter_hb) )
 				{
 					// Found a new link at the beginning of the chain.
-					(*HBonds)->AddAtStart(*iter_hb);
+					(*HBonds)->AddAtBegin(*iter_hb);
 					FoundOne = true;
 				} 
-				else if ( (*HBonds)->IsSameAsLast(*iter_hb) )
+				else if ( (*HBonds)->linksAtEnd(*iter_hb) )
 				{
 					// Found a new link at the end of the chain.
 					(*HBonds)->AddAtEnd(*iter_hb);

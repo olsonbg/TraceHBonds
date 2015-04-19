@@ -1,7 +1,7 @@
 #include "ListOfHBonds.h"
 
 ListOfHBonds::ListOfHBonds()
-  : size(0), Start(NULL)
+  : size(0), Beginning(NULL)
 {
 }
 
@@ -11,14 +11,14 @@ unsigned int ListOfHBonds::AtomCount()
 }
 
 
-struct HydrogenBond *ListOfHBonds::First()
+struct HydrogenBond *ListOfHBonds::Begin()
 {
-	return(Start);
+	return(Beginning);
 }
 
-struct HydrogenBond *ListOfHBonds::Last()
+struct HydrogenBond *ListOfHBonds::End()
 {
-	struct HydrogenBond *current = Start;
+	struct HydrogenBond *current = Begin();
 
 	if ( current == NULL )
 		return(NULL);
@@ -36,7 +36,7 @@ struct HydrogenBond *ListOfHBonds::Last()
 unsigned int ListOfHBonds::SwitchingCount()
 {
 	int Switches = 0;
-	struct HydrogenBond *current = Start;
+	struct HydrogenBond *current = Begin();
 
 	// Donor and Hydrogen are always on the same molecule,
 	// So checking which molecule the Hydrogen and Acceptor 
@@ -68,7 +68,7 @@ unsigned int ListOfHBonds::CountUniqStr( std::vector< std::string >s )
 unsigned int ListOfHBonds::MoleculeCount()
 {
 	std::vector< std::string > molecules;
-	struct HydrogenBond *current = Start;
+	struct HydrogenBond *current = Begin();
 
 	while (current != NULL)
 	{
@@ -87,7 +87,7 @@ unsigned int ListOfHBonds::ForcefieldCount()
 {
 	std::vector< std::string > forcefields;
 
-	struct HydrogenBond *current = Start;
+	struct HydrogenBond *current = Begin();
 
 	while (current != NULL)
 	{
@@ -107,19 +107,19 @@ int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 
 	Item           = NewItem;
 	Item->Next     = NULL;
-	Item->Previous = Last();
+	Item->Previous = End();
 
 	if ( Item->Previous != NULL )
 		Item->Previous->Next = Item;
 
-	if( First() == NULL )
+	if( Begin() == NULL )
 		size += 3;
 	else
 		size += 2;
 
 	// This is actually the first element.
 	if( Item->Previous == NULL )
-		Start = Item;
+		Beginning = Item;
 
 
 	return (size);
@@ -129,7 +129,7 @@ void ListOfHBonds::PrintAll()
 {
 	struct HydrogenBond *current;
 
-	current = First();
+	current = Begin();
 
 	while (current != NULL )
 	{
@@ -148,7 +148,7 @@ void ListOfHBonds::PrintAll()
 		std::cout << "  " << current->hydrogen->Molecule;
 		std::cout << "  " << current->hydrogen->ForceField << std::endl;
 
-		if ( current == Last() )
+		if ( current == End() )
 		{
 			std::cout << col << current->acceptor->x << " ";
 			std::cout << col << current->acceptor->y << " ";
@@ -166,7 +166,7 @@ void ListOfHBonds::PrintAllPovRay()
 {
 	struct HydrogenBond *current;
 
-	current = First();
+	current = Begin();
 
 	std::cout << "sphere_sweep {\n\tlinear_spline\n\t11\n" << std::endl;
 	while (current != NULL )
@@ -182,7 +182,7 @@ void ListOfHBonds::PrintAllPovRay()
 		std::cout << col << current->hydrogen->y << ",  ";
 		std::cout << col << current->hydrogen->z << ">,0.7" << std::endl;
 
-		if ( current == Last() )
+		if ( current == End() )
 		{
 			std::cout << "\t<";
 			std::cout << col << current->acceptor->x << ", ";
@@ -230,7 +230,7 @@ double ListOfHBonds::PrintAll( std::ostream *out, struct PBC Cell, bool POVRAY )
 	double initial_x, initial_y, initial_z;
 	double EndToEndLength;
 
-	current = First();
+	current = Begin();
 
 	initial_x = current->donor->x;
 	initial_y = current->donor->y;
@@ -263,7 +263,7 @@ double ListOfHBonds::PrintAll( std::ostream *out, struct PBC Cell, bool POVRAY )
 			*out << colY << Round(r[1],10000.0) << ", ";
 			*out << colZ << Round(r[2],10000.0) << ">,0.7" << std::endl;
 
-			if ( current == Last() )
+			if ( current == End() )
 			{
 				r = MinimumImage( current->acceptor, r, Cell );
 				*out << "\t<";
@@ -294,7 +294,7 @@ double ListOfHBonds::PrintAll( std::ostream *out, struct PBC Cell, bool POVRAY )
 			*out << "  " << current->hydrogen->Name;
 			*out << "  " << current->hydrogen->ForceField << std::endl;
 
-			if ( current == Last() )
+			if ( current == End() )
 			{
 				r = MinimumImage( current->acceptor, r, Cell );
 				*out << colX << Round(r[0],10000.0) << " ";
@@ -323,24 +323,24 @@ double ListOfHBonds::PrintAll( std::ostream *out, struct PBC Cell, bool POVRAY )
 	// return(counter);
 }
 
-int ListOfHBonds::AddAtStart(struct HydrogenBond *NewItem)
+int ListOfHBonds::AddAtBegin(struct HydrogenBond *NewItem)
 {
 	struct HydrogenBond *Item;
 
 	Item           = NewItem;
-	Item->Next     = First();
+	Item->Next     = Begin();
 	Item->Previous = NULL;
 
 	if ( Item->Next != NULL )
 		(Item->Next)->Previous = Item;
 
 
-	if ( First() == NULL )
+	if ( Begin() == NULL )
 		size += 3;
 	else
 		size += 2;
 
-	Start = NewItem;
+	Beginning = NewItem;
 
 	return (size);
 }
@@ -354,7 +354,7 @@ bool ListOfHBonds::Find( struct HydrogenBond *Item )
 	if ( Item == NULL )
 		return(false);
 
-	for( current = First(); current != NULL; current = current->Next )
+	for( current = Begin(); current != NULL; current = current->Next )
 	{
 		if ( current == Item )
 			return(true);
@@ -365,27 +365,27 @@ bool ListOfHBonds::Find( struct HydrogenBond *Item )
 
 // TODO: Rename this.
 // If the acceptor of Item is the same atom as the donor of the first
-// element in the list, then it is the same.
-bool ListOfHBonds::IsSameAsFirst( struct HydrogenBond *Item )
+// element in the list, then Item should come before Begin().
+bool ListOfHBonds::linksAtBegin( struct HydrogenBond *Item )
 {
 	// if ( (Item == NULL) || (size == 0) )
 	//     return(false);
 
-	if ( First()->donor == Item->acceptor )
+	if ( Begin()->donor == Item->acceptor )
 		return(true);
 
 	return(false);
 }
 
 // TODO: Rename this.
-// If the donor of Item is the same atom the the acceptor of the last 
-// element in the list, then it is the same.
-bool ListOfHBonds::IsSameAsLast( struct HydrogenBond *Item )
+// If the donor of Item is the same atom the the acceptor of the last
+// element in the list, then Item should come after End().
+bool ListOfHBonds::linksAtEnd( struct HydrogenBond *Item )
 {
 	// if ( (Item == NULL) || (size == 0) )
 	//     return(false);
 
-	if ( Last()->acceptor == Item->donor )
+	if ( End()->acceptor == Item->donor )
 		return(true);
 
 	return(false);
@@ -393,12 +393,12 @@ bool ListOfHBonds::IsSameAsLast( struct HydrogenBond *Item )
 
 bool ListOfHBonds::ClosedLoop(void)
 {
-	return (IsSameAsLast(Start));
+	return ( linksAtEnd(Begin()) );
 }
 
 bool ListOfHBonds::DeleteList()
 {
-	Start = NULL;
+	Beginning = NULL;
 	size = 0;
 
 	return(true);

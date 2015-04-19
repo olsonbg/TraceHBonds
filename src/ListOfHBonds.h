@@ -73,7 +73,7 @@ class ListOfHBonds
 {
 	private:
 		int size;
-		struct HydrogenBond *Start;
+		struct HydrogenBond *Beginning;
 		double Round (double r, double f);
 
 	public:
@@ -81,8 +81,10 @@ class ListOfHBonds
 		ListOfHBonds();
 		unsigned int AtomCount();
 		// List Operations
+		struct HydrogenBond *Begin();
+		struct HydrogenBond *End();
 		int AddAtEnd(struct HydrogenBond *Item);
-		int AddAtStart(struct HydrogenBond *Item);
+		int AddAtBegin(struct HydrogenBond *Item);
 		struct HydrogenBond *Retrive(int pos);
 		struct HydrogenBond *Last();
 		struct HydrogenBond *First();
@@ -92,8 +94,8 @@ class ListOfHBonds
 		unsigned int ForcefieldCount();
 		unsigned int MoleculeCount();
 		unsigned int CountUniqStr( std::vector< std::string >s );
-		bool IsSameAsFirst( struct HydrogenBond *Item);
-		bool IsSameAsLast( struct HydrogenBond *Item);
+		bool linksAtBegin( struct HydrogenBond *Item);
+		bool linksAtEnd  ( struct HydrogenBond *Item);
 		bool ClosedLoop(void);
 		std::vector<double> MinimumImage( struct thbAtom *A,
 		                                  std::vector<double> r,

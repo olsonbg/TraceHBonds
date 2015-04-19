@@ -153,7 +153,7 @@ int ReadData( const char *filename,
 			else
 			{
 				HBond->donor = duplicate;
-				// delete donor;
+				delete donor;
 			}
 
 			duplicate = AlreadyRecordedAtom(*atom, hydrogen);

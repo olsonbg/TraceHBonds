@@ -74,7 +74,6 @@ class ListOfHBonds
 	private:
 		int size;
 		struct HydrogenBond *Start;
-		double Round (double r);
 		double Round (double r, double f);
 
 	public:

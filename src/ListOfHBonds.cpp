@@ -196,12 +196,7 @@ void ListOfHBonds::PrintAllPovRay()
 	return;
 }
 
-double ListOfHBonds::Round (double r)
-{
-	return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
-}
-
-double ListOfHBonds::Round (double r,double f)
+double ListOfHBonds::Round (double r,double f=1.0)
 {
 	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
 }
@@ -368,12 +363,13 @@ bool ListOfHBonds::Find( struct HydrogenBond *Item )
 	return(false);
 }
 
+// TODO: Rename this.
 // If the acceptor of Item is the same atom as the donor of the first
 // element in the list, then it is the same.
 bool ListOfHBonds::IsSameAsFirst( struct HydrogenBond *Item )
 {
-	if ( (Item == NULL) || (size == 0) )
-		return(false);
+	// if ( (Item == NULL) || (size == 0) )
+	//     return(false);
 
 	if ( First()->donor == Item->acceptor )
 		return(true);
@@ -381,12 +377,13 @@ bool ListOfHBonds::IsSameAsFirst( struct HydrogenBond *Item )
 	return(false);
 }
 
+// TODO: Rename this.
 // If the donor of Item is the same atom the the acceptor of the last 
-// element in the lit, then it is the same.
+// element in the list, then it is the same.
 bool ListOfHBonds::IsSameAsLast( struct HydrogenBond *Item )
 {
-	if ( (Item == NULL) || (size == 0) )
-		return(false);
+	// if ( (Item == NULL) || (size == 0) )
+	//     return(false);
 
 	if ( Last()->acceptor == Item->donor )
 		return(true);

@@ -38,15 +38,9 @@ bool SameAtom( struct thbAtom *A,
 
 bool Trace( ListOfHBonds **HBonds,
             std::vector<struct HydrogenBond *> hb,
-            // std::vector<struct HBondAtom *> H,
-            // std::vector<struct HBondAtom *> aO,
-            // std::vector<struct HBondAtom *> dO,
             unsigned int current);
 
 void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb );
-// void RemoveDuplicates( std::vector<struct HBondAtom *> *H,
-//                        std::vector<struct HBondAtom *> *aO,
-//                        std::vector<struct HBondAtom *> *dO );
 
 void DeleteVectorPointers( std::vector<struct HydrogenBond *> v);
 void DeleteVectorPointers( std::vector<struct thbAtom *> v);

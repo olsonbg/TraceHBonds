@@ -207,7 +207,7 @@ void Help(char *name)
 	std::cerr << std::endl;
 
 	std::cerr << "USAGE: " << std::endl;
-	const char *usage = "-p <prefix> -s <suffix> -f <number> -l <number> -P <prefix> -S <suffix> [-b <number>] [--povray]";
+	const char *usage = "(-a <arc file> | -p <prefix> -s <suffix> -f <number> -l <number>) -P <prefix> -S <suffix> [-b <number>] [--povray]";
 	std::string USAGE = name;
 	USAGE += " ";
 	USAGE += usage;
@@ -215,6 +215,9 @@ void Help(char *name)
 	           NULL,
 	           NULL);
 	std::cerr << "OPTIONS:" << std::endl;
+	HelpOption("--arc <arc file>",
+	           "-a <arc file>",
+	           "<Arc file> is the archive file generated from Discover.");
 	HelpOption("--inprefix <prefix>",
 	           "-p <prefix>",
 	           "<Prefix> of the input filename. The text before the integer in the filename. For a filename of 'HBonds1.dat' the <prefix> would be 'HBonds'");

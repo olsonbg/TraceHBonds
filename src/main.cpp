@@ -8,6 +8,7 @@ bool THB_VERBOSE = false;
 int main(int argc, char *argv[])
 {
 	unsigned int NumBins = 0;
+	char *fArc        = NULL; // arc filename (without the .arc extension).
 	char *fPrefix     = NULL; // Prefix for filename.
 	char *fSuffix     = NULL; // Suffix for filename.
 	int   fidx_f      = 0;    // First number for file index.
@@ -31,6 +32,7 @@ int main(int argc, char *argv[])
 			{"povray",  no_argument,       &POVRAY,       1},
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
+			{"arc",       required_argument, 0, 'a'},
 			{"inprefix",  required_argument, 0, 'p'},
 			{"insuffix",  required_argument, 0, 's'},
 			{"outprefix", required_argument, 0, 'P'},
@@ -45,7 +47,7 @@ int main(int argc, char *argv[])
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
 
-		c = getopt_long (argc, argv, "p:s:P:S:f:l:b:h",
+		c = getopt_long (argc, argv, "a:p:s:P:S:f:l:b:h",
 		                 long_options, &option_index);
 
 		/* Detect the end of the options. */
@@ -62,6 +64,8 @@ int main(int argc, char *argv[])
 				if (optarg)
 					std::cout << " with arg " <<  optarg <<std::endl;
 				break;
+			case 'a':
+				fArc = optarg;
 			case 'p':
 				fPrefix = optarg;
 				break;
@@ -93,11 +97,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ( (flag_fidx_f == false) ||
+	if ( (fArc == NULL) &&
+	    ( (flag_fidx_f == false) ||
 	     (flag_fidx_l == false) ||
 	     (fidx_l < fidx_f)      ||
 	     (fidx_l < 0)           ||
-	     (fidx_f < 0)          )
+	     (fidx_f < 0)          ) )
 	{
 		Help(argv[0]);
 		return(1);

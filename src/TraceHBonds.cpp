@@ -26,6 +26,14 @@ int doAllFiles(char *progname,
                char *ofPrefix, char *ofSuffix,
                int NumBins, bool POVRAY)
 {
+	std::vector<struct HydrogenBond *> hb;
+	std::vector<struct thbAtom *> atom;
+	struct PBC *Cell;
+	Cell = new struct PBC;
+	ReadCarMdf( fPrefix, &atom, Cell );
+	return(0);
+
+	////////////////////////
 	unsigned int filecounter=1;
 	for (int fidx=first; fidx <= last; fidx++)
 	{
@@ -265,10 +273,10 @@ int doFrame(const char *ifile, const char *ofile,
 
 	// Reserve space to prevent reallocation. If more than
 	// 5000 hydrogen bonds, it will start reallocation.
-	hb.reserve(50000);
+	hb.reserve(40000);
 	// Reserve space to prevent reallocation. If more than
 	// 15000 atoms, it will start reallocation.
-	atom.reserve(10000);
+	atom.reserve(5000);
 
 	Cell = new struct PBC;
 

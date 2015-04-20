@@ -25,9 +25,13 @@ struct thbAtom
 	unsigned int ResidueNum;
 	std::string Molecule;
 	std::string ForceField;
-	float BondOrder;
+	// float BondOrder;
 	// Atoms connected to this one.
-	std::vector<struct thbAtom *> Connected;
+	std::vector<struct thbAtom *> ConnectedAtom;
+	std::vector<std::string>  ConnectedAtomName;
+	std::vector<std::string>  ConnectedAtomResidue;
+	std::vector<unsigned int> ConnectedAtomResidueNum;
+	std::vector<float>        ConnectedAtomBondOrder;
 
 	// Assign default values
 	public:

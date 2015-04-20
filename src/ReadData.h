@@ -13,9 +13,6 @@
 int ReadData( const char *filename, 
               std::vector<struct HydrogenBond *> *hb,
               std::vector<struct thbAtom *> *atom,
-			  // std::vector<struct HBondAtom *> *Atoms1, 
-			  // std::vector<struct HBondAtom *> *Atoms2,
-			  // std::vector<struct HBondAtom *> *Atoms3,
 			  struct PBC *Cell);
 
 #endif

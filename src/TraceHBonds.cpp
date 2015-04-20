@@ -1,14 +1,25 @@
 #include "Print.h"
 #include "OutputFormat.h"
+#include "TraceHBonds.h"
+
+#ifdef DEBUG
+#define DEBUG_MSG(str) do { std::cout << "DEBUG: " << str << std::endl; } while ( false )
+#else
+#define DEBUG_MSG(str) do { } while ( false )
+#endif
 
 extern bool THB_VERBOSE;
 
-// Macros
+// General parsing/formatting
 
-typedef std::vector<unsigned int> vui;
-typedef std::vector< vui > vvui;
+std::string toString(int n)
+{
+	std::stringstream out(std::ios_base::out);
+	out << n;
+	return out.str();
+}
 
-// Read code
+// Real code.
 
 int doAllFiles(char *progname,
                char *fPrefix , char *fSuffix, int first, int last,
@@ -36,7 +47,7 @@ int doAllFiles(char *progname,
 		}
 
 		/*
-		 * If VERBOSE was requested, show number of file processed, updated 
+		 * If VERBOSE was requested, show number of file processed, updated
 		 * every 50.
 		 */
 		if ( THB_VERBOSE &&
@@ -254,10 +265,10 @@ int doFrame(const char *ifile, const char *ofile,
 
 	// Reserve space to prevent reallocation. If more than
 	// 5000 hydrogen bonds, it will start reallocation.
-	hb.reserve(5000);
+	hb.reserve(50000);
 	// Reserve space to prevent reallocation. If more than
 	// 15000 atoms, it will start reallocation.
-	atom.reserve(15000);
+	atom.reserve(10000);
 
 	Cell = new struct PBC;
 
@@ -274,10 +285,21 @@ int doFrame(const char *ifile, const char *ofile,
 	out << CC << " Donor Oxygen atoms    : " << hb.size() << std::endl;
 	out << CC << " Hydrogen atoms        : " << hb.size() << std::endl;
 	out << CC << " Acceptor Oxygen atoms : " << hb.size() << std::endl;
+	std::cout << CC << " Unique atoms          : " << atom.size() << std::endl;
 
-	std::cout << "Removing duplicates: "<<hb.size() << std::endl;
+	DEBUG_MSG("Removing duplicates: " << hb.size() << "Initially" );
+	if ( THB_VERBOSE )
+		std::cout << "Removing duplicates: "
+		          <<hb.size()
+		          << " Initially."
+		          << std::endl;
 	RemoveDuplicates ( &hb, &TrjIdx_iter );
-	std::cout << "Duplicates Removed: " <<hb.size() << " Remaining." << std::endl;
+	if ( THB_VERBOSE )
+		std::cout << "Duplicates Removed: "
+		          << hb.size()
+		          << " Remaining."
+		          << std::endl;
+
 	// Update TrjIdx_iter after removing elements.
 	TrjIdx_iter = TrajectoryIndexIterator( &hb );
 
@@ -311,7 +333,8 @@ int doFrame(const char *ifile, const char *ofile,
 	std::vector<ListOfHBonds *>HBStrings;
 
 	//Find all the strings.
-	// std::cout << "Tracing HB strings." << std::endl;
+	if ( THB_VERBOSE ) std::cout << "Tracing HB strings." << std::endl;
+
 	for( unsigned int i=0; i < hb.size(); i++ )
 	{
 		ListOfHBonds *HBonds = new ListOfHBonds();
@@ -320,14 +343,30 @@ int doFrame(const char *ifile, const char *ofile,
 		else
 			delete HBonds;
 	}
-	// std::cout << "Done tracing HB strings." << std::endl;
 
+	if (THB_VERBOSE) std::cout << "Done tracing HB strings." << std::endl;
+
+	if (THB_VERBOSE) std::cout << "Preparing histograms..." << std::endl;
 	for( ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 	{
-		//Make histograms, and printout the results.
-		makeHistograms( &out, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
-		out << CC << "NEXT" <<std::endl;
+		if (THB_VERBOSE && ((TrjIdx+1)%50==0) )
+			std::cout << "\tframe " << TrjIdx+1 << "\r" << std::flush;
+
+		std::ofstream odata;
+		std::string OutFile = "/dev/shm/t/__U_";
+		OutFile += toString(TrjIdx+1);
+		OutFile += ".zzz";
+
+		odata.open(OutFile.c_str(),std::ios::out);
+		if ( odata.is_open() )
+		{
+			//Make histograms, and printout the results.
+			makeHistograms( &odata, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
+			out << CC << "NEXT" <<std::endl;
+			odata.close();
+		}
 	}
+	if (THB_VERBOSE) std::cout << "Done with histograms." << std::endl;
 	// Cleanup.
 	DeleteVectorPointers(hb);
 	DeleteVectorPointers(atom);
@@ -353,15 +392,9 @@ template<class T> void DeleteVectorPointers( T v )
 		delete v[i];
 }
 
-// void removeMarked( std::vector<struct HBondAtom *> *H,
-//                    std::vector<struct HBondAtom *> *aO,
-//                    std::vector<struct HBondAtom *> *dO )
 void removeMarked( std::vector<struct HydrogenBond *> *hb )
 {
 	std::vector<struct HydrogenBond *>::iterator iter_hb = hb->begin();
-	// std::vector<struct HBondAtom *>::iterator iter_H  = H->begin();
-	// std::vector<struct HBondAtom *>::iterator iter_aO = aO->begin();
-	// std::vector<struct HBondAtom *>::iterator iter_dO = dO->begin();
 
 	for( ; iter_hb < hb->end(); )
 	{
@@ -448,7 +481,6 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 	//
 	// Look for H duplicates
 	//
-	// iter_hbmain = hb->begin();
 
 	for(iter_hbmain = hb->begin(); iter_hbmain < hb->end()-1; ++iter_hbmain )
 	{
@@ -475,7 +507,6 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 
 			if ( SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
 			{
-				// duplicate = true;
 				if ( (*iter_hb)->length < MinLength )
 				{
 					MinLength = (*iter_hb)->length;
@@ -522,14 +553,7 @@ bool Trace( ListOfHBonds **HBonds,
 	// DonorO --- Hydrogen ... AcceptorO
 	// ... Denotes the Hydrogen bond.
 
-	// std::vector<struct HydrogenBond *>::iterator iter_hbmain;
 	std::vector<struct HydrogenBond *>::iterator iter_hb;
-
-	// Check that requested element is not beyond the size of the vector.
-	// if ( current >= hb->size() )
-	//     return(false);
-
-	// iter_hbmain = hb->begin()+current;
 
 	std::vector<struct HydrogenBond *>::iterator iter_begin;
 	std::vector<struct HydrogenBond *>::iterator iter_end;
@@ -662,6 +686,7 @@ int makeHistograms( std::ostream *out,
 	{
 		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
 			continue;
+
 		*out << std::endl << std::endl;
 		*out << CC << " Current Element : " << i << std::endl;
 		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
@@ -751,10 +776,6 @@ int makeHistograms( std::ostream *out,
 
 	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
 	// number of atoms, so increase counter by 2 for each step.
-	// if ( MaxChainLength < NumBins )
-	//     MaxChainL = NumBins;
-	// else
-	//     MaxChainL = MaxChainLength;
 
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{

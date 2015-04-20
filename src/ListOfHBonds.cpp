@@ -374,7 +374,6 @@ bool ListOfHBonds::Find( struct HydrogenBond *Item )
 	return(false);
 }
 
-// TODO: Rename this.
 // If the acceptor of Item is the same atom as the donor of the first
 // element in the list, then Item should come before Begin().
 bool ListOfHBonds::linksAtBegin( struct HydrogenBond *Item )
@@ -388,7 +387,6 @@ bool ListOfHBonds::linksAtBegin( struct HydrogenBond *Item )
 	return(false);
 }
 
-// TODO: Rename this.
 // If the donor of Item is the same atom the the acceptor of the last
 // element in the list, then Item should come after End().
 bool ListOfHBonds::linksAtEnd( struct HydrogenBond *Item )

@@ -11,6 +11,13 @@
 #include "ReadData.h"
 #include "ListOfHBonds.h"
 
+// Macros
+
+typedef std::vector<unsigned int> vui;
+typedef std::vector< vui > vvui;
+
+//
+
 int doAllFiles(char *progname,
                char *fPrefix , char *fSuffix, int first, int last,
                char *ofPrefix, char *ofSuffix,
@@ -45,10 +52,6 @@ bool alloc_vector(struct PBC *v,
 bool SameAtom( struct thbAtom *A,
                struct thbAtom *B);
 
-// bool Trace( ListOfHBonds **HBonds,
-//             std::vector< std::vector<struct HydrogenBond *>::iterator > *,
-//             std::vector<struct HydrogenBond *> *hb,
-//             unsigned int current);
 bool Trace( ListOfHBonds **HBonds,
             std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
             std::vector<struct HydrogenBond *>::iterator iter_hbmain);
@@ -57,8 +60,6 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
             std::vector< std::vector<struct HydrogenBond *>::iterator > *);
 
 
-// void DeleteVectorPointers( std::vector<struct HydrogenBond *> v);
-// void DeleteVectorPointers( std::vector<struct thbAtom *> v);
 template<class T> void DeleteVectorPointers( T v );
 
 #endif

@@ -1,6 +1,5 @@
 #include "ReadData.h"
 
-// double Vector_Length( struct HBondAtom *a, struct HBondAtom *b );
 struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
                                      struct thbAtom *find);
 
@@ -124,9 +123,9 @@ int ReadData( const char *filename,
 	{
 		// Donor --- Hydrogen ... Acceptor
 		// ... Denotes the Hydrogen bond.
-		hydrogen = new struct thbAtom; // Hydrogen - Atom1
-		acceptor = new struct thbAtom; // Acceptor Oxygen - Atom2
-		donor    = new struct thbAtom; // Donor Oxygen - Atom3
+		hydrogen = new struct thbAtom; // Atom1 of datafile.
+		acceptor = new struct thbAtom; // Atom2 of datafile.
+		donor    = new struct thbAtom; // Atom3 of datafile.
 		HBond    = new struct HydrogenBond;
 
 		n = sscanf( line,
@@ -154,12 +153,13 @@ int ReadData( const char *filename,
 			acceptor->Molecule = acceptorMolecule;
 			
 			acceptor->ForceField  = acceptorForceField;
-			// The next two are an assumption, since we can not determine the 
+			// The next two are an assumption, since we can not determine the
 			// correct values from the datafile.
 			hydrogen->ForceField = "h1o";
 			donor->ForceField = "o2h";
 
-			// Save atoms to the vector, unless the same atom has already been saved.
+			// Save atoms to the vector, unless the same atom has already been
+			// saved.
 			struct thbAtom *duplicate;
 			
 			duplicate = AlreadyRecordedAtom(*atom, donor);
@@ -263,6 +263,9 @@ int ReadData( const char *filename,
 			if ( alloc_vector(Cell, 0.0, TrjIdx+1) )
 			{
 				// Start another frame of the trajectory.
+				if (  (TrjIdx+1)%50==0 )
+					std::cout << "\tframe " << TrjIdx+1 << "\r" << std::flush;
+
 				TrjIdx++;
 
 				if ( alloc_vector(Cell, 0.0, TrjIdx+1) )
@@ -287,19 +290,6 @@ int ReadData( const char *filename,
 
 	return(TrjIdx+1);
 }
-
-// double Vector_Length( struct thbAtom *a, struct thbAtom *b )
-// {
-//     double length;
-
-//     length = pow(a->x - b->x,2) +
-//              pow(a->y - b->y,2) +
-//              pow(a->z - b->z,2);
-
-//     length = sqrt(length);
-
-//     return(length);
-// }
 
 struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
                                      struct thbAtom *find)

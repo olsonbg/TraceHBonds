@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 
 PROJECT(TraceHBonds)
@@ -28,6 +29,10 @@ include_directories("${PROJECT_BINARY_DIR}")
 if( CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	message( "Making static binary." )
 	set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc")
-endif()
+endif( CMAKE_SYSTEM_NAME STREQUAL "Windows")
+
+if( CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG")
+endif( CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 
 add_subdirectory(src)

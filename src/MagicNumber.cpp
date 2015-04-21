@@ -15,7 +15,7 @@ int getMagicNumber( const char *filename )
 
 	if ( fread(magic, 1, 6, fp) != 6 )
 	{
-		std::cerr << "Error reading magic number." << std::endl;
+		std::cerr << "Error reading magic number." << "\n";
 		fclose(fp);
 		return(MAGICNUMBER_UNKNOWN);
 	}

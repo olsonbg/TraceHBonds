@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 					break;
 				std::cout << "Option: " << long_options[option_index].name;
 				if (optarg)
-					std::cout << " with arg " <<  optarg <<std::endl;
+					std::cout << " with arg " <<  optarg <<"\n";
 				break;
 			case 'a':
 				fArc = optarg;

@@ -151,7 +151,7 @@ bool ReadMdf( const char *filename,
 
 	if ( !ifp.is_open() )
 	{
-		std::cerr << "Error: can not open this type of file." << std::endl;
+		std::cerr << "Error: can not open this type of file." << "\n";
 		return(false);
 	}
 
@@ -403,7 +403,7 @@ int ReadCar(const char *filename,
 
 	if ( !ifp.is_open() )
 	{
-		std::cerr << "Error: can not open this type of file." << std::endl;
+		std::cerr << "Error: can not open this type of file." << "\n";
 		return(false);
 	}
 
@@ -420,9 +420,9 @@ int ReadCar(const char *filename,
 	while ( ! in.eof() )
 	{
 		if ( line[0] == '!' )
-		{}//	std::cout << "# Found a comment." << std::endl;
+		{}//	std::cout << "# Found a comment." << "\n";
 		else if ( ! strncmp(line, "Materials Studio Generated CAR File", 35) )
-		{}//	std::cout << "# Found Materials Studio comment." << std::endl;
+		{}//	std::cout << "# Found Materials Studio comment." << "\n";
 		else if ( *line == *CarEND )
 		{
 			in.getline(line,82); lineno++;

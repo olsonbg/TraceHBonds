@@ -20,7 +20,7 @@ void PrintHistogramChain( std::ostream *out,
 
 	if (Step == 0) // That does not make sense, abort!
 	{
-		std::cerr << "Step should be greater than zero (0)!" << std::endl;
+		std::cerr << "Step should be greater than zero (0)!" << "\n";
 		return;
 	}
 
@@ -59,7 +59,7 @@ void PrintHistogramChain( std::ostream *out,
 			*out << std::setw(4) << Histogram[i] << "|";
 			for (int j = 0; j < Round(Histogram[i]/Scale); j++) *out << "*";
 		}
-		*out << std::endl;
+		*out << "\n";
 	}
 }
 
@@ -75,7 +75,7 @@ void PrintHistogramMolecules( std::ostream *out,
 
 	if (Step == 0) // That does not make sense, abort!
 	{
-		std::cerr << "Step should be greater than zero (0)!" << std::endl;
+		std::cerr << "Step should be greater than zero (0)!" << "\n";
 		return;
 	}
 
@@ -119,7 +119,7 @@ void PrintHistogramMolecules( std::ostream *out,
 			*out << std::setw(4) << Histogram[i] << "|";
 			for (int j = 0; j < Round(Histogram[i]/Scale); j++) *out << "*";
 		}
-		*out << std::endl;
+		*out << "\n";
 	}
 }
 
@@ -136,9 +136,9 @@ char * word_wrap (char* string, int line_width) {
 		{
 			if ( isspace( string[k] ) )
 			{
-				// std::cerr << "Newline" <<std::endl;
+				// std::cerr << "Newline" <<"\n";
 				string[k] = '\n';
-				// std::cerr << "[" << string << "]" <<std::endl;
+				// std::cerr << "[" << string << "]" <<"\n";
 				// set string index to character after this one
 				i = k + 1;
 				break;
@@ -182,7 +182,7 @@ void HelpIndented(const char *text, unsigned int indent, unsigned int wrap)
 				std::cerr << " ";
 		}
 	}
-	std::cerr << std::endl;
+	std::cerr << "\n";
 }
 
 void HelpOption(const char *v1, const char *v2, const char *text)
@@ -194,19 +194,19 @@ void HelpOption(const char *v1, const char *v2, const char *text)
 	if (v2 != NULL) HelpIndented(v2, INDENT, WRAP);
 	if (text != NULL) HelpIndented(text, 2*INDENT, WRAP);
 
-	std::cerr << std::endl;
+	std::cerr << "\n";
 }
 
 void Help(char *name)
 {
 	// fprintf(stdout,"\n%s Version %d.%d\n\n",
-	std::cerr << std::endl << name << " Version ";
+	std::cerr << "\n" << name << " Version ";
 	std::cerr << TraceHBonds_VERSION_MAJOR << ".";
 	std::cerr << TraceHBonds_VERSION_MINOR;
-	std::cerr << std::endl;
-	std::cerr << std::endl;
+	std::cerr << "\n";
+	std::cerr << "\n";
 
-	std::cerr << "USAGE: " << std::endl;
+	std::cerr << "USAGE: " << "\n";
 	const char *usage = "(-a <arc file> | -p <prefix> -s <suffix> -f <number> -l <number>) -P <prefix> -S <suffix> [-b <number>] [--povray]";
 	std::string USAGE = name;
 	USAGE += " ";
@@ -214,7 +214,7 @@ void Help(char *name)
 	HelpOption(USAGE.c_str(),
 	           NULL,
 	           NULL);
-	std::cerr << "OPTIONS:" << std::endl;
+	std::cerr << "OPTIONS:" << "\n";
 	HelpOption("--arc <arc file>",
 	           "-a <arc file>",
 	           "<Arc file> is the archive file generated from Discover.");
@@ -248,9 +248,9 @@ void Help(char *name)
 	HelpOption("-h",
 	           NULL,
 	           "This help screen");
-	std::cerr << std::endl;
+	std::cerr << "\n";
 	std::cerr << "Compiled on " << __DATE__;
-	std::cerr << " at " << __TIME__ << "." <<std::endl;
-	std::cerr << "Author: Brian G. Olson (olsonbg@gmail.com)" <<std::endl;
+	std::cerr << " at " << __TIME__ << "." <<"\n";
+	std::cerr << "Author: Brian G. Olson (olsonbg@gmail.com)" <<"\n";
 }
 

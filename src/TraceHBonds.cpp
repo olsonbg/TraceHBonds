@@ -3,7 +3,7 @@
 #include "TraceHBonds.h"
 
 #ifdef DEBUG
-#define DEBUG_MSG(str) do { std::cout << "DEBUG: " << str << std::endl; } while ( false )
+#define DEBUG_MSG(str) do { std::cout << "DEBUG: " << str << "\n"; } while ( false )
 #else
 #define DEBUG_MSG(str) do { } while ( false )
 #endif
@@ -86,7 +86,7 @@ int doAllFiles(char *progname,
 	if ( THB_VERBOSE)
 			std::cout << "Processing file "
 			          << last-first+1 << "/"
-			          << last-first+1 << "." << std::endl;
+			          << last-first+1 << "." << "\n";
 
 	return(0);
 }
@@ -109,7 +109,7 @@ template<class T> bool alloc_vector( std::vector<T> *v,
 		catch( std::exception const &e)
 		{
 			std::cout << "exception: " << e.what();
-			std::cout << ". ran out of memory?" << std::endl;
+			std::cout << ". ran out of memory?" << "\n";
 			return false;
 		}
 	}
@@ -173,7 +173,7 @@ bool alloc_vector(vvui *v,
 			catch( std::exception const &e)
 			{
 				std::cout << "exception: " << e.what();
-				std::cout << ". ran out of memory?" << std::endl;
+				std::cout << ". ran out of memory?" << "\n";
 				return false;
 			}
 		}
@@ -305,24 +305,24 @@ int doFrame(const char *ifile, const char *ofile,
 	/*
 	 * Show some initial information
 	 */
-	out << CC << "--- Before removing duplicates." << std::endl;
-	out << CC << " Donor Oxygen atoms    : " << hb.size() << std::endl;
-	out << CC << " Hydrogen atoms        : " << hb.size() << std::endl;
-	out << CC << " Acceptor Oxygen atoms : " << hb.size() << std::endl;
-	std::cout << CC << " Unique atoms          : " << atom.size() << std::endl;
+	out << CC << "--- Before removing duplicates." << "\n";
+	out << CC << " Donor Oxygen atoms    : " << hb.size() << "\n";
+	out << CC << " Hydrogen atoms        : " << hb.size() << "\n";
+	out << CC << " Acceptor Oxygen atoms : " << hb.size() << "\n";
+	std::cout << CC << " Unique atoms          : " << atom.size() << "\n";
 
 	DEBUG_MSG("Removing duplicates: " << hb.size() << "Initially" );
 	if ( THB_VERBOSE )
 		std::cout << "Removing duplicates: "
 		          <<hb.size()
 		          << " Initially."
-		          << std::endl;
+		          << "\n";
 	RemoveDuplicates ( &hb, &TrjIdx_iter );
 	if ( THB_VERBOSE )
 		std::cout << "Duplicates Removed: "
 		          << hb.size()
 		          << " Remaining."
-		          << std::endl;
+		          << "\n";
 
 	// Update TrjIdx_iter after removing elements.
 	TrjIdx_iter = TrajectoryIndexIterator( &hb );
@@ -331,10 +331,10 @@ int doFrame(const char *ifile, const char *ofile,
 	/*
 	 * Show some more information
 	 */
-	out << CC << "--- Removed duplicates." << std::endl;
-	out << CC << " Filename : " << ifile << std::endl;
+	out << CC << "--- Removed duplicates." << "\n";
+	out << CC << " Filename : " << ifile << "\n";
 	if ( NumBins != 0 )
-		out <<CC<< " Minimum # of bins set to : " <<NumBins << std::endl;
+		out <<CC<< " Minimum # of bins set to : " <<NumBins << "\n";
 
 	unsigned int TrjIdx = 0;
 
@@ -346,18 +346,18 @@ int doFrame(const char *ifile, const char *ofile,
 	    << Cell->alpha.at(TrjIdx) << " "
 	    << Cell->beta.at(TrjIdx)  << " "
 	    << Cell->gamma.at(TrjIdx)
-	    << std::endl;
+	    << "\n";
 
-	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << std::endl;
-	out <<CC<< " Hydrogen atoms        : " << hb.size() << std::endl;
-	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << std::endl;
+	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
+	out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
+	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
 
 	// Each element of the vector points to a string of hbonds.
 	// ListOfHBonds is a strings of hbonds.
 	std::vector<ListOfHBonds *>HBStrings;
 
 	//Find all the strings.
-	if ( THB_VERBOSE ) std::cout << "Tracing HB strings." << std::endl;
+	if ( THB_VERBOSE ) std::cout << "Tracing HB strings." << "\n";
 
 	for( unsigned int i=0; i < hb.size(); i++ )
 	{
@@ -368,9 +368,9 @@ int doFrame(const char *ifile, const char *ofile,
 			delete HBonds;
 	}
 
-	if (THB_VERBOSE) std::cout << "Done tracing HB strings." << std::endl;
+	if (THB_VERBOSE) std::cout << "Done tracing HB strings." << "\n";
 
-	if (THB_VERBOSE) std::cout << "Preparing histograms..." << std::endl;
+	if (THB_VERBOSE) std::cout << "Preparing histograms..." << "\n";
 	for( ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 	{
 		if (THB_VERBOSE && ((TrjIdx+1)%50==0) )
@@ -386,11 +386,11 @@ int doFrame(const char *ifile, const char *ofile,
 		{
 			//Make histograms, and printout the results.
 			makeHistograms( &odata, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
-			out << CC << "NEXT" <<std::endl;
+			out << CC << "NEXT" <<"\n";
 			odata.close();
 		}
 	}
-	if (THB_VERBOSE) std::cout << "Done with histograms." << std::endl;
+	if (THB_VERBOSE) std::cout << "Done with histograms." << "\n";
 	// Cleanup.
 	DeleteVectorPointers(hb);
 	DeleteVectorPointers(atom);
@@ -695,14 +695,14 @@ int makeHistograms( std::ostream *out,
 	// Header for povray file.
 	if (POVRAY)
 	{
-		*out << "#version 3.6;" << std::endl;
-		*out << "global_settings {  assumed_gamma 1.0 }" << std::endl;
+		*out << "#version 3.6;" << "\n";
+		*out << "global_settings {  assumed_gamma 1.0 }" << "\n";
 		*out << "Camera_LookAt( " << Cell->x.at(TrjIdx) << ", "
 		                          << Cell->y.at(TrjIdx) << ", "
-		                          << Cell->z.at(TrjIdx) << " )" << std::endl;
+		                          << Cell->z.at(TrjIdx) << " )" << "\n";
 		*out << "PBC( " << Cell->x.at(TrjIdx) << ", "
 		                << Cell->y.at(TrjIdx) << ", "
-		                << Cell->z.at(TrjIdx) << " )" << std::endl;
+		                << Cell->z.at(TrjIdx) << " )" << "\n";
 	}
 
 	// Printout information about each hbond string.
@@ -711,40 +711,40 @@ int makeHistograms( std::ostream *out,
 		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
 			continue;
 
-		*out << std::endl << std::endl;
-		*out << CC << " Current Element : " << i << std::endl;
+		*out << "\n\n";
+		*out << CC << " Current Element : " << i << "\n";
 		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
-		*out << std::endl;
+		*out << "\n";
 
 		// Note if this is a closed loop.
 		if ( HBStrings[i]->ClosedLoop() )
-			*out << CC << " Closed Loop" << std::endl;
+			*out << CC << " Closed Loop" << "\n";
 
 		*out << CC << " Molecules : "
-		          << HBStrings[i]->MoleculeCount() << std::endl;
+		          << HBStrings[i]->MoleculeCount() << "\n";
 
 		*out << CC << " Unique forcefields : "
-		          << HBStrings[i]->ForcefieldCount() << std::endl;
+		          << HBStrings[i]->ForcefieldCount() << "\n";
 
 		*out << CC
 		          << " Times chain switched between Molecules (switching) : "
-		          << HBStrings[i]->SwitchingCount() << std::endl;
+		          << HBStrings[i]->SwitchingCount() << "\n";
 
 		*out << CC << " Periodic boundary conditions applied."
-		          << std::endl;
+		          << "\n";
 		// Show the Chain atoms, molecules and coordinates
 		EndToEndLength = HBStrings[i]->PrintAll(out, *Cell, TrjIdx, POVRAY);
 		*out << CC << " Chain end-to-end distance: ";
-		*out << colE2E << EndToEndLength << std::endl;
+		*out << colE2E << EndToEndLength << "\n";
 	}
 
 	// Printout Histograms
 
 	// Chain Length histogram table header
 	unsigned int MaxBarLength = 62;
-	*out << CC << std::endl << CC;
+	*out << CC << "\n" << CC;
 	*out << " Atoms/HBonds |Count| (For all Chains, including Closed Loops)";
-	*out << std::endl;
+	*out << "\n";
 	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
@@ -754,8 +754,8 @@ int makeHistograms( std::ostream *out,
 	                     NumBins,CC);
 
 	// Closed Loop histogram table header
-	*out << CC <<std::endl << CC 
-	          << " Atoms/HBonds |Count| (For Closed Loops)" << std::endl;
+	*out << CC <<"\n" << CC 
+	          << " Atoms/HBonds |Count| (For Closed Loops)" << "\n";
 	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
@@ -777,9 +777,9 @@ int makeHistograms( std::ostream *out,
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
 		// Number of Switches histogram table header
-		*out << CC << std::endl << CC 
+		*out << CC << "\n" << CC 
 		          << " Switching |Count| (For Chain length of " << chainL << ")"
-		          << std::endl;
+		          << "\n";
 
 		if ( chainL > MaxChainLength )
 		{
@@ -804,9 +804,9 @@ int makeHistograms( std::ostream *out,
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
 		// Number of Molecules histogram table header
-		*out << CC << std::endl << CC 
+		*out << CC << "\n" << CC 
 		          << " Molecules |Count| (For Chain length of " << chainL << ")"
-		          << std::endl;
+		          << "\n";
 
 		if ( chainL > MaxChainLength)
 		{

@@ -63,7 +63,7 @@ int ReadData( const char *filename,
 		in.push(ifp);
 	else
 	{
-		std::cerr << "Error: can not open this type of file." << std::endl;
+		std::cerr << "Error: can not open this type of file." << "\n";
 		return(false);
 	}
 
@@ -82,8 +82,8 @@ int ReadData( const char *filename,
 		if ( n != 6 )
 		{
 			std::cerr << "Error on line 1. Expected 6 arguments, read " << n;
-			std::cerr << "." <<std::endl;
-			std::cerr << " L1: '" << line << "'" << std::endl;
+			std::cerr << "." <<"\n";
+			std::cerr << " L1: '" << line << "'" << "\n";
 			ifp.close();
 			return(1);
 		}
@@ -247,8 +247,8 @@ int ReadData( const char *filename,
 			if ( n != 6 ) // Unknown line, abort.
 			{
 			std::cerr << "Error on line " << linen;
-			std::cerr << ". Expected either 6, or 17 arguments, read " <<n<< "."<<std::endl;
-			std::cerr << " L" << linen << ": '" << line << "'" << std::endl;
+			std::cerr << ". Expected either 6, or 17 arguments, read " <<n<< "."<<"\n";
+			std::cerr << " L" << linen << ": '" << line << "'" << "\n";
 			return(1);
 			}
 

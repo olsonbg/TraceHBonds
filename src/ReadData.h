@@ -10,10 +10,10 @@
 #include "ListOfHBonds.h"
 #include "TraceHBonds.h"
 
-int ReadData( const char *filename, 
+int ReadData( const char *filename,
               std::vector<struct HydrogenBond *> *hb,
               std::vector<struct thbAtom *> *atom,
-			  struct PBC *Cell);
+              struct PBC *Cell);
 
 #endif
 

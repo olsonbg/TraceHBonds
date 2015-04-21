@@ -146,14 +146,14 @@ void ListOfHBonds::PrintAll(unsigned int TrjIdx)
 		std::cout << col << current->donor->z.at(TrjIdx);
 		std::cout << " [" << current->donor->Type << "]";
 		std::cout << "  " << current->donor->Molecule;
-		std::cout << "  " << current->donor->ForceField << std::endl;
+		std::cout << "  " << current->donor->ForceField << "\n";
 
 		std::cout << col << current->hydrogen->x.at(TrjIdx) << " ";
 		std::cout << col << current->hydrogen->y.at(TrjIdx) << " ";
 		std::cout << col << current->hydrogen->z.at(TrjIdx);
 		std::cout << " [" << current->hydrogen->Type << "]";
 		std::cout << "  " << current->hydrogen->Molecule;
-		std::cout << "  " << current->hydrogen->ForceField << std::endl;
+		std::cout << "  " << current->hydrogen->ForceField << "\n";
 
 		if ( current == End() )
 		{
@@ -162,7 +162,7 @@ void ListOfHBonds::PrintAll(unsigned int TrjIdx)
 			std::cout << col << current->acceptor->z.at(TrjIdx);
 			std::cout << " [" << current->acceptor->Type << "]";
 			std::cout << "  " << current->acceptor->Molecule;
-			std::cout << "  " << current->acceptor->ForceField << std::endl;
+			std::cout << "  " << current->acceptor->ForceField << "\n";
 		}
 		current = current->Next;
 	}
@@ -175,31 +175,31 @@ void ListOfHBonds::PrintAllPovRay(unsigned int TrjIdx)
 
 	current = Begin();
 
-	std::cout << "sphere_sweep {\n\tlinear_spline\n\t11\n" << std::endl;
+	std::cout << "sphere_sweep {\n\tlinear_spline\n\t11\n" << "\n";
 	while (current != NULL )
 	{
 		OFmt col(9,4);
 		std::cout << "\t<";
 		std::cout << col << current->donor->x.at(TrjIdx) << ", ";
 		std::cout << col << current->donor->y.at(TrjIdx) << ",  ";
-		std::cout << col << current->donor->z.at(TrjIdx) << ">,0.7" << std::endl;
+		std::cout << col << current->donor->z.at(TrjIdx) << ">,0.7" << "\n";
 
 		std::cout << "\t<";
 		std::cout << col << current->hydrogen->x.at(TrjIdx) << ", ";
 		std::cout << col << current->hydrogen->y.at(TrjIdx) << ",  ";
-		std::cout << col << current->hydrogen->z.at(TrjIdx) << ">,0.7" << std::endl;
+		std::cout << col << current->hydrogen->z.at(TrjIdx) << ">,0.7" << "\n";
 
 		if ( current == End() )
 		{
 			std::cout << "\t<";
 			std::cout << col << current->acceptor->x.at(TrjIdx) << ", ";
 			std::cout << col << current->acceptor->y.at(TrjIdx) << ",  ";
-			std::cout << col << current->acceptor->z.at(TrjIdx) << ">,0.7" << std::endl;
+			std::cout << col << current->acceptor->z.at(TrjIdx) << ">,0.7" << "\n";
 		}
 
 		current = current->Next;
 	}
-	std::cout << "\ttolerance 0.07\n\ttexture{ChainLength11}" << std::endl;
+	std::cout << "\ttolerance 0.07\n\ttexture{ChainLength11}" << "\n";
 	return;
 }
 
@@ -253,7 +253,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 
 	if (POVRAY) 
 		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount() 
-		          << "," << std::endl;
+		          << "," << "\n";
 
 	OFmt colX(9,4);
 	OFmt colY(9,4);
@@ -266,13 +266,13 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			*out << "\t<";
 			*out << colX << Round(r[0],10000.0) << ", ";
 			*out << colY << Round(r[1],10000.0) << ", ";
-			*out << colZ << Round(r[2],10000.0) << ">,0.7" << std::endl;
+			*out << colZ << Round(r[2],10000.0) << ">,0.7" << "\n";
 
 			r = MinimumImage( current->hydrogen, TrjIdx, r, Cell );
 			*out << "\t<";
 			*out << colX << Round(r[0],10000.0) << ", ";
 			*out << colY << Round(r[1],10000.0) << ", ";
-			*out << colZ << Round(r[2],10000.0) << ">,0.7" << std::endl;
+			*out << colZ << Round(r[2],10000.0) << ">,0.7" << "\n";
 
 			if ( current == End() )
 			{
@@ -280,7 +280,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 				*out << "\t<";
 				*out << colX << Round(r[0],10000.0) << ", ";
 				*out << colY << Round(r[1],10000.0) << ", ";
-				*out << colZ << Round(r[2],10000.0) << ">,0.7" << std::endl;
+				*out << colZ << Round(r[2],10000.0) << ">,0.7" << "\n";
 			}
 		}
 		else
@@ -293,7 +293,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			*out << " [" << current->donor->Type << "]";
 			*out << "  " << current->donor->Molecule;
 			*out << "  " << current->donor->Name;
-			*out << "  " << current->donor->ForceField << std::endl;
+			*out << "  " << current->donor->ForceField << "\n";
 
 			r = MinimumImage( current->hydrogen, TrjIdx, r, Cell );
 			*out << colX << Round(r[0],10000.0) << " ";
@@ -303,7 +303,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			*out << " [" << current->hydrogen->Type << "]";
 			*out << "  " << current->hydrogen->Molecule;
 			*out << "  " << current->hydrogen->Name;
-			*out << "  " << current->hydrogen->ForceField << std::endl;
+			*out << "  " << current->hydrogen->ForceField << "\n";
 
 			if ( current == End() )
 			{
@@ -315,7 +315,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 				*out << " [" << current->acceptor->Type << "]";
 				*out << "  " << current->acceptor->Molecule;
 				*out << "  " << current->acceptor->Name;
-				*out << "  " << current->acceptor->ForceField << std::endl;
+				*out << "  " << current->acceptor->ForceField << "\n";
 			}
 		}
 		current = current->Next;
@@ -324,7 +324,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 
 	if (POVRAY)
 		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount() 
-		          << "}\n}" << std::endl;
+		          << "}\n}" << "\n";
 
 	EndToEndLength = sqrt( pow(initial_x-r[0],2) +
 	                       pow(initial_y-r[1],2) +

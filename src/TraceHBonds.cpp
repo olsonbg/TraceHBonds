@@ -21,6 +21,24 @@ std::string toString(int n)
 
 // Real code.
 
+int doArcFile(char *progname,
+              char *ifilename,
+              char *ofPrefix, char *ofSuffix,
+              int NumBins, bool POVRAY)
+{
+	std::vector<struct HydrogenBond *> hb;
+	std::vector<struct thbAtom *> atom;
+
+	struct PBC *Cell;
+	Cell = new struct PBC;
+
+	ReadCarMdf( ifilename, &atom, Cell );
+
+	// TODO:
+	// Now calculate determine the hydrogen bonds
+	return(0);
+}
+
 int doAllFiles(char *progname,
                char *fPrefix , char *fSuffix, int first, int last,
                char *ofPrefix, char *ofSuffix,
@@ -30,8 +48,6 @@ int doAllFiles(char *progname,
 	std::vector<struct thbAtom *> atom;
 	struct PBC *Cell;
 	Cell = new struct PBC;
-	ReadCarMdf( fPrefix, &atom, Cell );
-	return(0);
 
 	////////////////////////
 	unsigned int filecounter=1;

@@ -1,5 +1,5 @@
 ADD_EXECUTABLE(TraceHBonds TraceHBonds.cpp ListOfHBonds.cpp ReadData.cpp
-               ReadCarMdf.cpp Print.cpp main.cpp)
+               ReadCarMdf.cpp MagicNumber.cpp Print.cpp main.cpp)
 
 # Link the executable to a library.
 FIND_PACKAGE( Boost REQUIRED COMPONENTS iostreams REQUIRED )

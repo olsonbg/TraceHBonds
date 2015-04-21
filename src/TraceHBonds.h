@@ -19,6 +19,11 @@ typedef std::vector< vui > vvui;
 
 //
 
+int doArcFile(char *progname,
+              char *ifilename,
+              char *ofPrefix, char *ofSuffix,
+              int NumBins, bool POVRAY);
+
 int doAllFiles(char *progname,
                char *fPrefix , char *fSuffix, int first, int last,
                char *ofPrefix, char *ofSuffix,

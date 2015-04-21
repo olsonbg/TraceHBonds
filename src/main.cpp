@@ -109,11 +109,16 @@ int main(int argc, char *argv[])
 	}
 
 	if ( flag_verbose ) THB_VERBOSE=true;
+
 	// Done reading command line arguments
-	doAllFiles(argv[0],
-	           fPrefix , fSuffix, fidx_f, fidx_l,
-	           ofPrefix,ofSuffix,
-	           NumBins, POVRAY);
+	// 
+	if ( fArc != NULL ) // It's a arc/car/mdf file.
+		doArcFile(argv[0], fArc, ofPrefix, ofSuffix, NumBins, POVRAY);
+	else // Old style Hydrogen bond list.
+		doAllFiles(argv[0],
+		           fPrefix , fSuffix, fidx_f, fidx_l,
+		           ofPrefix,ofSuffix,
+		           NumBins, POVRAY);
 
 
 	return(0);

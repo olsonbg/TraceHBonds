@@ -1,3 +1,4 @@
+#include "MagicNumber.h"
 #include "ReadData.h"
 
 struct thbAtom *AlreadyRecordedAtom( std::vector<struct thbAtom *> atom,
@@ -16,30 +17,21 @@ int ReadData( const char *filename,
 	// Donor --- Hydrogen ... Acceptor
 	// ... Denotes the Hydrogen bond.
 
-	// store the 1st 6 bytes of file to determine the filetype (magic number).
-	uint8_t magic[6];
-	bool STDIN=false;
-	FILE *fp ;
+	int magicNum = -1;
 
+	bool STDIN=false;
 	if ( !strncmp(filename,"-",1) )
 		STDIN=true;
 
 	if ( !STDIN )
 	{
-		fp = fopen(filename,"r");
+		magicNum = getMagicNumber(filename);
 
-		if( fp == NULL )
+		if ( magicNum == -1 )
 		{
-			std::perror(filename);
-			return(1) ;
-		}
-		if ( !STDIN && (fread(magic, 1, 6, fp) != 6) )
-		{
-			std::cerr << "Error reading magic number." << std::endl;
-			fclose(fp);
+			std::cout << "Error opening " << filename << "\n";
 			return(1);
 		}
-		fclose(fp);
 	}
 
 	boost::iostreams::filtering_stream<boost::iostreams::input> in;
@@ -49,31 +41,31 @@ int ReadData( const char *filename,
 
 	// Determine filetype, then use appropriate boost filter.
 #ifdef USE_ZLIB
-	if ( !STDIN &&
-	     (magic[0] == 0x1f) && (magic[1] == 0x8b) && (magic[2] == 0x08) )
+	if ( !STDIN && (magicNum == MAGICNUMBER_GZIP) )
 	{
-		// This is a gzip file.
 		in.push(boost::iostreams::gzip_decompressor());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
 #ifdef USE_BZIP2
-	if ( !STDIN &&
-	     (magic[0] == 0x42) && (magic[1] == 0x5a) && (magic[2] == 0x68) )
+	if ( !STDIN && (magicNum == MAGICNUMBER_BZIP2) )
 	{
-		// This is a bzip2 file.
 		in.push(boost::iostreams::bzip2_decompressor());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
-	if ( !ifp.is_open() && !STDIN ) // Assume a plain text file if 
-		                            // ifp is not open.
+	if ( !STDIN && (magicNum == MAGICNUMBER_UNKNOWN) )
 		ifp.open(filename,std::ios::in);
 
 	if (STDIN)
 		in.push(std::cin);
-	else
+	else if ( ifp.is_open() )
 		in.push(ifp);
+	else
+	{
+		std::cerr << "Error: can not open this type of file." << std::endl;
+		return(false);
+	}
 
 	in.getline(line,255);
 

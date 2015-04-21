@@ -1,3 +1,4 @@
+#include "MagicNumber.h"
 #include "ReadCarMdf.h"
 // #include <fstream>
 // #include <iostream>
@@ -114,50 +115,45 @@ bool ReadMdf( const char *filename,
              std::vector<struct thbAtom *> *atom)
 {
 	struct thbAtom *NewAtom;
-	// store the 1st 6 bytes of file to determine the filetype (magic number).
-	uint8_t magic[6];
-	FILE *fp ;
 
-	fp = fopen(filename,"r");
+	int magicNum;
 
-	if( fp == NULL )
+	magicNum = getMagicNumber(filename);
+
+	if ( magicNum == -1 )
 	{
-		std::perror(filename);
-		return(false) ;
+		std::cout << "Error opening " << filename << "\n";
+		return(1);
 	}
-	if ( fread(magic, 1, 6, fp) != 6 )
-	{
-		std::cerr << "Error reading magic number." << std::endl;
-		fclose(fp);
-		return(false);
-	}
-	fclose(fp);
 
 	boost::iostreams::filtering_stream<boost::iostreams::input> in;
 	std::ifstream ifp;
 	if (ifp == NULL)
 		return(false);
 
-	// Determine filetype, then use appropriate boost filter.
 #ifdef USE_ZLIB
-	if ( (magic[0] == 0x1f) && (magic[1] == 0x8b) && (magic[2] == 0x08) )
+	if ( magicNum == MAGICNUMBER_GZIP )
 	{
-		// This is a gzip file.
 		in.push(boost::iostreams::gzip_decompressor());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
 #ifdef USE_BZIP2
-	if ( (magic[0] == 0x42) && (magic[1] == 0x5a) && (magic[2] == 0x68) )
+	if ( magicNum == MAGICNUMBER_BZIP2 )
 	{
-		// This is a bzip2 file.
 		in.push(boost::iostreams::bzip2_decompressor());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
-	if ( !ifp.is_open() ) // Assume a plain text file if 
-		                            // ifp is not open.
+	
+	if ( magicNum == MAGICNUMBER_UNKNOWN )
 		ifp.open(filename,std::ios::in);
+
+	if ( !ifp.is_open() )
+	{
+		std::cerr << "Error: can not open this type of file." << std::endl;
+		return(false);
+	}
 
 	in.push(ifp);
 
@@ -330,7 +326,15 @@ int ReadCarMdf( const char *filename,
 {
 	// Read atoms from MDF files.
 	std::string MDFfile = filename;
-	MDFfile += ".mdf";
+	
+	// The user may specify either a .arc, or .car file. They both use a .mdf
+	// file for connections.
+	size_t tag = MDFfile.rfind(".arc");
+	if ( tag == std::string::npos )
+		tag = MDFfile.rfind(".car");
+
+	if ( tag != std::string::npos )
+		MDFfile.replace(tag, 4, ".mdf");
 
 	std::cout << "ReadMdf..." << "\n";
 	if ( !ReadMdf( MDFfile.c_str(), atom ) )
@@ -340,9 +344,10 @@ int ReadCarMdf( const char *filename,
 	doAtomConnections( atom );
 
 	std::string CARfile = filename;
-	CARfile += ".arc"; // Using arc file for now. Same format as car.
-	std::cout << "Reading atom coordinates..." << "\n";
+
+	std::cout << "Reading atom coordinates from " << CARfile << "\n";
 	ReadCar( CARfile.c_str(), atom, Cell );
+	std::cout << "Read coordinates." << "\n";
 
 	// for(unsigned int i=0; i< atom->size(); ++i)
 	//     std::cout << atom->at(i)->Type << " "
@@ -365,49 +370,43 @@ int ReadCar(const char *filename,
 	int n; // To check number of assigned values in sscanf
 	int lineno=0; // Line number of datafile, used for error messages.
 
-	// store the 1st 6 bytes of file to determine the filetype (magic number).
-	uint8_t magic[6];
-	FILE *fp;
+	int magicNum = getMagicNumber(filename);
 
-	fp = fopen(filename,"r");
-
-	if( fp == NULL )
+	if ( magicNum == -1 )
 	{
-		std::perror(filename);
-		return(false) ;
+		std::cout << "Error opening " << filename << "\n";
+		return(1);
 	}
-	if ( fread(magic, 1, 6, fp) != 6 )
-	{
-		std::cerr << "Error reading magic number." << std::endl;
-		fclose(fp);
-		return(false);
-	}
-	fclose(fp);
 
 	boost::iostreams::filtering_stream<boost::iostreams::input> in;
 	std::ifstream ifp;
 	if (ifp == NULL)
 		return(false);
 
-	// Determine filetype, then use appropriate boost filter.
 #ifdef USE_ZLIB
-	if ( (magic[0] == 0x1f) && (magic[1] == 0x8b) && (magic[2] == 0x08) )
+	if ( magicNum == MAGICNUMBER_GZIP )
 	{
-		// This is a gzip file.
 		in.push(boost::iostreams::gzip_decompressor());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
 #ifdef USE_BZIP2
-	if ( (magic[0] == 0x42) && (magic[1] == 0x5a) && (magic[2] == 0x68) )
+	if ( magicNum == MAGICNUMBER_BZIP2 )
 	{
-		// This is a bzip2 file.
 		in.push(boost::iostreams::bzip2_decompressor());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
-	if ( !ifp.is_open() ) // Assume a plain text file if ifp is not open.
+	
+	if ( magicNum == MAGICNUMBER_UNKNOWN )
 		ifp.open(filename,std::ios::in);
+
+	if ( !ifp.is_open() )
+	{
+		std::cerr << "Error: can not open this type of file." << std::endl;
+		return(false);
+	}
+
 
 	in.push(ifp);
 

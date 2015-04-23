@@ -1,4 +1,4 @@
-ADD_EXECUTABLE(TraceHBonds TraceHBonds.cpp ListOfHBonds.cpp ReadData.cpp
+ADD_EXECUTABLE(TraceHBonds TraceHBonds.cpp ListOfHBonds.cpp
                ReadCarMdf.cpp MagicNumber.cpp Print.cpp main.cpp)
 
 # Link the executable to a library.

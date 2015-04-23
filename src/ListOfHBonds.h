@@ -11,6 +11,14 @@ struct PBC
 	// Store the PBC parameters for many frames(snapshots) in a trajectory.
 	std::vector<double> x, y, z;
 	std::vector<double> alpha, beta, gamma;
+	unsigned int frames;
+	// 
+	// Assign default values
+	public:
+	PBC()
+	{
+		frames = 0;
+	}
 };
 
 struct thbAtom
@@ -110,8 +118,10 @@ class ListOfHBonds
 		                                  unsigned int TrjIdx,
 		                                  std::vector<double> r,
 		                                  struct PBC Cell);
+#ifdef DEBUG
 		void PrintAll(unsigned int TrjIdx);
 		void PrintAllPovRay(unsigned int TrjIdx);
+#endif
 		double PrintAll(std::ostream *out,
 		                struct PBC Cell,
 		                unsigned int TrjIdx,

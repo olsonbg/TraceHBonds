@@ -2,28 +2,202 @@
 #include "OutputFormat.h"
 #include "TraceHBonds.h"
 
-#ifdef DEBUG
-#define DEBUG_MSG(str) do { std::cout << "DEBUG: " << str << "\n"; } while ( false )
-#else
-#define DEBUG_MSG(str) do { } while ( false )
-#endif
-
 extern bool THB_VERBOSE;
 
-// General parsing/formatting
+const long double PI = 3.14159265358979323846;
 
-std::string toString(int n)
+inline
+double Round (double r,double f=1.0)
 {
-	std::stringstream out(std::ios_base::out);
-	out << n;
-	return out.str();
+	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
 }
 
-// Real code.
+// Vector pointing from atom A to atom B.
+inline
+std::vector<double> getAtomSeparationVector( std::vector<double> *A,
+                                             std::vector<double> *B)
+{
+	std::vector<double> sep;
 
-int doArcFile(char *progname,
-              char *ifilename,
+	sep.push_back( B->at(0) - A->at(0) );
+	sep.push_back( B->at(1) - A->at(1) );
+	sep.push_back( B->at(2) - A->at(2) );
+
+	return(sep);
+}
+
+// Calculate the angle A-B-C in degrees
+// For Hydrogren bond, this would be donor-hydrogen-acceptor
+double getBondAngle( std::vector<double> A,
+                     std::vector<double> B,
+                     std::vector<double> C)
+{
+	std::vector<double> BA = getAtomSeparationVector(&B,&A);
+	std::vector<double> BC = getAtomSeparationVector(&B,&C);
+
+	double BAdotBC = BA[0]*BC[0] +
+	                 BA[1]*BC[1] +
+	                 BA[2]*BC[2];
+
+	
+	double magBA = sqrt( BA[0]*BA[0] + BA[1]*BA[1] + BA[2]*BA[2] );
+	double magBC = sqrt( BC[0]*BC[0] + BC[1]*BC[1] + BC[2]*BC[2] );
+
+	return ( acos(BAdotBC/magBA/magBC)*180.0/PI );
+}
+
+// Minimum Image Vector pointing from atom A to atom B.
+// returns x,y,z as a vector of doubles.
+inline
+std::vector<double> getMinimumImageVector( std::vector<double> *A,
+                                           std::vector<double> *B,
+                                           std::vector<double> *Cell)
+{
+	std::vector<double> d;
+	
+	d = getAtomSeparationVector(A,B);
+
+	double Lx = Cell->at(0);
+	double Ly = Cell->at(1);
+	double Lz = Cell->at(2);
+
+	d[0] -= Round(d[0]/Lx)*Lx;
+	d[1] -= Round(d[1]/Ly)*Ly;
+	d[2] -= Round(d[2]/Lz)*Lz;
+
+	return(d);
+}
+
+void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
+                              std::vector<struct thbAtom *> *hydrogendonors,
+                              std::vector<struct thbAtom *> *acceptors,
+                              struct HydrogenBondMatching *match)
+{
+	std::vector<struct thbAtom *>::iterator it_a1;
+
+	for( it_a1 = atom->begin(); it_a1 < atom->end(); ++it_a1)
+	{
+		if ( match->Hydrogens.find((*it_a1)->ForceField) != match->Hydrogens.end())
+			hydrogendonors->push_back(*it_a1);
+		else if( match->Acceptors.find((*it_a1)->ForceField) != match->Acceptors.end())
+			acceptors->push_back(*it_a1);
+	}
+}
+
+void HBs( std::vector<struct HydrogenBond *> *hb,
+		  std::vector<double>cell,
+		  std::vector<struct thbAtom *>*hydrogens,
+		  std::vector<struct thbAtom *>*acceptors,
+		  double TrjIdx, double rCutoff, double angleCutoff)
+{
+
+	std::vector<struct thbAtom *>::iterator it_h;
+	std::vector<struct thbAtom *>::iterator it_a;
+
+	std::vector<double> r;
+
+	double rCutoff2 = pow(rCutoff,2.0);
+	double r2;
+
+	for( it_h = hydrogens->begin(); it_h < hydrogens->end(); ++it_h)
+	{
+		std::vector<double>a;
+		a.push_back( (*it_h)->x.at(TrjIdx) );
+		a.push_back( (*it_h)->y.at(TrjIdx) );
+		a.push_back( (*it_h)->z.at(TrjIdx) );
+
+		for( it_a = acceptors->begin(); it_a < acceptors->end(); ++it_a)
+		{
+			// Make sure this acceptor is not covalently bonded to the hydrogen
+			// we are looking at.  The angle check would catch this, but this
+			// will skip a few calculations.
+			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
+				continue;
+
+			std::vector<double>b;
+			b.push_back( (*it_a)->x.at(TrjIdx) );
+			b.push_back( (*it_a)->y.at(TrjIdx) );
+			b.push_back( (*it_a)->z.at(TrjIdx) );
+			r = getMinimumImageVector( &a, &b, &cell );
+			r2 = pow(r[0],2.0) + pow(r[1],2.0) + pow(r[2],2.0);
+
+			if ( r2 < rCutoff2)
+			{
+				// Distance cutoff is good, now check the angle.
+				std::vector<double>c;
+				c.push_back( (*it_h)->ConnectedAtom.at(0)->x.at(TrjIdx));
+				c.push_back( (*it_h)->ConnectedAtom.at(0)->y.at(TrjIdx));
+				c.push_back( (*it_h)->ConnectedAtom.at(0)->z.at(TrjIdx));
+				double angle = getBondAngle(c,a,b);
+				if ( angle > angleCutoff )
+				{
+					struct HydrogenBond *NewHB;
+					NewHB = new struct HydrogenBond;
+
+					NewHB->length   = sqrt(r2);
+					NewHB->angle    = angle;
+					NewHB->hydrogen = *it_h;
+					NewHB->acceptor = *it_a;
+					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
+					NewHB->TrajIdx  = TrjIdx;
+
+					hb->push_back(NewHB);
+				}
+			}
+		}
+	}
+}
+
+void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
+                    std::vector<struct thbAtom *> *atom,
+                    struct PBC *Cell, struct HydrogenBondMatching *match,
+                    double rCutoff, double angleCutoff )
+{
+	std::vector<struct thbAtom *> hydrogens;
+	std::vector<struct thbAtom *> acceptors;
+
+
+	getHydrogenBondElements( atom, &hydrogens, &acceptors, match );
+
+	if (THB_VERBOSE)
+	{
+		std::set<std::string>::iterator it;
+
+		VERBOSE_CMSG("Total hydrogen donors: " << hydrogens.size() << " [ ");
+		for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
+			VERBOSE_CMSG(*it << " ");
+		VERBOSE_MSG("]");
+
+		VERBOSE_CMSG("Total acceptors      : " << acceptors.size() << " [ ");
+		for(it=match->Acceptors.begin(); it != match->Acceptors.end();++it)
+			VERBOSE_CMSG(*it << " ");
+		VERBOSE_MSG("]");
+
+		VERBOSE_MSG("Finding hydrogen bonds with Rc < " << rCutoff << " Angstroms, and angle > " << angleCutoff << " degrees.");
+	}
+
+
+	for( unsigned int TrjIdx=0; TrjIdx < Cell->frames; ++TrjIdx)
+	{
+		if (THB_VERBOSE)
+			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+		
+
+		std::vector<double>cell;
+		cell.push_back( Cell->x.at(TrjIdx) );
+		cell.push_back( Cell->y.at(TrjIdx) );
+		cell.push_back( Cell->z.at(TrjIdx) );
+
+		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
+	}
+	if (THB_VERBOSE)
+		VERBOSE_MSG("");
+}
+
+int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
+              struct HydrogenBondMatching *match,
+              double rCutoff, double angleCutoff,
               int NumBins, bool POVRAY)
 {
 	std::vector<struct HydrogenBond *> hb;
@@ -33,60 +207,93 @@ int doArcFile(char *progname,
 	Cell = new struct PBC;
 
 	ReadCarMdf( ifilename, &atom, Cell );
+	std::vector<double>A, B, C;
 
-	// TODO:
-	// Now calculate determine the hydrogen bonds
-	return(0);
-}
+	unsigned int NumFramesInTrajectory = 0;
+	NumFramesInTrajectory = Cell->frames;
 
-int doAllFiles(char *progname,
-               char *fPrefix , char *fSuffix, int first, int last,
-               char *ofPrefix, char *ofSuffix,
-               int NumBins, bool POVRAY)
-{
-	std::vector<struct HydrogenBond *> hb;
-	std::vector<struct thbAtom *> atom;
-	struct PBC *Cell;
-	Cell = new struct PBC;
+	if (THB_VERBOSE)
+		VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
 
-	////////////////////////
-	unsigned int filecounter=1;
-	for (int fidx=first; fidx <= last; fidx++)
+	// Now  determine the hydrogen bonds
+	AtomNeighbors( &hb, &atom, Cell, match, rCutoff, angleCutoff );
+
+
+	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
+	TrjIdx_iter = TrajectoryIndexIterator( &hb );
+
+	if ( THB_VERBOSE )
+		VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
+
+	RemoveDuplicates ( &hb, &TrjIdx_iter );
+
+	if ( THB_VERBOSE )
+		VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
+
+	// Update TrjIdx_iter after removing elements.
+	TrjIdx_iter = TrajectoryIndexIterator( &hb );
+
+	unsigned int TrjIdx;
+
+	// Each element of the vector points to a string of hbonds.
+	// ListOfHBonds is a strings of hbonds.
+	std::vector<ListOfHBonds *>HBStrings;
+
+	//Find all the strings.
+	if ( THB_VERBOSE ) std::cout << "Tracing HB strings." << "\n";
+
+	for( unsigned int i=0; i < hb.size(); i++ )
 	{
-		std::stringstream ifile;
-		std::stringstream ofile;
-		
-		ifile << fPrefix  << fidx << fSuffix;
-		// Send to stdout, '-', is ofPrefix and ofSuffix are not
-		// specified.
-		if ( (ofPrefix == NULL) && (ofSuffix == NULL) )
-			ofile << "-";
+		ListOfHBonds *HBonds = new ListOfHBonds();
+		if ( Trace( &HBonds, &TrjIdx_iter, hb.begin()+i) )
+			HBStrings.push_back(HBonds);
 		else
-			ofile << ofPrefix << fidx << ofSuffix;
-
-		if (ifile == NULL)
-		{
-			Help(progname);
-			return(1);
-		}
-
-		/*
-		 * If VERBOSE was requested, show number of file processed, updated
-		 * every 50.
-		 */
-		if ( THB_VERBOSE &&
-		     ((filecounter%50 == 0) || (filecounter == 1)) )
-			std::cout << "Processing file " << filecounter << "/" 
-			          << last-first+1 << ".\r" << std::flush;
-
-		doFrame(ifile.str().c_str(), ofile.str().c_str(), NumBins, POVRAY);
-		filecounter++;
+			delete HBonds;
 	}
 
-	if ( THB_VERBOSE)
-			std::cout << "Processing file "
-			          << last-first+1 << "/"
-			          << last-first+1 << "." << "\n";
+	if (THB_VERBOSE) std::cout << "Done tracing HB strings." << "\n";
+
+
+	const char *CC1 = "#";
+	const char *CC2 = "//";
+	std::string CC;
+
+	// Povray uses a different comment string.
+	if ( POVRAY )
+		CC = CC2;
+	else
+		CC = CC1;
+	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
+	{
+		if (THB_VERBOSE && ( ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory) ) )
+			VERBOSE_RMSG("Preparing histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
+
+		std::stringstream ofilename;
+		ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
+
+		std::ofstream out;
+		out.open(ofilename.str().c_str(),std::ios::out);
+		if ( out.is_open() )
+		{
+			out << CC
+				<< " PBC "
+				<< Cell->x.at(TrjIdx)     << " "
+				<< Cell->y.at(TrjIdx)     << " "
+				<< Cell->z.at(TrjIdx)     << " "
+				<< Cell->alpha.at(TrjIdx) << " "
+				<< Cell->beta.at(TrjIdx)  << " "
+				<< Cell->gamma.at(TrjIdx)
+				<< "\n";
+
+			out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
+			out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
+			out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
+
+			// Make histograms, and printout the results.
+			makeHistograms( &out, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
+			out.close();
+		}
+	}
 
 	return(0);
 }
@@ -117,49 +324,13 @@ template<class T> bool alloc_vector( std::vector<T> *v,
 }
 
 /*
- * Make sure x,y, and z coordinates of atom are each of size nelem, if not,
- * initialize the needed number of elements to val. Make sure not to
- * touch/change any values that are already in atom.
- */
-bool alloc_vector(struct thbAtom *atom,
-                  double val,
-                  unsigned int nelem)
-{
-	if ( !alloc_vector( &(atom->x), val, nelem) ) return(false);
-	if ( !alloc_vector( &(atom->y), val, nelem) ) return(false);
-	if ( !alloc_vector( &(atom->z), val, nelem) ) return(false);
-
-	return(true);
-}
-
-/*
- * Make sure the PBC parameters in cell are each of size nelem, if not,
- * initialize the needed number of elements to val. Make sure not to
- * touch/change any values that are already in cell.
- */
-bool alloc_vector(struct PBC *cell,
-                  double val,
-                  unsigned int nelem)
-{
-	if ( !alloc_vector( &(cell->x), val, nelem) ) return(false);
-	if ( !alloc_vector( &(cell->y), val, nelem) ) return(false);
-	if ( !alloc_vector( &(cell->z), val, nelem) ) return(false);
-
-	if ( !alloc_vector( &(cell->alpha), val, nelem) ) return(false);
-	if ( !alloc_vector( &(cell->beta) , val, nelem) ) return(false);
-	if ( !alloc_vector( &(cell->gamma), val, nelem) ) return(false);
-
-	return(true);
-}
-
-/*
  * Make sure v is of size nelem*melem, if not, initialize the needed number of
  * elements to val. Make sure we don't adjust the values already stored in v.
  */
-bool alloc_vector(vvui *v,
-                  unsigned int val,
-                  unsigned int nelem,
-                  unsigned int melem)
+template<class T> bool alloc_vector( std::vector< std::vector<T> > *v,
+                                     T val,
+                                     unsigned int nelem,
+                                     unsigned int melem)
 {
 	for ( unsigned int n=0; n < nelem; n++)
 	{
@@ -167,7 +338,7 @@ bool alloc_vector(vvui *v,
 		{
 			try
 			{
-				vui Zero( nelem, 0);
+				std::vector<T> Zero( nelem, val);
 				v->push_back(Zero);
 			}
 			catch( std::exception const &e)
@@ -252,164 +423,6 @@ TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb)
 	return(TrjIdx_iter);
 }
 
-int doFrame(const char *ifile, const char *ofile,
-            unsigned int NumBins, bool POVRAY)
-{
-	// Redirect to either a file, or std::cout.
-	std::streambuf *buf;
-	std::ofstream ofs;
-
-	if ( !strncmp(ofile,"-",1) )
-		buf = std::cout.rdbuf();
-	else
-	{
-		ofs.open(ofile,std::ios::out);
-		if ( !ofs.is_open() )
-		{
-			std::perror(ofile);
-			return(1);
-		}
-		buf = ofs.rdbuf();
-	}
-	std::ostream out(buf);
-
-	const char *CC1 = "#";
-	const char *CC2 = "//";
-	std::string CC;
-
-	// Povray uses a different comment string.
-	if ( POVRAY )
-		CC = CC2;
-	else
-		CC = CC1;
-
-	std::vector<struct HydrogenBond *> hb;
-	std::vector<struct thbAtom *> atom;
-	struct PBC *Cell;
-
-	// Reserve space to prevent reallocation. If more than
-	// 5000 hydrogen bonds, it will start reallocation.
-	hb.reserve(40000);
-	// Reserve space to prevent reallocation. If more than
-	// 15000 atoms, it will start reallocation.
-	atom.reserve(5000);
-
-	Cell = new struct PBC;
-
-	unsigned int NumFramesInTrajectory = 0;
-	NumFramesInTrajectory = ReadData( ifile, &hb, &atom, Cell );
-
-	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
-	TrjIdx_iter = TrajectoryIndexIterator( &hb );
-
-	/*
-	 * Show some initial information
-	 */
-	out << CC << "--- Before removing duplicates." << "\n";
-	out << CC << " Donor Oxygen atoms    : " << hb.size() << "\n";
-	out << CC << " Hydrogen atoms        : " << hb.size() << "\n";
-	out << CC << " Acceptor Oxygen atoms : " << hb.size() << "\n";
-	std::cout << CC << " Unique atoms          : " << atom.size() << "\n";
-
-	DEBUG_MSG("Removing duplicates: " << hb.size() << "Initially" );
-	if ( THB_VERBOSE )
-		std::cout << "Removing duplicates: "
-		          <<hb.size()
-		          << " Initially."
-		          << "\n";
-	RemoveDuplicates ( &hb, &TrjIdx_iter );
-	if ( THB_VERBOSE )
-		std::cout << "Duplicates Removed: "
-		          << hb.size()
-		          << " Remaining."
-		          << "\n";
-
-	// Update TrjIdx_iter after removing elements.
-	TrjIdx_iter = TrajectoryIndexIterator( &hb );
-
-
-	/*
-	 * Show some more information
-	 */
-	out << CC << "--- Removed duplicates." << "\n";
-	out << CC << " Filename : " << ifile << "\n";
-	if ( NumBins != 0 )
-		out <<CC<< " Minimum # of bins set to : " <<NumBins << "\n";
-
-	unsigned int TrjIdx = 0;
-
-	out << CC
-	    << " PBC "
-	    << Cell->x.at(TrjIdx)     << " "
-	    << Cell->y.at(TrjIdx)     << " "
-	    << Cell->z.at(TrjIdx)     << " "
-	    << Cell->alpha.at(TrjIdx) << " "
-	    << Cell->beta.at(TrjIdx)  << " "
-	    << Cell->gamma.at(TrjIdx)
-	    << "\n";
-
-	out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
-	out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
-	out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
-
-	// Each element of the vector points to a string of hbonds.
-	// ListOfHBonds is a strings of hbonds.
-	std::vector<ListOfHBonds *>HBStrings;
-
-	//Find all the strings.
-	if ( THB_VERBOSE ) std::cout << "Tracing HB strings." << "\n";
-
-	for( unsigned int i=0; i < hb.size(); i++ )
-	{
-		ListOfHBonds *HBonds = new ListOfHBonds();
-		if ( Trace( &HBonds, &TrjIdx_iter, hb.begin()+i) )
-			HBStrings.push_back(HBonds);
-		else
-			delete HBonds;
-	}
-
-	if (THB_VERBOSE) std::cout << "Done tracing HB strings." << "\n";
-
-	if (THB_VERBOSE) std::cout << "Preparing histograms..." << "\n";
-	for( ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
-	{
-		if (THB_VERBOSE && ((TrjIdx+1)%50==0) )
-			std::cout << "\tframe " << TrjIdx+1 << "\r" << std::flush;
-
-		std::ofstream odata;
-		std::string OutFile = "/dev/shm/t/__U_";
-		OutFile += toString(TrjIdx+1);
-		OutFile += ".zzz";
-
-		odata.open(OutFile.c_str(),std::ios::out);
-		if ( odata.is_open() )
-		{
-			//Make histograms, and printout the results.
-			makeHistograms( &odata, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
-			out << CC << "NEXT" <<"\n";
-			odata.close();
-		}
-	}
-	if (THB_VERBOSE) std::cout << "Done with histograms." << "\n";
-	// Cleanup.
-	DeleteVectorPointers(hb);
-	DeleteVectorPointers(atom);
-	hb.clear();
-	atom.clear();
-
-	delete Cell;
-
-	for(unsigned int i=0; i < HBStrings.size();++i)
-		delete HBStrings[i];
-	HBStrings.clear();
-	
-	if ( ofs.is_open() )
-		ofs.close();
-	// Done with cleanup.
-
-	return(0);
-}
-
 template<class T> void DeleteVectorPointers( T v )
 {
 	for(unsigned int i =0; i < v.size(); ++i)
@@ -454,6 +467,9 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 
 	std::vector<struct HydrogenBond *>::iterator iter_begin;
 	std::vector<struct HydrogenBond *>::iterator iter_end;
+
+	if ( hb->size() == 0 )
+		return;
 
 	/*
 	 * Look for acceptor duplicates

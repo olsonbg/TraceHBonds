@@ -132,6 +132,7 @@ int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 	return (size);
 }
 
+#ifdef DEBUG
 void ListOfHBonds::PrintAll(unsigned int TrjIdx)
 {
 	struct HydrogenBond *current;
@@ -202,6 +203,7 @@ void ListOfHBonds::PrintAllPovRay(unsigned int TrjIdx)
 	std::cout << "\ttolerance 0.07\n\ttexture{ChainLength11}" << "\n";
 	return;
 }
+#endif
 
 double ListOfHBonds::Round (double r,double f=1.0)
 {
@@ -217,18 +219,18 @@ std::vector<double> ListOfHBonds::MinimumImage( struct thbAtom *A,
 {
 	std::vector<double> d;
 	double Nx, Ny, Nz;
-	
-		// Take care of periodic boundary conditions.
-		// Minimum Image calculation.
-		Nx = Round( (A->x.at(TrjIdx) - r[0])/Cell.x.at(TrjIdx));
-		Ny = Round( (A->y.at(TrjIdx) - r[1])/Cell.y.at(TrjIdx));
-		Nz = Round( (A->z.at(TrjIdx) - r[2])/Cell.z.at(TrjIdx));
 
-		d.push_back( A->x.at(TrjIdx) - Nx*Cell.x.at(TrjIdx) );
-		d.push_back( A->y.at(TrjIdx) - Ny*Cell.y.at(TrjIdx) );
-		d.push_back( A->z.at(TrjIdx) - Nz*Cell.z.at(TrjIdx) );
+	// Take care of periodic boundary conditions.
+	// Minimum Image calculation.
+	Nx = Round( (A->x.at(TrjIdx) - r[0])/Cell.x.at(TrjIdx));
+	Ny = Round( (A->y.at(TrjIdx) - r[1])/Cell.y.at(TrjIdx));
+	Nz = Round( (A->z.at(TrjIdx) - r[2])/Cell.z.at(TrjIdx));
 
-		return(d);
+	d.push_back( A->x.at(TrjIdx) - Nx*Cell.x.at(TrjIdx) );
+	d.push_back( A->y.at(TrjIdx) - Ny*Cell.y.at(TrjIdx) );
+	d.push_back( A->z.at(TrjIdx) - Nz*Cell.z.at(TrjIdx) );
+
+	return(d);
 }
 
 double ListOfHBonds::PrintAll( std::ostream *out,

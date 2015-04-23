@@ -1,19 +1,7 @@
 #include "MagicNumber.h"
 #include "ReadCarMdf.h"
-// #include <fstream>
-// #include <iostream>
-// #include <sstream>
-// #include <vector>
-// #include <string.h>
-// #include <boost/iostreams/filtering_stream.hpp>
-// #include <boost/iostreams/device/file.hpp>
-// #include <boost/iostreams/copy.hpp>
-// #include <boost/iostreams/filter/gzip.hpp>
-// #include <boost/iostreams/filter/bzip2.hpp>
-// #include "Frame.h"
-// #include "WriteInfo.h"
 
-extern int mpirank;
+extern bool THB_VERBOSE;
 
 unsigned int toUInt(std::string s)
 {
@@ -166,7 +154,8 @@ bool ReadMdf( const char *filename,
 	char forcefield[4];
 	char connected[256];
 
-	std::cout << "Reading " << filename << "\n";
+	if (THB_VERBOSE) VERBOSE_MSG("Reading atom configuration from " << filename);
+
 	in.getline(line,255);
 	bool ReadingMolecule = false;
 	while ( !in.eof() )
@@ -188,7 +177,6 @@ bool ReadMdf( const char *filename,
 					std::cerr << "Error datermining molecule name!" << "\n";
 					return(false);
 				}
-				// std::cout << "New Molecule: " << molecule << "\n";
 			}
 			else
 				ReadingMolecule = false;
@@ -210,17 +198,6 @@ bool ReadMdf( const char *filename,
 				return(1);
 			}
 			std::vector<std::string> cA = connectedAtoms(connected);
-
-			// std::cout << molecule << "|"
-			//           << residue  << "|"
-			//           << residueNum << "|"
-			//           << name << "|"
-			//           << type << "|"
-			//           << forcefield;
-
-			// for (unsigned int i=0; i< cA.size(); i++)
-			//     std::cout << "|" << cA.at(i);
-			// std::cout << "\n";
 
 			NewAtom = new struct thbAtom;
 			NewAtom->Name       = name;
@@ -336,24 +313,18 @@ int ReadCarMdf( const char *filename,
 	if ( tag != std::string::npos )
 		MDFfile.replace(tag, 4, ".mdf");
 
-	std::cout << "ReadMdf..." << "\n";
 	if ( !ReadMdf( MDFfile.c_str(), atom ) )
 		return(1);
 
-	std::cout << "Connecting atoms..." << "\n";
+	if (THB_VERBOSE) VERBOSE_MSG("Connecting atoms...");
+
 	doAtomConnections( atom );
 
 	std::string CARfile = filename;
 
-	std::cout << "Reading atom coordinates from " << CARfile << "\n";
-	ReadCar( CARfile.c_str(), atom, Cell );
-	std::cout << "Read coordinates." << "\n";
+	if (THB_VERBOSE) VERBOSE_MSG("Reading atom coordinates from " << CARfile);
 
-	// for(unsigned int i=0; i< atom->size(); ++i)
-	//     std::cout << atom->at(i)->Type << " "
-	//         << atom->at(i)->ConnectedAtom.size() << " "
-	//         << atom->at(i)->x.size() << " "
-	//         << atom->at(i)->ForceField << "\n";
+	ReadCar( CARfile.c_str(), atom, Cell );
 
 	return(0);
 }
@@ -364,9 +335,6 @@ int ReadCar(const char *filename,
 {
 	char line[83];
 	char CarEND[] = "end                                                                             ";
-	// struct atom_struct atom;
-	// struct cell_dim cell;
-	// int nConfigurations = 0;
 	int n; // To check number of assigned values in sscanf
 	int lineno=0; // Line number of datafile, used for error messages.
 
@@ -437,6 +405,9 @@ int ReadCar(const char *filename,
 		else if ( ! strncmp(line, "Configurations", 14) ) {}
 		else if ( ! strncmp(line, "PBC ", 4) )
 		{
+			if (Cell->frames == 3)
+				break;
+
 			double CellX, CellY, CellZ;
 			double CellAlpha, CellBeta, CellGamma;
 
@@ -461,6 +432,7 @@ int ReadCar(const char *filename,
 			Cell->alpha.push_back(CellAlpha);
 			Cell->beta.push_back( CellBeta);
 			Cell->gamma.push_back(CellGamma);
+			Cell->frames++;
 		}
 		else // Must be a new atom.
 		{

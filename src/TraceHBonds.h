@@ -8,9 +8,19 @@
 #include <string.h>
 #include <vector>
 #include <iostream>
-#include "ReadData.h"
+#include <set>
 #include "ReadCarMdf.h"
 #include "ListOfHBonds.h"
+
+#ifdef DEBUG
+#define DEBUG_MSG(str) do { std::cout << "DEBUG: " << str << "\n"; } while ( false )
+#else
+#define DEBUG_MSG(str) do { } while ( false )
+#endif
+
+#define VERBOSE_MSG(str) do { std::cout << str << "\n"; } while ( false )
+#define VERBOSE_CMSG(str) do { std::cout << str; } while ( false )
+#define VERBOSE_RMSG(str) do { std::cout << str << "\r" << std::flush; } while ( false )
 
 // Macros
 
@@ -19,41 +29,32 @@ typedef std::vector< vui > vvui;
 
 //
 
-int doArcFile(char *progname,
-              char *ifilename,
+struct HydrogenBondMatching
+{
+	std::set<std::string>Hydrogens;
+	std::set<std::string>Acceptors;
+};
+
+int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
+              struct HydrogenBondMatching *match,
+              double rCutoff, double angleCutoff,
               int NumBins, bool POVRAY);
 
-int doAllFiles(char *progname,
-               char *fPrefix , char *fSuffix, int first, int last,
-               char *ofPrefix, char *ofSuffix,
-               int NumBins, bool POVRAY );
-
-int doFrame(const char *ifile, const char *ofile,
-            unsigned int NumBins, bool POVRAY);
-
 int makeHistograms( std::ostream *out,
-                     std::vector<ListOfHBonds *> HBStrings,
-                     std::string CC, unsigned int NumBins,
-                     struct PBC *Cell, unsigned int TrjIdx,
-                     bool POVRAY);
+                    std::vector<ListOfHBonds *> HBStrings,
+                    std::string CC, unsigned int NumBins,
+                    struct PBC *Cell, unsigned int TrjIdx,
+                    bool POVRAY);
 
-bool alloc_vector(std::vector< std::vector<unsigned int> > *v,
-                  unsigned int val,
-                  unsigned int nelem,
-                  unsigned int melem);
+template<class T> bool alloc_vector(std::vector< std::vector<T> > *v,
+                                    T val,
+                                    unsigned int nelem,
+                                    unsigned int melem);
 
 template<class T> bool alloc_vector( std::vector<T> *v,
                                      T val,
                                      unsigned int nelem);
-
-bool alloc_vector(struct thbAtom *v,
-                  double val,
-                  unsigned int nelem);
-
-bool alloc_vector(struct PBC *v,
-                  double val,
-                  unsigned int nelem);
 
 bool SameAtom( struct thbAtom *A,
                struct thbAtom *B);
@@ -67,5 +68,8 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 
 
 template<class T> void DeleteVectorPointers( T v );
+
+std::vector< std::vector<struct HydrogenBond *>::iterator >
+TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb);
 
 #endif

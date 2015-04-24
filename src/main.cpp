@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include "TraceHBonds.h"
 #include "Print.h"
+#include "WorkerThreads.h"
 
 bool THB_VERBOSE = false;
 
@@ -99,17 +100,32 @@ int main(int argc, char *argv[])
 	// 
 	// 
 
-	if ( (fArc != NULL) && (ofPrefix != NULL) ) // It's a arc/car/mdf file.
-		doArcFile(fArc, ofPrefix, ofSuffix,
-		          &match,
-		          rCutoff, angleCutoff,
-		          NumBins, POVRAY);
-	else
+	if ( (fArc == NULL) || (ofPrefix == NULL) )
 	{
 		Help(argv[0]);
 		return(1);
 	}
+#ifdef PTHREADS
 
+	unsigned int numCPUs = sysconf( _SC_NPROCESSORS_ONLN );
+
+	VERBOSE_MSG("Using " << numCPUs+1 << " threads.");
+
+	if ( !StartWorkerThreads(numCPUs+1) )
+	{
+		std::cout << "Error; Could not start worker threads" << std::endl;
+		return(1);
+	}
+	// Pause the threads for now.
+	PauseWorkerThreads();
+#endif
+	doArcFile(fArc, ofPrefix, ofSuffix,
+	          &match,
+	          rCutoff, angleCutoff,
+	          NumBins, POVRAY);
+#ifdef PTHREADS
+	StopWorkerThreads();
+#endif
 
 	return(0);
 }

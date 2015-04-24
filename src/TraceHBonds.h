@@ -12,15 +12,17 @@
 #include "ReadCarMdf.h"
 #include "ListOfHBonds.h"
 
+extern bool THB_VERBOSE;
+
 #ifdef DEBUG
-#define DEBUG_MSG(str) do { std::cout << "DEBUG: " << str << "\n"; } while ( false )
+#define DEBUG_MSG(str) do { if (DEBUG) std::cout << "DEBUG: " << str << "\n"; } while ( false )
 #else
 #define DEBUG_MSG(str) do { } while ( false )
 #endif
 
-#define VERBOSE_MSG(str) do { std::cout << str << "\n"; } while ( false )
-#define VERBOSE_CMSG(str) do { std::cout << str; } while ( false )
-#define VERBOSE_RMSG(str) do { std::cout << str << "\r" << std::flush; } while ( false )
+#define VERBOSE_MSG(str)  do { if (THB_VERBOSE) std::cout << str << "\n"; } while ( false )
+#define VERBOSE_CMSG(str) do { if (THB_VERBOSE) std::cout << str; } while ( false )
+#define VERBOSE_RMSG(str) do { if (THB_VERBOSE) std::cout << str << "\r" << std::flush; } while ( false )
 
 // Macros
 
@@ -34,6 +36,13 @@ struct HydrogenBondMatching
 	std::set<std::string>Hydrogens;
 	std::set<std::string>Acceptors;
 };
+
+void HBs( std::vector<struct HydrogenBond *> *hb,
+		  std::vector<double>cell,
+		  std::vector<struct thbAtom *>*hydrogens,
+		  std::vector<struct thbAtom *>*acceptors,
+		  double TrjIdx, double rCutoff, double angleCutoff,
+		  unsigned int ThreadID=0, unsigned int Threads=1);
 
 int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,

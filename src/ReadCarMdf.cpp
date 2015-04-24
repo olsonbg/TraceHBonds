@@ -154,7 +154,7 @@ bool ReadMdf( const char *filename,
 	char forcefield[4];
 	char connected[256];
 
-	if (THB_VERBOSE) VERBOSE_MSG("Reading atom configuration from " << filename);
+	VERBOSE_MSG("Reading atom configuration from " << filename);
 
 	in.getline(line,255);
 	bool ReadingMolecule = false;
@@ -316,13 +316,13 @@ int ReadCarMdf( const char *filename,
 	if ( !ReadMdf( MDFfile.c_str(), atom ) )
 		return(1);
 
-	if (THB_VERBOSE) VERBOSE_MSG("Connecting atoms...");
+	VERBOSE_MSG("Connecting atoms...");
 
 	doAtomConnections( atom );
 
 	std::string CARfile = filename;
 
-	if (THB_VERBOSE) VERBOSE_MSG("Reading atom coordinates from " << CARfile);
+	VERBOSE_MSG("Reading atom coordinates from " << CARfile);
 
 	ReadCar( CARfile.c_str(), atom, Cell );
 
@@ -405,8 +405,8 @@ int ReadCar(const char *filename,
 		else if ( ! strncmp(line, "Configurations", 14) ) {}
 		else if ( ! strncmp(line, "PBC ", 4) )
 		{
-			if (Cell->frames == 3)
-				break;
+			// if (Cell->frames == 30)
+			//     break;
 
 			double CellX, CellY, CellZ;
 			double CellAlpha, CellBeta, CellGamma;

@@ -1,10 +1,17 @@
 ADD_EXECUTABLE(TraceHBonds TraceHBonds.cpp ListOfHBonds.cpp
-               ReadCarMdf.cpp MagicNumber.cpp Print.cpp main.cpp)
+               ReadCarMdf.cpp MagicNumber.cpp Print.cpp
+               WorkerThreads.cpp main.cpp)
 
 # Link the executable to a library.
 FIND_PACKAGE( Boost REQUIRED COMPONENTS iostreams REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIRS} )
 TARGET_LINK_LIBRARIES(TraceHBonds ${Boost_LIBRARIES} )
+
+FIND_PACKAGE( Threads )
+IF( Threads_FOUND )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPTHREADS")
+	TARGET_LINK_LIBRARIES(TraceHBonds ${CMAKE_THREAD_LIBS_INIT})
+ENDIF( Threads_FOUND )
 
 FIND_PACKAGE( BZip2 )
 IF( BZIP2_FOUND )

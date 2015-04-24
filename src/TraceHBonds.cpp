@@ -1,8 +1,18 @@
 #include "Print.h"
 #include "OutputFormat.h"
 #include "TraceHBonds.h"
+#include "WorkerThreads.h"
 
 extern bool THB_VERBOSE;
+
+#ifdef PTHREADS
+extern pthread_mutex_t inQueueLock;
+extern pthread_mutex_t outQueueLock;
+extern std::list< unsigned int > inQueue;
+extern std::list< unsigned int > outQueue;
+extern std::vector< struct worker_data_s > worker_data;
+extern std::vector< std::vector<struct HydrogenBond *> *> worker_hb;
+#endif
 
 const long double PI = 3.14159265358979323846;
 
@@ -88,7 +98,8 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 		  std::vector<double>cell,
 		  std::vector<struct thbAtom *>*hydrogens,
 		  std::vector<struct thbAtom *>*acceptors,
-		  double TrjIdx, double rCutoff, double angleCutoff)
+		  double TrjIdx, double rCutoff, double angleCutoff,
+		  unsigned int ThreadID, unsigned int Threads)
 {
 
 	std::vector<struct thbAtom *>::iterator it_h;
@@ -99,7 +110,9 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 	double rCutoff2 = pow(rCutoff,2.0);
 	double r2;
 
-	for( it_h = hydrogens->begin(); it_h < hydrogens->end(); ++it_h)
+	for( it_h = hydrogens->begin() + ThreadID;
+	     it_h < hydrogens->end();
+	     it_h += Threads)
 	{
 		std::vector<double>a;
 		a.push_back( (*it_h)->x.at(TrjIdx) );
@@ -176,11 +189,26 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		VERBOSE_MSG("Finding hydrogen bonds with Rc < " << rCutoff << " Angstroms, and angle > " << angleCutoff << " degrees.");
 	}
 
+#ifdef PTHREADS
+	// How many jobs to split this work into; The number of jobs to put
+	// in the queue. Use the same as the number of threads created.
+	unsigned int NUM_JOBS=NumWorkerThreads();
+
+	// Initialize the variables where the worker threads put their
+	// results.
+	for (unsigned int j=0; j < NUM_JOBS; ++j)
+	{
+		std::vector<struct HydrogenBond *> *thread_hb;
+		thread_hb = new std::vector<struct HydrogenBond *>;
+		worker_hb.push_back(thread_hb);
+	}
+	// Tell the threads to start looking at the inQueue for work to do.
+	ContinueWorkerThreads();
+#endif
 
 	for( unsigned int TrjIdx=0; TrjIdx < Cell->frames; ++TrjIdx)
 	{
-		if (THB_VERBOSE)
-			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+		VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 		
 
 		std::vector<double>cell;
@@ -188,10 +216,62 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		cell.push_back( Cell->y.at(TrjIdx) );
 		cell.push_back( Cell->z.at(TrjIdx) );
 
+#ifdef PTHREADS
+		for (unsigned int j=0; j < NUM_JOBS; ++j)
+		{
+			// setup the job data.
+			pthread_mutex_lock(&inQueueLock);
+
+			worker_data.at(j).jobtype = THREAD_JOB_HBS;
+			worker_data.at(j).jobnum = j;
+			worker_data.at(j).num_threads = NUM_JOBS;
+			worker_data.at(j).hb = worker_hb[j];
+			worker_data.at(j).cell = cell;
+			worker_data.at(j).hydrogens = &hydrogens;
+			worker_data.at(j).acceptors = &acceptors;
+			worker_data.at(j).TrjIdx = TrjIdx;
+			worker_data.at(j).rCutoff = rCutoff;
+			worker_data.at(j).angleCutoff = angleCutoff;
+
+			inQueue.push_back(j);
+
+			pthread_mutex_unlock(&inQueueLock);
+		}
+		// Wait for out queue to fill with all jobs.
+		unsigned int Done_count = 0;
+		while (Done_count != NUM_JOBS )
+		{
+			pthread_mutex_lock(&outQueueLock);
+			Done_count = outQueue.size();
+			pthread_mutex_unlock(&outQueueLock);
+		}
+		outQueue.clear();
+		// Concatenate the worker_hb to the real hb, then clear the worker_hb
+		// vector.
+		for(unsigned int j=0; j < NUM_JOBS; ++j)
+		{
+			hb->reserve( hb->size() + worker_data.at(j).hb->size() );
+			hb->insert(hb->end(),
+			           worker_data.at(j).hb->begin(),
+			           worker_data.at(j).hb->end() );
+
+			worker_data.at(j).hb->clear();
+		}
+		
+#else
 		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
+#endif
 	}
-	if (THB_VERBOSE)
-		VERBOSE_MSG("");
+
+#ifdef PTHREADS
+	// Do not need the threads for now, so tell them to pause.
+	PauseWorkerThreads();
+	// Cleanup
+	DeleteVectorPointers(worker_hb);
+#endif
+
+
+	VERBOSE_MSG("");
 }
 
 int doArcFile(char *ifilename,
@@ -212,8 +292,7 @@ int doArcFile(char *ifilename,
 	unsigned int NumFramesInTrajectory = 0;
 	NumFramesInTrajectory = Cell->frames;
 
-	if (THB_VERBOSE)
-		VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
+	VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
 
 	// Now  determine the hydrogen bonds
 	AtomNeighbors( &hb, &atom, Cell, match, rCutoff, angleCutoff );
@@ -222,13 +301,11 @@ int doArcFile(char *ifilename,
 	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
 	TrjIdx_iter = TrajectoryIndexIterator( &hb );
 
-	if ( THB_VERBOSE )
-		VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
+	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
 
 	RemoveDuplicates ( &hb, &TrjIdx_iter );
 
-	if ( THB_VERBOSE )
-		VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
+	VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
 
 	// Update TrjIdx_iter after removing elements.
 	TrjIdx_iter = TrajectoryIndexIterator( &hb );
@@ -240,7 +317,7 @@ int doArcFile(char *ifilename,
 	std::vector<ListOfHBonds *>HBStrings;
 
 	//Find all the strings.
-	if ( THB_VERBOSE ) std::cout << "Tracing HB strings." << "\n";
+	VERBOSE_MSG("Tracing HB strings.");
 
 	for( unsigned int i=0; i < hb.size(); i++ )
 	{
@@ -251,7 +328,7 @@ int doArcFile(char *ifilename,
 			delete HBonds;
 	}
 
-	if (THB_VERBOSE) std::cout << "Done tracing HB strings." << "\n";
+	VERBOSE_MSG("Done tracing HB strings.");
 
 
 	const char *CC1 = "#";
@@ -265,7 +342,7 @@ int doArcFile(char *ifilename,
 		CC = CC1;
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 	{
-		if (THB_VERBOSE && ( ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory) ) )
+		if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
 			VERBOSE_RMSG("Preparing histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
 
 		std::stringstream ofilename;
@@ -294,6 +371,18 @@ int doArcFile(char *ifilename,
 			out.close();
 		}
 	}
+
+	//Cleanup
+	delete Cell;
+	DeleteVectorPointers(atom);
+	atom.clear();
+
+	DeleteVectorPointers(hb);
+	hb.clear();
+
+	for(unsigned int i=0; i < HBStrings.size(); ++i)
+		delete HBStrings[i];
+	HBStrings.clear();
 
 	return(0);
 }

@@ -1,5 +1,10 @@
 #include <cstdlib>
 #include <getopt.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "TraceHBonds.h"
 #include "Print.h"
 #include "WorkerThreads.h"
@@ -106,12 +111,23 @@ int main(int argc, char *argv[])
 		return(1);
 	}
 #ifdef PTHREADS
+	unsigned int numCPUs;
 
-	unsigned int numCPUs = sysconf( _SC_NPROCESSORS_ONLN );
+#ifdef __linux
+	numCPUs = sysconf( _SC_NPROCESSORS_ONLN );
+#elif _WIN32
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+	numCPUs = sysinfo.dwNumberOfProcessors;
+#else
+#error "OS not supported!"
+#endif // __linux
 
-	VERBOSE_MSG("Using " << numCPUs+1 << " threads.");
+	if (numCPUs == 0 ) numCPUs = 1;
 
-	if ( !StartWorkerThreads(numCPUs+1) )
+	VERBOSE_MSG("Starting " << numCPUs << " threads.");
+
+	if ( !StartWorkerThreads(numCPUs) )
 	{
 		std::cout << "Error; Could not start worker threads" << std::endl;
 		return(1);

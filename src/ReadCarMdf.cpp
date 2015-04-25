@@ -237,8 +237,12 @@ bool ReadMdf( const char *filename,
 bool isConnectedAtom( struct thbAtom *a, struct thbAtom *b, unsigned int i)
 {
 
-	if( (a->Molecule                      == b->Molecule) &&
+
+	// Compare the first characters of Name initially, to speed this up a
+	// little bit.
+	if( (a->ConnectedAtomName.at(i).at(0) == b->Name[0] ) &&
 	    (a->ConnectedAtomName.at(i)       == b->Name ) &&
+	    (a->Molecule                      == b->Molecule) &&
 	    (a->ConnectedAtomResidue.at(i)    == b->Residue) &&
 	    (a->ConnectedAtomResidueNum.at(i) == b->ResidueNum) )
 		return(true);
@@ -303,7 +307,7 @@ int ReadCarMdf( const char *filename,
 {
 	// Read atoms from MDF files.
 	std::string MDFfile = filename;
-	
+
 	// The user may specify either a .arc, or .car file. They both use a .mdf
 	// file for connections.
 	size_t tag = MDFfile.rfind(".arc");
@@ -365,7 +369,7 @@ int ReadCar(const char *filename,
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
-	
+
 	if ( magicNum == MAGICNUMBER_UNKNOWN )
 		ifp.open(filename,std::ios::in);
 
@@ -405,8 +409,11 @@ int ReadCar(const char *filename,
 		else if ( ! strncmp(line, "Configurations", 14) ) {}
 		else if ( ! strncmp(line, "PBC ", 4) )
 		{
-			// if (Cell->frames == 30)
-			//     break;
+			if ( (Cell->frames)%50==0 )
+				VERBOSE_RMSG("Frames : " << Cell->frames);
+
+			if (Cell->frames == 200)
+				break;
 
 			double CellX, CellY, CellZ;
 			double CellAlpha, CellBeta, CellGamma;

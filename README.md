@@ -1,47 +1,50 @@
 # TraceHBonds
 
-###USAGE 
-        TraceHBonds -p <prefix> -s <suffix> -f <number> -l <number> -P
-                    <prefix> -S <suffix> [-b <number>] [--povray]
+###USAGE
+        TraceHBonds -i <arc file> -p <prefix> -s <suffix> -r <distance
+        cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor
+        forcefield> [-b <number>] [--povray]
 
 ###OPTIONS
-        --inprefix <prefix>
-        -p <prefix>
-                <Prefix> of the input filename. The text before the integer
-                in the filename. For a filename of 'HBonds1.dat' the
-                <prefix> would be 'HBonds'
-
-        --insuffix <suffix>
-        -s <suffix>
-                <Suffix> of the input filename. The text after the integer
-                in the filename. For a filename of 'HBonds1.dat' the
-                <suffix> would be '.dat'
+        --input <arc file>
+        -i <arc file>
+                <Arc file> is the archive file generated from Discover.
 
         --outprefix <prefix>
-        -P <prefix>
+        -p <prefix>
                 <Prefix> of the output filename. The text before the
-                integer in the filename. For a filename of 'HBonds1.txt'
+                integer in the filename. For a filename of 'HBonds1.dat'
                 the <prefix> would be HBonds'
 
-        --outsuffix suffix
-        -S suffix
+        --outsuffix <suffix>
+        -s <suffix>
                 <Suffix> of the output filename. The text after the integer
-                in the filename. For a filename of 'HBonds1.txt' the
+                in the filename. For a filename of 'HBonds1.dat' the
                 <suffix> would be '.dat'
 
-        --first <number>
-        -f <number>
-                The first <number> to start the processing at. <number> is
-                the integer in the filename. For filenames of
-                'HBonds1.dat,' 'HBonds2.dat,' ..., 'HBonds1000.dat,' the
-                first <nmber> would be 1.
+        --rcutoff <Rc>
+        -r <Rc>
+                Set the cutoff length to <Rc> for the determination of a
+                hydrogen bond.
 
-        --last <number>
-        -l <number>
-                The last <number> to start the processing at. <number> is
-                the integer in the filename. For a filenames of
-                'HBonds1.dat,' 'HBonds2.dat,' ..., 'HBodns1000.dat,' the
-                last <number> would be 1000.
+        --anglecutoff <Ac>
+        -a <Ac>
+                Set the cutoff angle to <Ac> for the determination of a
+                hydrogen bond.
+
+        --hydrogen <force field>
+        -H <force field>
+                Set the <force field> of donor hydrogens for hydrogen
+                bonding (e.g. -H h1o). More than one <force field> may be
+                used by specifying additional -H <force field> parameters.
+                NOTE: the short option is a capital 'H.'
+
+        --acceptor <force field>
+        -A <force field>
+                Set the <force field> of acceptor atoms for hydrogen
+                bonding. More than one <force field> may be used by
+                specifying additional -A <force field> parameters (e.g. -A
+                o2h -A o1=). NOTE: the short option is a capital 'A.'
 
         --bins <number>
         -b <number>

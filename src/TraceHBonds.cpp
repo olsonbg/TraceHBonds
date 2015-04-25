@@ -12,6 +12,9 @@ extern std::list< unsigned int > inQueue;
 extern std::list< unsigned int > outQueue;
 extern std::vector< struct worker_data_s > worker_data;
 extern std::vector< std::vector<struct HydrogenBond *> *> worker_hb;
+// Unique ID for jobs in queue. Start at zero and increase by one after each
+// submission to the job queue.
+unsigned int JobID=0;
 #endif
 
 const long double PI = 3.14159265358979323846;
@@ -27,11 +30,11 @@ inline
 std::vector<double> getAtomSeparationVector( std::vector<double> *A,
                                              std::vector<double> *B)
 {
-	std::vector<double> sep;
+	std::vector<double> sep(3,0);
 
-	sep.push_back( B->at(0) - A->at(0) );
-	sep.push_back( B->at(1) - A->at(1) );
-	sep.push_back( B->at(2) - A->at(2) );
+	sep.at(0) = B->at(0) - A->at(0);
+	sep.at(1) = B->at(1) - A->at(1);
+	sep.at(2) = B->at(2) - A->at(2);
 
 	return(sep);
 }
@@ -110,14 +113,17 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 	double rCutoff2 = pow(rCutoff,2.0);
 	double r2;
 
+	std::vector<double>a(3, 0.0);
+	std::vector<double>b(3, 0.0);
+	std::vector<double>c(3, 0.0);
+
 	for( it_h = hydrogens->begin() + ThreadID;
 	     it_h < hydrogens->end();
 	     it_h += Threads)
 	{
-		std::vector<double>a;
-		a.push_back( (*it_h)->x.at(TrjIdx) );
-		a.push_back( (*it_h)->y.at(TrjIdx) );
-		a.push_back( (*it_h)->z.at(TrjIdx) );
+		a.at(0) =  (*it_h)->x.at(TrjIdx) ;
+		a.at(1) =  (*it_h)->y.at(TrjIdx) ;
+		a.at(2) =  (*it_h)->z.at(TrjIdx) ;
 
 		for( it_a = acceptors->begin(); it_a < acceptors->end(); ++it_a)
 		{
@@ -127,20 +133,20 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
 				continue;
 
-			std::vector<double>b;
-			b.push_back( (*it_a)->x.at(TrjIdx) );
-			b.push_back( (*it_a)->y.at(TrjIdx) );
-			b.push_back( (*it_a)->z.at(TrjIdx) );
+			b.at(0) =  (*it_a)->x.at(TrjIdx);
+			b.at(1) =  (*it_a)->y.at(TrjIdx);
+			b.at(2) =  (*it_a)->z.at(TrjIdx);
+
 			r = getMinimumImageVector( &a, &b, &cell );
 			r2 = pow(r[0],2.0) + pow(r[1],2.0) + pow(r[2],2.0);
 
 			if ( r2 < rCutoff2)
 			{
 				// Distance cutoff is good, now check the angle.
-				std::vector<double>c;
-				c.push_back( (*it_h)->ConnectedAtom.at(0)->x.at(TrjIdx));
-				c.push_back( (*it_h)->ConnectedAtom.at(0)->y.at(TrjIdx));
-				c.push_back( (*it_h)->ConnectedAtom.at(0)->z.at(TrjIdx));
+				c.at(0) = (*it_h)->ConnectedAtom.at(0)->x.at(TrjIdx);
+				c.at(1) = (*it_h)->ConnectedAtom.at(0)->y.at(TrjIdx);
+				c.at(2) = (*it_h)->ConnectedAtom.at(0)->z.at(TrjIdx);
+
 				double angle = getBondAngle(c,a,b);
 				if ( angle > angleCutoff )
 				{
@@ -169,6 +175,8 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 	std::vector<struct thbAtom *> hydrogens;
 	std::vector<struct thbAtom *> acceptors;
 
+	hydrogens.reserve(5000);
+	acceptors.reserve(5000);
 
 	getHydrogenBondElements( atom, &hydrogens, &acceptors, match );
 
@@ -200,21 +208,22 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 	{
 		std::vector<struct HydrogenBond *> *thread_hb;
 		thread_hb = new std::vector<struct HydrogenBond *>;
+		thread_hb->reserve(5000);
 		worker_hb.push_back(thread_hb);
 	}
 	// Tell the threads to start looking at the inQueue for work to do.
 	ContinueWorkerThreads();
 #endif
 
+	std::vector<double>cell(3, 0.0);
 	for( unsigned int TrjIdx=0; TrjIdx < Cell->frames; ++TrjIdx)
 	{
 		VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 		
 
-		std::vector<double>cell;
-		cell.push_back( Cell->x.at(TrjIdx) );
-		cell.push_back( Cell->y.at(TrjIdx) );
-		cell.push_back( Cell->z.at(TrjIdx) );
+		cell.at(0) = Cell->x.at(TrjIdx);
+		cell.at(1) = Cell->y.at(TrjIdx);
+		cell.at(2) = Cell->z.at(TrjIdx);
 
 #ifdef PTHREADS
 		for (unsigned int j=0; j < NUM_JOBS; ++j)
@@ -283,10 +292,16 @@ int doArcFile(char *ifilename,
 	std::vector<struct HydrogenBond *> hb;
 	std::vector<struct thbAtom *> atom;
 
+	std::map<std::string,double> times;
+	time_t t_start;
+
 	struct PBC *Cell;
 	Cell = new struct PBC;
 
+	atom.reserve(50000);
+	t_start = time(NULL);
 	ReadCarMdf( ifilename, &atom, Cell );
+	times["reading data"]  = difftime(t_start, time(NULL));
 	std::vector<double>A, B, C;
 
 	unsigned int NumFramesInTrajectory = 0;
@@ -294,17 +309,21 @@ int doArcFile(char *ifilename,
 
 	VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
 
+	// Reserve space for 10000 hydrogen bonds to minimize reallocations.
+	hb.reserve(10000);
 	// Now  determine the hydrogen bonds
+	t_start = time(NULL);
 	AtomNeighbors( &hb, &atom, Cell, match, rCutoff, angleCutoff );
-
+	times["finding pairs"] = difftime(t_start, time(NULL));
 
 	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
 	TrjIdx_iter = TrajectoryIndexIterator( &hb );
 
 	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
 
+	t_start = time(NULL);
 	RemoveDuplicates ( &hb, &TrjIdx_iter );
-
+	times["finding hydrogen bonds"] = difftime(t_start, time(NULL));
 	VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
 
 	// Update TrjIdx_iter after removing elements.
@@ -315,10 +334,12 @@ int doArcFile(char *ifilename,
 	// Each element of the vector points to a string of hbonds.
 	// ListOfHBonds is a strings of hbonds.
 	std::vector<ListOfHBonds *>HBStrings;
+	HBStrings.reserve(5000);
 
 	//Find all the strings.
 	VERBOSE_MSG("Tracing HB strings.");
 
+	t_start = time(NULL);
 	for( unsigned int i=0; i < hb.size(); i++ )
 	{
 		ListOfHBonds *HBonds = new ListOfHBonds();
@@ -327,9 +348,7 @@ int doArcFile(char *ifilename,
 		else
 			delete HBonds;
 	}
-
-	VERBOSE_MSG("Done tracing HB strings.");
-
+	times["finding hydrogen bond strings"] = difftime(t_start, time(NULL));
 
 	const char *CC1 = "#";
 	const char *CC2 = "//";
@@ -340,6 +359,7 @@ int doArcFile(char *ifilename,
 		CC = CC2;
 	else
 		CC = CC1;
+	t_start = time(NULL);
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 	{
 		if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
@@ -371,7 +391,20 @@ int doArcFile(char *ifilename,
 			out.close();
 		}
 	}
+	times["making histograms and saving files"] = difftime(t_start, time(NULL));
 
+	VERBOSE_MSG("\n\nTime spend:");
+	std::map<std::string,double>::iterator time_it;
+	for( time_it = times.begin(); time_it!=times.end(); ++time_it)
+	{
+		double t = -1.0*time_it->second;
+
+		VERBOSE_CMSG("  " << time_it->first << " - ");
+		if ( t > 60.0 )
+			VERBOSE_MSG(t/60.0 << " min.");
+		else
+			VERBOSE_MSG(t << " sec.");
+	}
 	//Cleanup
 	delete Cell;
 	DeleteVectorPointers(atom);

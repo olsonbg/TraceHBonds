@@ -5,13 +5,12 @@
 #include <vector>
 #include <list>
 #include <pthread.h>
-#include <sys/signal.h>
 
 
 //Shared data.
-#define THREAD_JOB_HBS     1 // Run HBs().
-#define THREAD_JOB_PAUSE  90 // Pause thread.
-#define THREAD_JOB_EXIT   99 // Exit thread.
+const unsigned int THREAD_JOB_HBS   =  1; // Run HBs().
+const unsigned int THREAD_JOB_PAUSE = 90; // Pause thread.
+const unsigned int THREAD_JOB_EXIT  = 99; // Exit thread.
 
 //The queues.
 

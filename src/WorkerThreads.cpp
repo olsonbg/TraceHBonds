@@ -5,6 +5,7 @@
 
 std::list< pthread_t *> threadIdList;
 pthread_mutex_t inQueueLock;
+pthread_mutex_t runningQueueLock;
 pthread_mutex_t outQueueLock;
 pthread_mutex_t pauseLock;
 pthread_cond_t resumeCond;
@@ -94,9 +95,10 @@ void CheckWorkerPause()
 
 bool StartWorkerThreads(unsigned int NUM_THREADS)
 {
-	pthread_mutex_init( &inQueueLock, NULL );
-	pthread_mutex_init( &outQueueLock, NULL );
-	pthread_mutex_init( &pauseLock, NULL );
+	pthread_mutex_init( &inQueueLock     , NULL );
+	pthread_mutex_init( &runningQueueLock, NULL );
+	pthread_mutex_init( &outQueueLock    , NULL );
+	pthread_mutex_init( &pauseLock       , NULL );
 	pthread_cond_init( &resumeCond, NULL );
 
 	// start worker threads

@@ -4,6 +4,7 @@
 #ifdef PTHREADS
 #include <vector>
 #include <list>
+#include <queue>
 #include <pthread.h>
 
 
@@ -35,13 +36,5 @@ struct thread_detail_s {
 	unsigned int num;
 };
 
-void *workerThread(void *);
-unsigned int NumWorkerThreads();
-void CheckWorkerPause(void);
-void PauseWorkerThreads(void);
-void ContinueWorkerThreads(void);
-bool StartWorkerThreads(unsigned int NUM_THREADS);
-bool StopWorkerThreads(void);
-
-#endif
-#endif
+#endif // PTHREADS
+#endif // _WorkerThreads.h

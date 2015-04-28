@@ -1,15 +1,19 @@
 #include <cstdlib>
 #include <getopt.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
+#include "main.h"
 #include "TraceHBonds.h"
 #include "Print.h"
+#include "Thread.h"
+#include "queue.h"
 #include "WorkerThreads.h"
 
 bool THB_VERBOSE = false;
+
+#ifdef PTHREADS
+extern Queue<struct worker_data_s> inQueue;
+#endif // PTHREADS
 
 int main(int argc, char *argv[])
 {
@@ -110,37 +114,47 @@ int main(int argc, char *argv[])
 		Help(argv[0]);
 		return(1);
 	}
+
 #ifdef PTHREADS
-	unsigned int numCPUs;
-
-#ifdef __linux
-	numCPUs = sysconf( _SC_NPROCESSORS_ONLN );
-#elif _WIN32
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	numCPUs = sysinfo.dwNumberOfProcessors;
-#else
-#error "OS not supported!"
-#endif // __linux
-
-	if (numCPUs == 0 ) numCPUs = 1;
-
 	VERBOSE_MSG("Starting " << numCPUs << " threads.");
 
-	if ( !StartWorkerThreads(numCPUs) )
+	std::vector<MyThread *>MyThreads;
+	for (unsigned int j=0; j < numCPUs; ++j)
 	{
-		std::cout << "Error; Could not start worker threads" << std::endl;
-		return(1);
+		// Setup and start a thread.
+		MyThreads.push_back( new MyThread() );
+		MyThreads.at(j)->start();
 	}
-	// Pause the threads for now.
-	PauseWorkerThreads();
 #endif
+
 	doArcFile(fArc, ofPrefix, ofSuffix,
 	          &match,
 	          rCutoff, angleCutoff,
 	          NumBins, POVRAY);
+
 #ifdef PTHREADS
-	StopWorkerThreads();
+	// Tell the threads to exit.
+	// Use a dummy worker_data_s. All that matters is the jobtype. The other
+	// parameters are set just to avoid 'uninitialize parameter' warning by
+	// the compiler.
+	struct worker_data_s wd;
+	wd.jobtype = THREAD_JOB_EXIT;
+	wd.jobnum  = 0;
+	wd.hydrogens = NULL;
+	wd.acceptors = NULL;
+	wd.hb = NULL;
+	wd.TrjIdx = 0;
+	wd.num_threads = numCPUs;
+	wd.rCutoff = 0.0;
+	wd.angleCutoff = 0.0;
+	for (unsigned int j=0; j < numCPUs; ++j)
+	{
+		inQueue.push(wd);
+	}
+
+	// Wait for the threads to return.
+	for (unsigned int j=0; j < numCPUs; ++j) {
+		MyThreads.at(j)->join(); }
 #endif
 
 	return(0);

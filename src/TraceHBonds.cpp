@@ -1,20 +1,15 @@
+#include "main.h"
 #include "Print.h"
 #include "OutputFormat.h"
 #include "TraceHBonds.h"
+#include "queue.h"
 #include "WorkerThreads.h"
 
 extern bool THB_VERBOSE;
 
 #ifdef PTHREADS
-extern pthread_mutex_t inQueueLock;
-extern pthread_mutex_t outQueueLock;
-extern std::list< unsigned int > inQueue;
-extern std::list< unsigned int > outQueue;
-extern std::vector< struct worker_data_s > worker_data;
-extern std::vector< std::vector<struct HydrogenBond *> *> worker_hb;
-// Unique ID for jobs in queue. Start at zero and increase by one after each
-// submission to the job queue.
-unsigned int JobID=0;
+extern Queue<struct worker_data_s> inQueue;
+extern Queue<struct worker_data_s> outQueue;
 #endif
 
 const long double PI = 3.14159265358979323846;
@@ -197,24 +192,6 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		VERBOSE_MSG("Finding hydrogen bonds with Rc < " << rCutoff << " Angstroms, and angle > " << angleCutoff << " degrees.");
 	}
 
-#ifdef PTHREADS
-	// How many jobs to split this work into; The number of jobs to put
-	// in the queue. Use the same as the number of threads created.
-	unsigned int NUM_JOBS=NumWorkerThreads();
-
-	// Initialize the variables where the worker threads put their
-	// results.
-	for (unsigned int j=0; j < NUM_JOBS; ++j)
-	{
-		std::vector<struct HydrogenBond *> *thread_hb;
-		thread_hb = new std::vector<struct HydrogenBond *>;
-		thread_hb->reserve(5000);
-		worker_hb.push_back(thread_hb);
-	}
-	// Tell the threads to start looking at the inQueue for work to do.
-	ContinueWorkerThreads();
-#endif
-
 	std::vector<double>cell(3, 0.0);
 	for( unsigned int TrjIdx=0; TrjIdx < Cell->frames; ++TrjIdx)
 	{
@@ -226,59 +203,46 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		cell.at(2) = Cell->z.at(TrjIdx);
 
 #ifdef PTHREADS
-		for (unsigned int j=0; j < NUM_JOBS; ++j)
+		// put the job in the queue.
+		for (unsigned int j=0; j < NumThreads; ++j)
 		{
 			// setup the job data.
-			pthread_mutex_lock(&inQueueLock);
+			struct worker_data_s wd;
+			wd.jobtype = THREAD_JOB_HBS;
+			wd.jobnum = j;
+			wd.num_threads = NumThreads;
+			wd.cell = cell;
+			wd.hydrogens = &hydrogens;
+			wd.acceptors = &acceptors;
+			wd.TrjIdx = TrjIdx;
+			wd.rCutoff = rCutoff;
+			wd.angleCutoff = angleCutoff;
 
-			worker_data.at(j).jobtype = THREAD_JOB_HBS;
-			worker_data.at(j).jobnum = j;
-			worker_data.at(j).num_threads = NUM_JOBS;
-			worker_data.at(j).hb = worker_hb[j];
-			worker_data.at(j).cell = cell;
-			worker_data.at(j).hydrogens = &hydrogens;
-			worker_data.at(j).acceptors = &acceptors;
-			worker_data.at(j).TrjIdx = TrjIdx;
-			worker_data.at(j).rCutoff = rCutoff;
-			worker_data.at(j).angleCutoff = angleCutoff;
+			wd.hb = new std::vector<struct HydrogenBond *>;
+			wd.hb->reserve(5000);
 
-			inQueue.push_back(j);
-
-			pthread_mutex_unlock(&inQueueLock);
+			inQueue.push(wd);
 		}
-		// Wait for out queue to fill with all jobs.
-		unsigned int Done_count = 0;
-		while (Done_count != NUM_JOBS )
+
+		// Get the results from the threads.
+		for(unsigned int j=0; j < NumThreads; ++j)
 		{
-			pthread_mutex_lock(&outQueueLock);
-			Done_count = outQueue.size();
-			pthread_mutex_unlock(&outQueueLock);
-		}
-		outQueue.clear();
-		// Concatenate the worker_hb to the real hb, then clear the worker_hb
-		// vector.
-		for(unsigned int j=0; j < NUM_JOBS; ++j)
-		{
-			hb->reserve( hb->size() + worker_data.at(j).hb->size() );
+			struct worker_data_s wd = outQueue.pop();
+			hb->reserve( hb->size() + wd.hb->size() );
 			hb->insert(hb->end(),
-			           worker_data.at(j).hb->begin(),
-			           worker_data.at(j).hb->end() );
+			           wd.hb->begin(),
+			           wd.hb->end() );
 
-			worker_data.at(j).hb->clear();
+			wd.hb->clear();
 		}
-		
 #else
 		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
 #endif
 	}
 
 #ifdef PTHREADS
-	// Do not need the threads for now, so tell them to pause.
-	PauseWorkerThreads();
 	// Cleanup
-	DeleteVectorPointers(worker_hb);
 #endif
-
 
 	VERBOSE_MSG("");
 }

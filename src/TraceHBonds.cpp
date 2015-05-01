@@ -20,62 +20,6 @@ double Round (double r,double f=1.0)
 	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
 }
 
-// Vector pointing from atom A to atom B.
-inline
-std::vector<double> getAtomSeparationVector( std::vector<double> *A,
-											 std::vector<double> *B)
-{
-	std::vector<double> sep(3,0);
-
-	sep.at(0) = B->at(0) - A->at(0);
-	sep.at(1) = B->at(1) - A->at(1);
-	sep.at(2) = B->at(2) - A->at(2);
-
-	return(sep);
-}
-
-// Calculate the angle A-B-C in degrees
-// For Hydrogren bond, this would be donor-hydrogen-acceptor
-double getBondAngle( std::vector<double> A,
-					 std::vector<double> B,
-					 std::vector<double> C)
-{
-	std::vector<double> BA = getAtomSeparationVector(&B,&A);
-	std::vector<double> BC = getAtomSeparationVector(&B,&C);
-
-	double BAdotBC = BA[0]*BC[0] +
-					 BA[1]*BC[1] +
-					 BA[2]*BC[2];
-
-	
-	double magBA = sqrt( BA[0]*BA[0] + BA[1]*BA[1] + BA[2]*BA[2] );
-	double magBC = sqrt( BC[0]*BC[0] + BC[1]*BC[1] + BC[2]*BC[2] );
-
-	return ( acos(BAdotBC/magBA/magBC)*180.0/PI );
-}
-
-// Minimum Image Vector pointing from atom A to atom B.
-// returns x,y,z as a vector of doubles.
-inline
-std::vector<double> getMinimumImageVector( std::vector<double> *A,
-										   std::vector<double> *B,
-										   std::vector<double> *Cell)
-{
-	std::vector<double> d;
-	
-	d = getAtomSeparationVector(A,B);
-
-	double Lx = Cell->at(0);
-	double Ly = Cell->at(1);
-	double Lz = Cell->at(2);
-
-	d[0] -= Round(d[0]/Lx)*Lx;
-	d[1] -= Round(d[1]/Ly)*Ly;
-	d[2] -= Round(d[2]/Lz)*Lz;
-
-	return(d);
-}
-
 void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
                               std::vector<struct thbAtom *> *hydrogendonors,
                               std::vector<struct thbAtom *> *acceptors,
@@ -93,11 +37,12 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 }
 
 void HBs( std::vector<struct HydrogenBond *> *hb,
-		  Point cell,
-		  std::vector<struct thbAtom *>*hydrogens,
-		  std::vector<struct thbAtom *>*acceptors,
-		  double TrjIdx, double rCutoff, double angleCutoff,
-		  unsigned int ThreadID, unsigned int Threads)
+          Point cell,
+          std::vector<struct thbAtom *>*hydrogens,
+          std::vector<struct thbAtom *>*acceptors,
+          double TrjIdx,
+          double rCutoff, double angleCutoff,
+          unsigned int ThreadID, unsigned int Threads)
 {
 
 	std::vector<struct thbAtom *>::iterator it_h;
@@ -323,9 +268,6 @@ int doArcFile(char *ifilename,
 	VERBOSE_MSG("Saving neighbor histograms.");
 	if ( 1 )
 	{
-		// std::stringstream ofilename;
-		// ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
-
 		std::ofstream out;
 		out.open("Neighbors.txt",std::ios::out);
 		if ( out.is_open() )

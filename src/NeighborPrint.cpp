@@ -5,25 +5,6 @@
 #include "SimpleMath.h"
 #include "NeighborPrint.h"
 
-// void Print_XYZ( std::vector<double> x,
-//                 std::vector<double> y,
-//                 std::vector<double> z)
-// {
-//     if ( (x.size() != y.size() ) ||
-//          (x.size() != z.size() ) ||
-//          (y.size() != z.size() ) )
-//     {
-//         std::cout << "# Error: Vectors not all the same size." << std::endl;
-//         return;
-//     }
-
-//     unsigned int n = x.size();
-
-//     for(unsigned int i=0; i < n; ++i)
-//         std::cout << x[i] << "\t" << y[i] << "\t" << z[i] << std::endl;
-
-//     return;
-// }
 
 void Print_AllFrames(std::ostream *out,
                      std::vector<struct Histograms_s> *frame)

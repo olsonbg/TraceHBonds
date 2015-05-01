@@ -145,15 +145,6 @@ void getNeighbors( struct Histograms_s *Histograms,
 		}
 	}
 
-	// for(unsigned int i=0; i < Histograms->NearestNeighbors.size(); ++i)
-	// {
-	//     std::cout << "Index " << i << ":";
-	//     for(unsigned int j=0; j < Histograms->NearestNeighbors.at(i).size();++j)
-	//     {
-	//         std::cout << Histograms->NearestNeighbors.at(i).at(j) << " ";
-	//     }
-	//     std::cout << "\n";
-	// }
 }
 
 /*
@@ -341,16 +332,16 @@ prntHistograms( std::ostream *out,
 		{
 			vui dummy;
 			PrintHistogramMolecules( out,
-									 dummy,
-									 0, 1,
-									 1, MaxBarLength,
-									 NumBins, CC);
+			                         dummy,
+			                         0, 1,
+			                         1, MaxBarLength,
+			                         NumBins, CC);
 		}
 		else
 			PrintHistogramMolecules( out,
-									 Histogram->MoleculesInChain[chainL],
-									 Histogram->MaxMoleculesInChain[chainL], 1,
-									 1, MaxBarLength,
-									 NumBins, CC);
+			                         Histogram->MoleculesInChain[chainL],
+			                         Histogram->MaxMoleculesInChain[chainL], 1,
+			                         1, MaxBarLength,
+			                         NumBins, CC);
 	}
 }

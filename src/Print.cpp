@@ -44,7 +44,6 @@ void PrintHistogramChain( std::ostream *out,
 	     i <= uniformStop;
 	     i += Step)
 	{
-//		fprintf(*out,"%s %4d /%4d   | %4d|",CC.c_str(),i,(i-1)/2,Histogram[i]);
 		*out << CC.c_str() << " ";
 		*out << std::setw(4) << i << " /";
 		*out << std::setw(4) << (i-1)/2 << "   | ";
@@ -97,7 +96,6 @@ void PrintHistogramMolecules( std::ostream *out,
 	// Using uniformStop to make it easy to aggregate
 	// many TraceHBond output files
 	unsigned int uniformStop;
-	// if ( Stop < Step*NumBins + Start - (unsigned int)1)
 	if ( NumBins > 0 )
 		uniformStop = Step*NumBins + Start - (unsigned int)1;
 	else
@@ -105,7 +103,6 @@ void PrintHistogramMolecules( std::ostream *out,
 
 	for (unsigned int i = Start; i <= uniformStop; i += Step )
 	{
-//		printf("%s %4d      | %4d|",CC.c_str(),i,Histogram[i]);
 		*out << CC.c_str() << " ";
 		*out << std::setw(4) << i << "      | ";
 		if ( i >= Histogram.size() )
@@ -136,10 +133,7 @@ char * word_wrap (char* string, int line_width) {
 		{
 			if ( isspace( string[k] ) )
 			{
-				// std::cerr << "Newline" <<"\n";
 				string[k] = '\n';
-				// std::cerr << "[" << string << "]" <<"\n";
-				// set string index to character after this one
 				i = k + 1;
 				break;
 			}
@@ -199,7 +193,6 @@ void HelpOption(const char *v1, const char *v2, const char *text)
 
 void Help(char *name)
 {
-	// fprintf(stdout,"\n%s Version %d.%d\n\n",
 	std::cerr << "\n" << name << " Version ";
 	std::cerr << TraceHBonds_VERSION_MAJOR << ".";
 	std::cerr << TraceHBonds_VERSION_MINOR;

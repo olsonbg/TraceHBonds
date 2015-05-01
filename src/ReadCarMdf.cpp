@@ -433,14 +433,8 @@ int ReadCar(const char *filename,
 				return(1);
 			}
 			Cell->p.push_back( Point(CellX, CellY, CellZ) );
-			// Cell->x.push_back( CellX);
-			// Cell->y.push_back( CellY);
-			// Cell->z.push_back( CellZ);
 
 			Cell->angles.push_back( Point(CellAlpha, CellBeta, CellGamma) );
-			// Cell->alpha.push_back(CellAlpha);
-			// Cell->beta.push_back( CellBeta);
-			// Cell->gamma.push_back(CellGamma);
 			Cell->frames++;
 		}
 		else // Must be a new atom.
@@ -459,8 +453,6 @@ int ReadCar(const char *filename,
 				return(1);
 			}
 			atom->at(atomNum)->p.push_back( Point(x,y,z) );
-			// atom->at(atomNum)->y.push_back(y);
-			// atom->at(atomNum)->z.push_back(z);
 
 			// Update atomNum counter.
 			atomNum++;

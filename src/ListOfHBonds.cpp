@@ -255,20 +255,6 @@ Point ListOfHBonds::MinimumImage( struct thbAtom *A,
                                   Point r,
                                   struct PBC Cell)
 {
-	// std::vector<double> d;
-	// double Nx, Ny, Nz;
-
-	// Take care of periodic boundary conditions.
-	// Minimum Image calculation.
-	// Nx = Round( (A->x.at(TrjIdx) - r[0])/Cell.x.at(TrjIdx));
-	// Ny = Round( (A->y.at(TrjIdx) - r[1])/Cell.y.at(TrjIdx));
-	// Nz = Round( (A->z.at(TrjIdx) - r[2])/Cell.z.at(TrjIdx));
-
-	// d.push_back( A->x.at(TrjIdx) - Nx*Cell.x.at(TrjIdx) );
-	// d.push_back( A->y.at(TrjIdx) - Ny*Cell.y.at(TrjIdx) );
-	// d.push_back( A->z.at(TrjIdx) - Nz*Cell.z.at(TrjIdx) );
-
-	// return A->p.at(TrjIdx).minimumImage(r, Cell.p.at(TrjIdx) );
 	return r.minimumImage( A->p.at(TrjIdx), Cell.p.at(TrjIdx) ) ;
 }
 
@@ -370,13 +356,9 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount() 
 		          << "}\n}" << "\n";
 
-	// EndToEndLength = sqrt( pow(initial_x-r[0],2) +
-	//                        pow(initial_y-r[1],2) +
-	//                        pow(initial_z-r[2],2) );
 
 	EndToEndLength = initial.distance(r);
 	return(EndToEndLength);
-	// return(counter);
 }
 
 int ListOfHBonds::AddAtBegin(struct HydrogenBond *NewItem)
@@ -424,9 +406,6 @@ bool ListOfHBonds::Find( struct HydrogenBond *Item )
 // element in the list, then Item should come before Begin().
 bool ListOfHBonds::linksAtBegin( struct HydrogenBond *Item )
 {
-	// if ( (Item == NULL) || (size == 0) )
-	//     return(false);
-
 	if ( Begin()->donor == Item->acceptor )
 		return(true);
 
@@ -437,9 +416,6 @@ bool ListOfHBonds::linksAtBegin( struct HydrogenBond *Item )
 // element in the list, then Item should come after End().
 bool ListOfHBonds::linksAtEnd( struct HydrogenBond *Item )
 {
-	// if ( (Item == NULL) || (size == 0) )
-	//     return(false);
-
 	if ( End()->acceptor == Item->donor )
 		return(true);
 

@@ -52,7 +52,7 @@ namespace SimpleMath
 		return(sum/v.size());
 	}
 
-	double stddev( double sum, unsigned int N)
+	double stddev( double sumSq, unsigned int N)
 	{
 		unsigned int E = 1.0; // 1.0 == Corrected Sample standard deviation.
 		                      // 0.0 == Uncorrected sample standard deviation
@@ -60,18 +60,15 @@ namespace SimpleMath
 
 		if ( N < (E+1) ) return(0.0);
 
-		return( sqrt(sum/double(N-E)) );
+		return( sqrt(sumSq/double(N-E)) );
 	}
 
 	double stddev( std::vector<double> v, double avg)
 	{
 		std::vector<double>::iterator it;
-		double sum = 0.0;
+		double sumSq = SumSquaredDifferences(v, avg);
 
-		for(it = v.begin(); it < v.end(); ++it)
-			sum += pow(*it - avg,2.0);
-
-		return( stddev(sum,v.size()) );
+		return( stddev(sumSq,v.size()) );
 	}
 
 	double stddev( std::vector<double> v)

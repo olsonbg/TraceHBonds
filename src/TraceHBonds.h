@@ -11,6 +11,7 @@
 #include <set>
 #include "ReadCarMdf.h"
 #include "ListOfHBonds.h"
+#include "Point.h"
 
 extern bool THB_VERBOSE;
 
@@ -30,11 +31,6 @@ extern bool THB_VERBOSE;
 	#define VERBOSE_RMSG(str) do { if (THB_VERBOSE) std::cout << str << "\r" << std::flush; } while ( false )
 #endif
 
-// Macros
-
-typedef std::vector<unsigned int> vui;
-typedef std::vector< vui > vvui;
-
 //
 
 struct HydrogenBondMatching
@@ -44,7 +40,7 @@ struct HydrogenBondMatching
 };
 
 void HBs( std::vector<struct HydrogenBond *> *hb,
-		  std::vector<double>cell,
+		  Point cell,
 		  std::vector<struct thbAtom *>*hydrogens,
 		  std::vector<struct thbAtom *>*acceptors,
 		  double TrjIdx, double rCutoff, double angleCutoff,
@@ -55,21 +51,6 @@ int doArcFile(char *ifilename,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
               int NumBins, bool POVRAY);
-
-int makeHistograms( std::ostream *out,
-                    std::vector<ListOfHBonds *> HBStrings,
-                    std::string CC, unsigned int NumBins,
-                    struct PBC *Cell, unsigned int TrjIdx,
-                    bool POVRAY);
-
-template<class T> bool alloc_vector(std::vector< std::vector<T> > *v,
-                                    T val,
-                                    unsigned int nelem,
-                                    unsigned int melem);
-
-template<class T> bool alloc_vector( std::vector<T> *v,
-                                     T val,
-                                     unsigned int nelem);
 
 bool SameAtom( struct thbAtom *A,
                struct thbAtom *B);

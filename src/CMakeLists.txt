@@ -1,5 +1,7 @@
 ADD_EXECUTABLE(TraceHBonds TraceHBonds.cpp ListOfHBonds.cpp
                ReadCarMdf.cpp MagicNumber.cpp Print.cpp
+			   Histograms.cpp NeighborPrint.cpp SimpleMath.cpp
+			   Point.cpp
                WorkerThreads.cpp Thread.cpp queue.cpp main.cpp)
 
 # Link the executable to a library.

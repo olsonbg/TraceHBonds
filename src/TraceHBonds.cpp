@@ -4,6 +4,8 @@
 #include "TraceHBonds.h"
 #include "queue.h"
 #include "WorkerThreads.h"
+#include "Histograms.h"
+#include "NeighborPrint.h"
 
 extern bool THB_VERBOSE;
 
@@ -11,8 +13,6 @@ extern bool THB_VERBOSE;
 extern Queue<struct worker_data_s> inQueue;
 extern Queue<struct worker_data_s> outQueue;
 #endif
-
-const long double PI = 3.14159265358979323846;
 
 inline
 double Round (double r,double f=1.0)
@@ -23,7 +23,7 @@ double Round (double r,double f=1.0)
 // Vector pointing from atom A to atom B.
 inline
 std::vector<double> getAtomSeparationVector( std::vector<double> *A,
-                                             std::vector<double> *B)
+											 std::vector<double> *B)
 {
 	std::vector<double> sep(3,0);
 
@@ -37,15 +37,15 @@ std::vector<double> getAtomSeparationVector( std::vector<double> *A,
 // Calculate the angle A-B-C in degrees
 // For Hydrogren bond, this would be donor-hydrogen-acceptor
 double getBondAngle( std::vector<double> A,
-                     std::vector<double> B,
-                     std::vector<double> C)
+					 std::vector<double> B,
+					 std::vector<double> C)
 {
 	std::vector<double> BA = getAtomSeparationVector(&B,&A);
 	std::vector<double> BC = getAtomSeparationVector(&B,&C);
 
 	double BAdotBC = BA[0]*BC[0] +
-	                 BA[1]*BC[1] +
-	                 BA[2]*BC[2];
+					 BA[1]*BC[1] +
+					 BA[2]*BC[2];
 
 	
 	double magBA = sqrt( BA[0]*BA[0] + BA[1]*BA[1] + BA[2]*BA[2] );
@@ -58,8 +58,8 @@ double getBondAngle( std::vector<double> A,
 // returns x,y,z as a vector of doubles.
 inline
 std::vector<double> getMinimumImageVector( std::vector<double> *A,
-                                           std::vector<double> *B,
-                                           std::vector<double> *Cell)
+										   std::vector<double> *B,
+										   std::vector<double> *Cell)
 {
 	std::vector<double> d;
 	
@@ -93,7 +93,7 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 }
 
 void HBs( std::vector<struct HydrogenBond *> *hb,
-		  std::vector<double>cell,
+		  Point cell,
 		  std::vector<struct thbAtom *>*hydrogens,
 		  std::vector<struct thbAtom *>*acceptors,
 		  double TrjIdx, double rCutoff, double angleCutoff,
@@ -103,22 +103,18 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 	std::vector<struct thbAtom *>::iterator it_h;
 	std::vector<struct thbAtom *>::iterator it_a;
 
-	std::vector<double> r;
+	Point r;
 
 	double rCutoff2 = pow(rCutoff,2.0);
 	double r2;
 
-	std::vector<double>a(3, 0.0);
-	std::vector<double>b(3, 0.0);
-	std::vector<double>c(3, 0.0);
+	Point a,b,c;
 
 	for( it_h = hydrogens->begin() + ThreadID;
 	     it_h < hydrogens->end();
 	     it_h += Threads)
 	{
-		a.at(0) =  (*it_h)->x.at(TrjIdx) ;
-		a.at(1) =  (*it_h)->y.at(TrjIdx) ;
-		a.at(2) =  (*it_h)->z.at(TrjIdx) ;
+		a = (*it_h)->p.at(TrjIdx);
 
 		for( it_a = acceptors->begin(); it_a < acceptors->end(); ++it_a)
 		{
@@ -128,21 +124,17 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
 				continue;
 
-			b.at(0) =  (*it_a)->x.at(TrjIdx);
-			b.at(1) =  (*it_a)->y.at(TrjIdx);
-			b.at(2) =  (*it_a)->z.at(TrjIdx);
+			b = (*it_a)->p.at(TrjIdx);
 
-			r = getMinimumImageVector( &a, &b, &cell );
-			r2 = pow(r[0],2.0) + pow(r[1],2.0) + pow(r[2],2.0);
+			r = a.minimumImage( b, cell );
+			r2 = r.magnitudeSquared();
 
 			if ( r2 < rCutoff2)
 			{
 				// Distance cutoff is good, now check the angle.
-				c.at(0) = (*it_h)->ConnectedAtom.at(0)->x.at(TrjIdx);
-				c.at(1) = (*it_h)->ConnectedAtom.at(0)->y.at(TrjIdx);
-				c.at(2) = (*it_h)->ConnectedAtom.at(0)->z.at(TrjIdx);
+				c = (*it_h)->ConnectedAtom.at(0)->p.at(TrjIdx);
 
-				double angle = getBondAngle(c,a,b);
+				double angle = a.angle(b,c);
 				if ( angle > angleCutoff )
 				{
 					struct HydrogenBond *NewHB;
@@ -154,6 +146,8 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 					NewHB->acceptor = *it_a;
 					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
 					NewHB->TrajIdx  = TrjIdx;
+
+					NewHB->acceptorDonorDistance=c.minimumImageDistance(b,cell);
 
 					hb->push_back(NewHB);
 				}
@@ -192,15 +186,17 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		VERBOSE_MSG("Finding hydrogen bonds with Rc < " << rCutoff << " Angstroms, and angle > " << angleCutoff << " degrees.");
 	}
 
-	std::vector<double>cell(3, 0.0);
-	for( unsigned int TrjIdx=0; TrjIdx < Cell->frames; ++TrjIdx)
+	unsigned int NumFramesInTrajectory = 0;
+	NumFramesInTrajectory = Cell->frames;
+
+	Point cell;
+	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
 	{
-		VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
+			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 		
 
-		cell.at(0) = Cell->x.at(TrjIdx);
-		cell.at(1) = Cell->y.at(TrjIdx);
-		cell.at(2) = Cell->z.at(TrjIdx);
+		cell = Cell->p.at(TrjIdx);
 
 #ifdef PTHREADS
 		// put the job in the queue.
@@ -314,6 +310,33 @@ int doArcFile(char *ifilename,
 	}
 	times["finding hydrogen bond strings"] = difftime(t_start, time(NULL));
 
+	// Make histograms.
+	VERBOSE_MSG("Generating size histograms.");
+	std::vector<struct Histograms_s> Histograms;
+	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
+		Histograms.push_back( makeHistograms(HBStrings, TrjIdx) ); }
+
+	VERBOSE_MSG("Generating neighbor histograms.");
+	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
+		getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
+
+	VERBOSE_MSG("Saving neighbor histograms.");
+	if ( 1 )
+	{
+		// std::stringstream ofilename;
+		// ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
+
+		std::ofstream out;
+		out.open("Neighbors.txt",std::ios::out);
+		if ( out.is_open() )
+		{
+			Print_AllFrames(&out, &Histograms);
+			Print_CombineFrames(&out, &Histograms);
+			Print_CombineNeighbors(&out, &Histograms);
+		}
+
+		out.close();
+	}
 	const char *CC1 = "#";
 	const char *CC2 = "//";
 	std::string CC;
@@ -323,11 +346,12 @@ int doArcFile(char *ifilename,
 		CC = CC2;
 	else
 		CC = CC1;
+
 	t_start = time(NULL);
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 	{
 		if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
-			VERBOSE_RMSG("Preparing histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
+			VERBOSE_RMSG("Saving histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
 
 		std::stringstream ofilename;
 		ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
@@ -336,26 +360,28 @@ int doArcFile(char *ifilename,
 		out.open(ofilename.str().c_str(),std::ios::out);
 		if ( out.is_open() )
 		{
+			// Header
 			out << CC
 				<< " PBC "
-				<< Cell->x.at(TrjIdx)     << " "
-				<< Cell->y.at(TrjIdx)     << " "
-				<< Cell->z.at(TrjIdx)     << " "
-				<< Cell->alpha.at(TrjIdx) << " "
-				<< Cell->beta.at(TrjIdx)  << " "
-				<< Cell->gamma.at(TrjIdx)
+				<< Cell->p.at(TrjIdx).x()      << " "
+				<< Cell->p.at(TrjIdx).y()      << " "
+				<< Cell->p.at(TrjIdx).z()      << " "
+				<< Cell->angles.at(TrjIdx).x() << " "
+				<< Cell->angles.at(TrjIdx).y() << " "
+				<< Cell->angles.at(TrjIdx).z()
 				<< "\n";
 
 			out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
 			out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
 			out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
+			
+			// print the histograms and chains.
+			prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, POVRAY);
 
-			// Make histograms, and printout the results.
-			makeHistograms( &out, HBStrings, CC, NumBins, Cell, TrjIdx, POVRAY);
 			out.close();
 		}
 	}
-	times["making histograms and saving files"] = difftime(t_start, time(NULL));
+	times["Saving files"] = difftime(t_start, time(NULL));
 
 	VERBOSE_MSG("\n\nTime spend:");
 	std::map<std::string,double>::iterator time_it;
@@ -382,105 +408,6 @@ int doArcFile(char *ifilename,
 	HBStrings.clear();
 
 	return(0);
-}
-
-/*
- * Make sure v is of size nelem, if not, initialize the needed number of
- * elements to val. Make sure not to touch/change any values that are already
- * in v.
- */
-template<class T> bool alloc_vector( std::vector<T> *v,
-                                     T val,
-                                     unsigned int nelem)
-{
-	for ( unsigned int n=v->size(); n < nelem; n++)
-	{
-		try
-		{
-			v->push_back(val);
-		}
-		catch( std::exception const &e)
-		{
-			std::cout << "exception: " << e.what();
-			std::cout << ". ran out of memory?" << "\n";
-			return false;
-		}
-	}
-	return true;
-}
-
-/*
- * Make sure v is of size nelem*melem, if not, initialize the needed number of
- * elements to val. Make sure we don't adjust the values already stored in v.
- */
-template<class T> bool alloc_vector( std::vector< std::vector<T> > *v,
-                                     T val,
-                                     unsigned int nelem,
-                                     unsigned int melem)
-{
-	for ( unsigned int n=0; n < nelem; n++)
-	{
-		if ( n == v->size() )
-		{
-			try
-			{
-				std::vector<T> Zero( nelem, val);
-				v->push_back(Zero);
-			}
-			catch( std::exception const &e)
-			{
-				std::cout << "exception: " << e.what();
-				std::cout << ". ran out of memory?" << "\n";
-				return false;
-			}
-		}
-		else
-		{
-			bool ret = alloc_vector(&(v->at(n)), val, melem);
-
-			if ( ret == false )
-				return false;
-		}
-	}
-	return true;
-}
-
-/*
- * Add to the counts in h[bin], making sure enough space is allocated.
- * Also record the maximum bin. max may already be assigned a value.
-*/
-bool Bin(vui *h, unsigned int *max, unsigned int bin)
-{
-	if ( alloc_vector(h, 0U, bin+1) )
-		h->at(bin)++;
-	else
-		return 1;
-
-	if ( bin > *max)
-		*max = bin;
-
-	return true;
-}
-
-/*
- * Add to the counts in the h[bini_i][bin_j] h, making sure enough space is
- * allocated. Also record the maximum bin_j in hmax, making sure enough space
- * is allocated. hmax may already be assigned a value.
-*/
-bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
-{
-
-	if( alloc_vector(h, 0U, hb+1, c+1))
-		(h->at(hb)).at(c)++;
-	else
-		return false;
-
-	if( !alloc_vector(hmax, 0U, hb+1) )
-		return 1;
-
-	if (c > hmax->at(hb))
-		hmax->at(hb) = c;
-	return true;
 }
 
 // Save Iterators which point to just past the end of a Trajectory Index.
@@ -732,199 +659,3 @@ bool Trace( ListOfHBonds **HBonds,
 	return(true);
 }
 
-int makeHistograms( std::ostream *out,
-                     std::vector<ListOfHBonds *> HBStrings,
-                     std::string CC, unsigned int NumBins,
-                     struct PBC *Cell, unsigned int TrjIdx,
-                     bool POVRAY)
-{
-	unsigned int MaxChainLength = 0;
-	unsigned int MaxLoopSize = 0;
-	double EndToEndLength;
-
-	/*
-	 * Go through the vector of HBond strings and:
-	 *  Bin Chain Lengths                             (1D)
-	 *  Bin Chain Lengths of only Closed Loops        (1D)
-	 *  Bin Molecule Switches for each Chain Length   (2D)
-	 *  Bin Molecules in Chain, for each Chain Length (2D)
-	 */
-
-	// Zero all histogram bins. Set 20 elements initially.
-	vui hChainLength(20,0);
-	vui hClosedLoop(20,0);
-	
-	vvui hSwitchesInChain( 20, vui (20,0));
-	vvui hMoleculesInChain( 20, vui (20,0));
-
-	vui MaxSwitchesInChain(20,0);
-	vui MaxMoleculesInChain(20,0);
-	// All histograms zeroed.
-
-	for( unsigned int i=0; i < HBStrings.size(); i++ )
-	{
-		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
-			continue;
-
-		unsigned int HBCount        = HBStrings[i]->AtomCount();
-		unsigned int SwitchingCount = HBStrings[i]->SwitchingCount();
-		unsigned int MoleculeCount  = HBStrings[i]->MoleculeCount();
-
-		// Bin the chain lengths.
-		if( !Bin(&hChainLength, &MaxChainLength, HBCount) )
-			return 1;
-
-		// Bin the chain lengths for only closed loops.
-		if ( HBStrings[i]->ClosedLoop() )
-		{
-			if( !Bin(&hClosedLoop, &MaxLoopSize, HBCount) )
-				return 1;
-		}
-
-		// Bin the number of molecule switches for each chain length.
-		if( !Bin(&hSwitchesInChain, &MaxSwitchesInChain,
-		         HBCount, SwitchingCount) )
-			return 1;
-
-		// Tabulate the number of molecules in each chain length.
-		if ( !Bin(&hMoleculesInChain,&MaxMoleculesInChain,
-		          HBCount,MoleculeCount) )
-			return 1;
-	}
-
-	OFmt colE2E(0,6);
-
-	// Header for povray file.
-	if (POVRAY)
-	{
-		*out << "#version 3.6;" << "\n";
-		*out << "global_settings {  assumed_gamma 1.0 }" << "\n";
-		*out << "Camera_LookAt( " << Cell->x.at(TrjIdx) << ", "
-		                          << Cell->y.at(TrjIdx) << ", "
-		                          << Cell->z.at(TrjIdx) << " )" << "\n";
-		*out << "PBC( " << Cell->x.at(TrjIdx) << ", "
-		                << Cell->y.at(TrjIdx) << ", "
-		                << Cell->z.at(TrjIdx) << " )" << "\n";
-	}
-
-	// Printout information about each hbond string.
-	for( unsigned int i=0; i < HBStrings.size(); i++ )
-	{
-		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
-			continue;
-
-		*out << "\n\n";
-		*out << CC << " Current Element : " << i << "\n";
-		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
-		*out << "\n";
-
-		// Note if this is a closed loop.
-		if ( HBStrings[i]->ClosedLoop() )
-			*out << CC << " Closed Loop" << "\n";
-
-		*out << CC << " Molecules : "
-		          << HBStrings[i]->MoleculeCount() << "\n";
-
-		*out << CC << " Unique forcefields : "
-		          << HBStrings[i]->ForcefieldCount() << "\n";
-
-		*out << CC
-		          << " Times chain switched between Molecules (switching) : "
-		          << HBStrings[i]->SwitchingCount() << "\n";
-
-		*out << CC << " Periodic boundary conditions applied."
-		          << "\n";
-		// Show the Chain atoms, molecules and coordinates
-		EndToEndLength = HBStrings[i]->PrintAll(out, *Cell, TrjIdx, POVRAY);
-		*out << CC << " Chain end-to-end distance: ";
-		*out << colE2E << EndToEndLength << "\n";
-	}
-
-	// Printout Histograms
-
-	// Chain Length histogram table header
-	unsigned int MaxBarLength = 62;
-	*out << CC << "\n" << CC;
-	*out << " Atoms/HBonds |Count| (For all Chains, including Closed Loops)";
-	*out << "\n";
-	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
-	// number of atoms, so use a step length of 2.
-	PrintHistogramChain( out,
-	                     hChainLength,
-	                     MaxChainLength, 3,
-	                     2, MaxBarLength,
-	                     NumBins,CC);
-
-	// Closed Loop histogram table header
-	*out << CC <<"\n" << CC 
-	          << " Atoms/HBonds |Count| (For Closed Loops)" << "\n";
-	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
-	// number of atoms, so use a step length of 2.
-	PrintHistogramChain( out,
-	                     hClosedLoop,
-	                     MaxLoopSize, 3,
-	                     2, MaxBarLength,
-	                     NumBins,CC);
-
-	// Molecules in each Chain histogram
-
-	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
-	// number of atoms, so increase counter by 2 for each step.
-	unsigned int MaxChainL;
-	if ( NumBins > 0 )
-		MaxChainL = NumBins;
-	else
-		MaxChainL = MaxChainLength;
-
-	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
-	{
-		// Number of Switches histogram table header
-		*out << CC << "\n" << CC 
-		          << " Switching |Count| (For Chain length of " << chainL << ")"
-		          << "\n";
-
-		if ( chainL > MaxChainLength )
-		{
-			vui dummy;
-			PrintHistogramMolecules( out,
-			                         dummy,
-			                         0, 0,
-			                         1, MaxBarLength,
-			                         NumBins, CC);
-		}
-		else
-			PrintHistogramMolecules( out,
-									 hSwitchesInChain[chainL],
-									 MaxSwitchesInChain[chainL],0,
-									 1, MaxBarLength,
-									 NumBins, CC);
-	}
-
-	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
-	// number of atoms, so increase counter by 2 for each step.
-
-	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
-	{
-		// Number of Molecules histogram table header
-		*out << CC << "\n" << CC 
-		          << " Molecules |Count| (For Chain length of " << chainL << ")"
-		          << "\n";
-
-		if ( chainL > MaxChainLength)
-		{
-			vui dummy;
-			PrintHistogramMolecules( out,
-									 dummy,
-									 0, 1,
-									 1, MaxBarLength,
-									 NumBins, CC);
-		}
-		else
-			PrintHistogramMolecules( out,
-									 hMoleculesInChain[chainL],
-									 MaxMoleculesInChain[chainL], 1,
-									 1, MaxBarLength,
-									 NumBins, CC);
-	}
-	return(0);
-}

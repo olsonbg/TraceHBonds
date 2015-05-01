@@ -1,20 +1,18 @@
 #include "ListOfHBonds.h"
 
 ListOfHBonds::ListOfHBonds()
-  : size(0), Beginning(NULL)
+  : size(0), HBsize(0), Beginning(NULL)
 {
 }
 
-unsigned int ListOfHBonds::AtomCount()
-{
-	return size;
-}
+unsigned int ListOfHBonds::AtomCount() {
+	return size; }
 
+unsigned int ListOfHBonds::HydrogenBondCount() {
+	return HBsize; }
 
-struct HydrogenBond *ListOfHBonds::Begin()
-{
-	return(Beginning);
-}
+struct HydrogenBond *ListOfHBonds::Begin() {
+	return(Beginning); }
 
 struct HydrogenBond *ListOfHBonds::End()
 {
@@ -70,6 +68,45 @@ unsigned int ListOfHBonds::CountUniqStr( std::vector< std::string >s )
 	return(word_count.size());
 }
 
+std::vector< double >
+ListOfHBonds::donorAcceptorDistances()
+{
+	std::vector< double >distances;
+	struct HydrogenBond *current = Begin();
+
+	while (current != NULL)
+	{
+		distances.push_back(current->acceptorDonorDistance);
+		current = current->Next;
+	}
+	return(distances);
+}
+
+// Coordinates of the donor and acceptor atoms in the chain.
+std::vector< Point *>
+ListOfHBonds::nonHydrogenCoordinates()
+{
+	std::vector< Point *>p;
+	struct HydrogenBond *current = Begin();
+
+	std::vector< Point > *d;
+	std::vector< Point > *a = &(current->acceptor->p);
+
+	while ( current != NULL)
+	{
+		p.push_back( &(current->donor->p.at(TrajectoryIndex())) );
+
+		if ( current->Next == NULL )
+		{
+			p.push_back( &(current->acceptor->p.at(TrajectoryIndex())) );
+		}
+
+		current = current->Next;
+	}
+
+
+	return(p);
+}
 // Count how many unique molecules are on this chain of
 // hydrogen bonds.
 unsigned int ListOfHBonds::MoleculeCount()
@@ -119,6 +156,8 @@ int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 	if ( Item->Previous != NULL )
 		Item->Previous->Next = Item;
 
+	++HBsize;
+
 	if( Begin() == NULL )
 		size += 3;
 	else
@@ -142,25 +181,25 @@ void ListOfHBonds::PrintAll(unsigned int TrjIdx)
 	while (current != NULL )
 	{
 		OFmt col(9,4);
-		std::cout << col << current->donor->x.at(TrjIdx) << " ";
-		std::cout << col << current->donor->y.at(TrjIdx) << " ";
-		std::cout << col << current->donor->z.at(TrjIdx);
+		std::cout << col << current->donor->p.at(TrjIdx).x() << " ";
+		std::cout << col << current->donor->p.at(TrjIdx).y() << " ";
+		std::cout << col << current->donor->p.at(TrjIdx).z();
 		std::cout << " [" << current->donor->Type << "]";
 		std::cout << "  " << current->donor->Molecule;
 		std::cout << "  " << current->donor->ForceField << "\n";
 
-		std::cout << col << current->hydrogen->x.at(TrjIdx) << " ";
-		std::cout << col << current->hydrogen->y.at(TrjIdx) << " ";
-		std::cout << col << current->hydrogen->z.at(TrjIdx);
+		std::cout << col << current->hydrogen->p.at(TrjIdx).x() << " ";
+		std::cout << col << current->hydrogen->p.at(TrjIdx).y() << " ";
+		std::cout << col << current->hydrogen->p.at(TrjIdx).z();
 		std::cout << " [" << current->hydrogen->Type << "]";
 		std::cout << "  " << current->hydrogen->Molecule;
 		std::cout << "  " << current->hydrogen->ForceField << "\n";
 
 		if ( current == End() )
 		{
-			std::cout << col << current->acceptor->x.at(TrjIdx) << " ";
-			std::cout << col << current->acceptor->y.at(TrjIdx) << " ";
-			std::cout << col << current->acceptor->z.at(TrjIdx);
+			std::cout << col << current->acceptor->p.at(TrjIdx).x() << " ";
+			std::cout << col << current->acceptor->p.at(TrjIdx).y() << " ";
+			std::cout << col << current->acceptor->p.at(TrjIdx).z();
 			std::cout << " [" << current->acceptor->Type << "]";
 			std::cout << "  " << current->acceptor->Molecule;
 			std::cout << "  " << current->acceptor->ForceField << "\n";
@@ -181,21 +220,21 @@ void ListOfHBonds::PrintAllPovRay(unsigned int TrjIdx)
 	{
 		OFmt col(9,4);
 		std::cout << "\t<";
-		std::cout << col << current->donor->x.at(TrjIdx) << ", ";
-		std::cout << col << current->donor->y.at(TrjIdx) << ",  ";
-		std::cout << col << current->donor->z.at(TrjIdx) << ">,0.7" << "\n";
+		std::cout << col << current->donor->p.at(TrjIdx).x() << ", ";
+		std::cout << col << current->donor->p.at(TrjIdx).y() << ",  ";
+		std::cout << col << current->donor->p.at(TrjIdx).z() << ">,0.7" << "\n";
 
 		std::cout << "\t<";
-		std::cout << col << current->hydrogen->x.at(TrjIdx) << ", ";
-		std::cout << col << current->hydrogen->y.at(TrjIdx) << ",  ";
-		std::cout << col << current->hydrogen->z.at(TrjIdx) << ">,0.7" << "\n";
+		std::cout << col << current->hydrogen->p.at(TrjIdx).x() << ", ";
+		std::cout << col << current->hydrogen->p.at(TrjIdx).y() << ",  ";
+		std::cout << col << current->hydrogen->p.at(TrjIdx).z() << ">,0.7" << "\n";
 
 		if ( current == End() )
 		{
 			std::cout << "\t<";
-			std::cout << col << current->acceptor->x.at(TrjIdx) << ", ";
-			std::cout << col << current->acceptor->y.at(TrjIdx) << ",  ";
-			std::cout << col << current->acceptor->z.at(TrjIdx) << ">,0.7" << "\n";
+			std::cout << col << current->acceptor->p.at(TrjIdx).x() << ", ";
+			std::cout << col << current->acceptor->p.at(TrjIdx).y() << ",  ";
+			std::cout << col << current->acceptor->p.at(TrjIdx).z() << ">,0.7" << "\n";
 		}
 
 		current = current->Next;
@@ -210,27 +249,27 @@ double ListOfHBonds::Round (double r,double f=1.0)
 	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
 }
 
-// Minimum Image distance of atom A from coordinate r.
-// returns x,y,z as a vector of doubles.
-std::vector<double> ListOfHBonds::MinimumImage( struct thbAtom *A,
-                                                unsigned int TrjIdx,
-                                                std::vector<double> r,
-                                                struct PBC Cell)
+// Minimum Image vector of atom A from coordinate r.
+Point ListOfHBonds::MinimumImage( struct thbAtom *A,
+                                  unsigned int TrjIdx,
+                                  Point r,
+                                  struct PBC Cell)
 {
-	std::vector<double> d;
-	double Nx, Ny, Nz;
+	// std::vector<double> d;
+	// double Nx, Ny, Nz;
 
 	// Take care of periodic boundary conditions.
 	// Minimum Image calculation.
-	Nx = Round( (A->x.at(TrjIdx) - r[0])/Cell.x.at(TrjIdx));
-	Ny = Round( (A->y.at(TrjIdx) - r[1])/Cell.y.at(TrjIdx));
-	Nz = Round( (A->z.at(TrjIdx) - r[2])/Cell.z.at(TrjIdx));
+	// Nx = Round( (A->x.at(TrjIdx) - r[0])/Cell.x.at(TrjIdx));
+	// Ny = Round( (A->y.at(TrjIdx) - r[1])/Cell.y.at(TrjIdx));
+	// Nz = Round( (A->z.at(TrjIdx) - r[2])/Cell.z.at(TrjIdx));
 
-	d.push_back( A->x.at(TrjIdx) - Nx*Cell.x.at(TrjIdx) );
-	d.push_back( A->y.at(TrjIdx) - Ny*Cell.y.at(TrjIdx) );
-	d.push_back( A->z.at(TrjIdx) - Nz*Cell.z.at(TrjIdx) );
+	// d.push_back( A->x.at(TrjIdx) - Nx*Cell.x.at(TrjIdx) );
+	// d.push_back( A->y.at(TrjIdx) - Ny*Cell.y.at(TrjIdx) );
+	// d.push_back( A->z.at(TrjIdx) - Nz*Cell.z.at(TrjIdx) );
 
-	return(d);
+	// return A->p.at(TrjIdx).minimumImage(r, Cell.p.at(TrjIdx) );
+	return r.minimumImage( A->p.at(TrjIdx), Cell.p.at(TrjIdx) ) ;
 }
 
 double ListOfHBonds::PrintAll( std::ostream *out,
@@ -239,21 +278,20 @@ double ListOfHBonds::PrintAll( std::ostream *out,
                                bool POVRAY )
 {
 	struct HydrogenBond *current;
-	std::vector<double>r;
-	double initial_x, initial_y, initial_z;
 	double EndToEndLength;
 
 	current = Begin();
 
-	initial_x = current->donor->x.at(TrjIdx);
-	initial_y = current->donor->y.at(TrjIdx);
-	initial_z = current->donor->z.at(TrjIdx);
+	Point initial( current->donor->p.at(TrjIdx).x(),
+	               current->donor->p.at(TrjIdx).y(),
+	               current->donor->p.at(TrjIdx).z() );
 
-	r.push_back(current->donor->x.at(TrjIdx));
-	r.push_back(current->donor->y.at(TrjIdx));
-	r.push_back(current->donor->z.at(TrjIdx));
+	
+	Point r( current->donor->p.at(TrjIdx).x(),
+	         current->donor->p.at(TrjIdx).y(),
+	         current->donor->p.at(TrjIdx).z() );
 
-	if (POVRAY) 
+	if (POVRAY)
 		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount() 
 		          << "," << "\n";
 
@@ -264,43 +302,47 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 	{
 		if (POVRAY)
 		{
-			r = MinimumImage( current->donor, TrjIdx, r, Cell );
-			*out << "\t<";
-			*out << colX << Round(r[0],10000.0) << ", ";
-			*out << colY << Round(r[1],10000.0) << ", ";
-			*out << colZ << Round(r[2],10000.0) << ">,0.7" << "\n";
+			if ( current != Begin() )
+				r = r + MinimumImage( current->donor, TrjIdx, r, Cell );
 
-			r = MinimumImage( current->hydrogen, TrjIdx, r, Cell );
 			*out << "\t<";
-			*out << colX << Round(r[0],10000.0) << ", ";
-			*out << colY << Round(r[1],10000.0) << ", ";
-			*out << colZ << Round(r[2],10000.0) << ">,0.7" << "\n";
+			*out << colX << Round(r.x(),10000.0) << ", ";
+			*out << colY << Round(r.y(),10000.0) << ", ";
+			*out << colZ << Round(r.z(),10000.0) << ">,0.7" << "\n";
+
+			r = r + MinimumImage( current->hydrogen, TrjIdx, r, Cell );
+			*out << "\t<";
+			*out << colX << Round(r.x(),10000.0) << ", ";
+			*out << colY << Round(r.y(),10000.0) << ", ";
+			*out << colZ << Round(r.z(),10000.0) << ">,0.7" << "\n";
 
 			if ( current == End() )
 			{
-				r = MinimumImage( current->acceptor, TrjIdx, r, Cell );
+				r = r + MinimumImage( current->acceptor, TrjIdx, r, Cell );
 				*out << "\t<";
-				*out << colX << Round(r[0],10000.0) << ", ";
-				*out << colY << Round(r[1],10000.0) << ", ";
-				*out << colZ << Round(r[2],10000.0) << ">,0.7" << "\n";
+				*out << colX << Round(r.x(),10000.0) << ", ";
+				*out << colY << Round(r.y(),10000.0) << ", ";
+				*out << colZ << Round(r.z(),10000.0) << ">,0.7" << "\n";
 			}
 		}
 		else
 		{
-			r = MinimumImage( current->donor, TrjIdx, r, Cell );
-			*out << colX << Round(r[0],10000.0) << " ";
-			*out << colY << Round(r[1],10000.0) << " ";
-			*out << colZ << Round(r[2],10000.0);
+			if ( current != Begin() )
+				r = r + MinimumImage( current->donor, TrjIdx, r, Cell );
+
+			*out << colX << Round(r.x(),10000.0) << " ";
+			*out << colY << Round(r.y(),10000.0) << " ";
+			*out << colZ << Round(r.z(),10000.0);
 
 			*out << " [" << current->donor->Type << "]";
 			*out << "  " << current->donor->Molecule;
 			*out << "  " << current->donor->Name;
 			*out << "  " << current->donor->ForceField << "\n";
 
-			r = MinimumImage( current->hydrogen, TrjIdx, r, Cell );
-			*out << colX << Round(r[0],10000.0) << " ";
-			*out << colY << Round(r[1],10000.0) << " ";
-			*out << colZ << Round(r[2],10000.0);
+			r = r + MinimumImage( current->hydrogen, TrjIdx, r, Cell );
+			*out << colX << Round(r.x(),10000.0) << " ";
+			*out << colY << Round(r.y(),10000.0) << " ";
+			*out << colZ << Round(r.z(),10000.0);
 
 			*out << " [" << current->hydrogen->Type << "]";
 			*out << "  " << current->hydrogen->Molecule;
@@ -309,10 +351,10 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 
 			if ( current == End() )
 			{
-				r = MinimumImage( current->acceptor, TrjIdx, r, Cell );
-				*out << colX << Round(r[0],10000.0) << " ";
-				*out << colY << Round(r[1],10000.0) << " ";
-				*out << colZ << Round(r[2],10000.0);
+				r = r + MinimumImage( current->acceptor, TrjIdx, r, Cell );
+				*out << colX << Round(r.x(),10000.0) << " ";
+				*out << colY << Round(r.y(),10000.0) << " ";
+				*out << colZ << Round(r.z(),10000.0);
 
 				*out << " [" << current->acceptor->Type << "]";
 				*out << "  " << current->acceptor->Molecule;
@@ -328,10 +370,11 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount() 
 		          << "}\n}" << "\n";
 
-	EndToEndLength = sqrt( pow(initial_x-r[0],2) +
-	                       pow(initial_y-r[1],2) +
-	                       pow(initial_z-r[2],2) );
+	// EndToEndLength = sqrt( pow(initial_x-r[0],2) +
+	//                        pow(initial_y-r[1],2) +
+	//                        pow(initial_z-r[2],2) );
 
+	EndToEndLength = initial.distance(r);
 	return(EndToEndLength);
 	// return(counter);
 }
@@ -347,6 +390,7 @@ int ListOfHBonds::AddAtBegin(struct HydrogenBond *NewItem)
 	if ( Item->Next != NULL )
 		(Item->Next)->Previous = Item;
 
+	++HBsize;
 
 	if ( Begin() == NULL )
 		size += 3;
@@ -411,6 +455,7 @@ bool ListOfHBonds::DeleteList()
 {
 	Beginning = NULL;
 	size = 0;
+	HBsize = 0;
 
 	return(true);
 }

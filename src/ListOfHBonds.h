@@ -5,12 +5,13 @@
 #include <math.h>
 #include <string.h>
 #include "OutputFormat.h"
+#include "Point.h"
 
 struct PBC
 {
 	// Store the PBC parameters for many frames(snapshots) in a trajectory.
-	std::vector<double> x, y, z;
-	std::vector<double> alpha, beta, gamma;
+	std::vector<class Point> p;
+	std::vector<class Point> angles; // alpha, beta, gamma;
 	unsigned int frames;
 	// 
 	// Assign default values
@@ -24,7 +25,7 @@ struct PBC
 struct thbAtom
 {
 	// Store the coordinates for many frames(snapshots) in a trajectory.
-	std::vector<double> x, y, z;
+	std::vector<class Point> p;
 
 	// These should not change with different frames(snapshots).
 	std::string Type; // E.g., C, H, N, Au.
@@ -56,6 +57,7 @@ struct thbAtom
 struct HydrogenBond
 {
 	double length;
+	double acceptorDonorDistance;
 	double angle;
 	struct thbAtom *hydrogen;
 	struct thbAtom *donor;
@@ -80,7 +82,7 @@ struct HydrogenBond
 		hydrogen = NULL;
 		donor = NULL;
 		acceptor = NULL;
-		length = angle = 0.0;
+		length = angle = acceptorDonorDistance = 0.0;
 		markedDuplicate = false;
 	}
 };
@@ -88,7 +90,8 @@ struct HydrogenBond
 class ListOfHBonds
 {
 	private:
-		int size;
+		unsigned int size;
+		unsigned int HBsize;
 		struct HydrogenBond *Beginning;
 		double Round (double r, double f);
 
@@ -96,14 +99,15 @@ class ListOfHBonds
 		// List Builder
 		ListOfHBonds();
 		unsigned int AtomCount();
+		unsigned int HydrogenBondCount();
 		// List Operations
 		struct HydrogenBond *Begin();
 		struct HydrogenBond *End();
 		int AddAtEnd(struct HydrogenBond *Item);
 		int AddAtBegin(struct HydrogenBond *Item);
 		struct HydrogenBond *Retrive(int pos);
-		struct HydrogenBond *Last();
-		struct HydrogenBond *First();
+		// struct HydrogenBond *Last();
+		// struct HydrogenBond *First();
 		bool DeleteList();
 		bool Find( struct HydrogenBond *Item);
 		unsigned int TrajectoryIndex();
@@ -111,13 +115,15 @@ class ListOfHBonds
 		unsigned int ForcefieldCount();
 		unsigned int MoleculeCount();
 		unsigned int CountUniqStr( std::vector< std::string >s );
+		std::vector< double >donorAcceptorDistances();
+		std::vector< Point *>nonHydrogenCoordinates();
 		bool linksAtBegin( struct HydrogenBond *Item);
 		bool linksAtEnd  ( struct HydrogenBond *Item);
 		bool ClosedLoop(void);
-		std::vector<double> MinimumImage( struct thbAtom *A,
-		                                  unsigned int TrjIdx,
-		                                  std::vector<double> r,
-		                                  struct PBC Cell);
+		Point MinimumImage( struct thbAtom *A,
+		                    unsigned int TrjIdx,
+		                    Point r,
+		                    struct PBC Cell);
 #ifdef DEBUG
 		void PrintAll(unsigned int TrjIdx);
 		void PrintAllPovRay(unsigned int TrjIdx);
@@ -127,4 +133,4 @@ class ListOfHBonds
 		                unsigned int TrjIdx,
 		                bool POVRAY);
 };
-#endif
+#endif // _ListOfHBonds_h

@@ -6,6 +6,7 @@
 #include <list>
 #include <queue>
 #include <pthread.h>
+#include "Point.h"
 
 
 //Shared data.
@@ -24,7 +25,7 @@ struct worker_data_s
 	unsigned int jobnum; // 0..num_threads-1
 	unsigned int num_threads;
 	std::vector<struct HydrogenBond *> *hb;
-	std::vector<double>cell;
+	Point cell;
 	std::vector<struct thbAtom *>*hydrogens;
 	std::vector<struct thbAtom *>*acceptors;
 	unsigned int TrjIdx;

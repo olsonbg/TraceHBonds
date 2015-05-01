@@ -412,8 +412,8 @@ int ReadCar(const char *filename,
 			if ( (Cell->frames)%50==0 )
 				VERBOSE_RMSG("Frames : " << Cell->frames);
 
-			if (Cell->frames == 200)
-				break;
+			// if (Cell->frames == 200)
+			//     break;
 
 			double CellX, CellY, CellZ;
 			double CellAlpha, CellBeta, CellGamma;
@@ -432,13 +432,15 @@ int ReadCar(const char *filename,
 				ifp.close();
 				return(1);
 			}
-			Cell->x.push_back( CellX);
-			Cell->y.push_back( CellY);
-			Cell->z.push_back( CellZ);
+			Cell->p.push_back( Point(CellX, CellY, CellZ) );
+			// Cell->x.push_back( CellX);
+			// Cell->y.push_back( CellY);
+			// Cell->z.push_back( CellZ);
 
-			Cell->alpha.push_back(CellAlpha);
-			Cell->beta.push_back( CellBeta);
-			Cell->gamma.push_back(CellGamma);
+			Cell->angles.push_back( Point(CellAlpha, CellBeta, CellGamma) );
+			// Cell->alpha.push_back(CellAlpha);
+			// Cell->beta.push_back( CellBeta);
+			// Cell->gamma.push_back(CellGamma);
 			Cell->frames++;
 		}
 		else // Must be a new atom.
@@ -456,9 +458,9 @@ int ReadCar(const char *filename,
 				ifp.close();
 				return(1);
 			}
-			atom->at(atomNum)->x.push_back(x);
-			atom->at(atomNum)->y.push_back(y);
-			atom->at(atomNum)->z.push_back(z);
+			atom->at(atomNum)->p.push_back( Point(x,y,z) );
+			// atom->at(atomNum)->y.push_back(y);
+			// atom->at(atomNum)->z.push_back(z);
 
 			// Update atomNum counter.
 			atomNum++;

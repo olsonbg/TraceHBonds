@@ -89,9 +89,6 @@ ListOfHBonds::nonHydrogenCoordinates()
 	std::vector< Point *>p;
 	struct HydrogenBond *current = Begin();
 
-	std::vector< Point > *d;
-	std::vector< Point > *a = &(current->acceptor->p);
-
 	while ( current != NULL)
 	{
 		p.push_back( &(current->donor->p.at(TrajectoryIndex())) );

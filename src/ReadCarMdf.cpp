@@ -320,8 +320,8 @@ int ReadCarMdf( const char *filename,
 	if ( !ReadMdf( MDFfile.c_str(), atom ) )
 		return(1);
 
-	VERBOSE_MSG("Connecting atoms...");
 
+	VERBOSE_MSG("Determining atom connections.");
 	doAtomConnections( atom );
 
 	std::string CARfile = filename;

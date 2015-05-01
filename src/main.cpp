@@ -1,13 +1,12 @@
 #include <cstdlib>
 #include <getopt.h>
-
-
 #include "main.h"
 #include "TraceHBonds.h"
 #include "Print.h"
 #include "Thread.h"
 #include "queue.h"
 #include "WorkerThreads.h"
+#include "cpu.h"
 
 bool THB_VERBOSE = false;
 
@@ -116,10 +115,10 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef PTHREADS
-	VERBOSE_MSG("Starting " << numCPUs << " threads.");
+	VERBOSE_MSG("Starting " << NumberOfCPUs() << " threads.");
 
 	std::vector<MyThread *>MyThreads;
-	for (unsigned int j=0; j < numCPUs; ++j)
+	for (unsigned int j=0; j < NumberOfCPUs(); ++j)
 	{
 		// Setup and start a thread.
 		MyThreads.push_back( new MyThread() );
@@ -144,16 +143,15 @@ int main(int argc, char *argv[])
 	wd.acceptors = NULL;
 	wd.hb = NULL;
 	wd.TrjIdx = 0;
-	wd.num_threads = numCPUs;
+	wd.num_threads = NumberOfCPUs();
 	wd.rCutoff = 0.0;
 	wd.angleCutoff = 0.0;
-	for (unsigned int j=0; j < numCPUs; ++j)
-	{
-		inQueue.push(wd);
-	}
+
+	for (unsigned int j=0; j < NumberOfCPUs(); ++j) {
+		inQueue.push(wd); }
 
 	// Wait for the threads to return.
-	for (unsigned int j=0; j < numCPUs; ++j) {
+	for (unsigned int j=0; j < NumberOfCPUs(); ++j) {
 		MyThreads.at(j)->join(); }
 #endif
 

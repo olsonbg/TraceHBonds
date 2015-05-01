@@ -6,6 +6,7 @@
 #include "WorkerThreads.h"
 #include "Histograms.h"
 #include "NeighborPrint.h"
+#include "cpu.h"
 
 extern bool THB_VERBOSE;
 
@@ -145,13 +146,13 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 
 #ifdef PTHREADS
 		// put the job in the queue.
-		for (unsigned int j=0; j < NumThreads; ++j)
+		for (unsigned int j=0; j < NumberOfCPUs(); ++j)
 		{
 			// setup the job data.
 			struct worker_data_s wd;
 			wd.jobtype = THREAD_JOB_HBS;
 			wd.jobnum = j;
-			wd.num_threads = NumThreads;
+			wd.num_threads = NumberOfCPUs();
 			wd.cell = cell;
 			wd.hydrogens = &hydrogens;
 			wd.acceptors = &acceptors;
@@ -166,7 +167,7 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		}
 
 		// Get the results from the threads.
-		for(unsigned int j=0; j < NumThreads; ++j)
+		for(unsigned int j=0; j < NumberOfCPUs(); ++j)
 		{
 			struct worker_data_s wd = outQueue.pop();
 			hb->reserve( hb->size() + wd.hb->size() );

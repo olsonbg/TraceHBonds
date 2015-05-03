@@ -59,6 +59,11 @@ bool Trace( ListOfHBonds **HBonds,
             std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
             std::vector<struct HydrogenBond *>::iterator iter_hbmain);
 
+std::vector< std::vector<bool> >
+Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
+               std::vector<struct HydrogenBond *>::iterator iter_hbmain,
+               unsigned int NumFrames);
+
 void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
             std::vector< std::vector<struct HydrogenBond *>::iterator > *);
 

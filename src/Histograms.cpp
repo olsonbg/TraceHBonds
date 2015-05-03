@@ -147,6 +147,84 @@ void getNeighbors( struct Histograms_s *Histograms,
 
 }
 
+void Correlations( std::ostream *out,
+                   std::vector< std::vector<bool> > *v )
+{
+	unsigned int numHBs = v->size();
+	unsigned int numFrames = v->at(0).size();
+	unsigned int fcutoff=numFrames/2;
+
+	// Initialize the histograms to zero (0).
+	vvui continuous  ( numHBs, vui(fcutoff, 0) );
+	vvui intermittent( numHBs, vui(fcutoff, 0) );
+
+	for( unsigned int h=0; h < numHBs; ++h)
+	{
+		for( unsigned int f1=0; f1 < fcutoff; ++f1)
+		{
+			unsigned int f2=f1+1;
+			if ( v->at(h).at(f1) ) {
+				continuous.at(h).at(0)++;
+				intermittent.at(h).at(0)++;
+				for( ; f2 < f1+fcutoff; ++f2)
+				{
+					if( ! v->at(h).at(f2) ) break;
+
+					continuous.at(h).at(f2-f1)++;
+					intermittent.at(h).at(f2-f1)++;
+				}
+				// Continue until fcutoff to calculate the intermittent
+				// hydrogen bond autocorrelation.
+				for(f2 = f2+1; f2 < f1+fcutoff; ++f2)
+				{
+					if( v->at(h).at(f2) )
+						intermittent.at(h).at(f2-f1)++;
+				}
+
+			}
+		}
+	}
+
+	// for( unsigned int h=0; h < c.size(); ++h)
+	// {
+		// for( unsigned int i=0; i < c.at(h).size(); ++i)
+			// *out << i << "\t" << c.at(h).at(i) << "\n";
+		// *out << "\n";
+	// }
+
+	// Save the continuous hydrogen bond autocorrelation data.
+	double max=0.0;
+	for( unsigned int i=0; i < fcutoff; ++i)
+	{
+		double d=0.0;
+		for( unsigned int h=0; h < continuous.size(); ++h) {
+			d += continuous.at(h).at(i); }
+
+		d = d/continuous.size();
+
+		if ( i == 0 ) max = d;
+
+		*out << i << "\t" << d/max << "\n";
+	}
+
+	*out << "\n";
+
+	// Save the intermittent hydrogen bond autocorrelation data.
+	max=0.0;
+	for( unsigned int i=0; i < fcutoff; ++i)
+	{
+		double d=0.0;
+		for( unsigned int h=0; h < intermittent.size(); ++h) {
+			d += intermittent.at(h).at(i); }
+
+		d = d/intermittent.size();
+
+		if ( i == 0 ) max = d;
+
+		*out << i << "\t" << d/max << "\n";
+	}
+}
+
 /*
  * Go through the vector of HBond strings and:
  *  Bin Chain Lengths                             (1D)

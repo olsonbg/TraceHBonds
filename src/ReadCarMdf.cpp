@@ -412,7 +412,7 @@ int ReadCar(const char *filename,
 			if ( (Cell->frames)%50==0 )
 				VERBOSE_RMSG("Frames : " << Cell->frames);
 
-			// if (Cell->frames == 200)
+			// if (Cell->frames == 100)
 			//     break;
 
 			double CellX, CellY, CellZ;

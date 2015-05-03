@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <getopt.h>
-#include "main.h"
 #include "TraceHBonds.h"
 #include "Print.h"
 #include "Thread.h"
@@ -153,6 +152,10 @@ int main(int argc, char *argv[])
 	// Wait for the threads to return.
 	for (unsigned int j=0; j < NumberOfCPUs(); ++j) {
 		MyThreads.at(j)->join(); }
+
+	std::vector<MyThread *>::iterator it=MyThreads.begin();
+	for (; it < MyThreads.end(); ++it) {
+		delete *it; }
 #endif
 
 	return(0);

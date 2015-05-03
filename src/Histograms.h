@@ -45,6 +45,9 @@ struct Histograms_s
 makeHistograms( std::vector<ListOfHBonds *> HBStrings,
                 unsigned int TrjIdx);
 
+void Correlations( std::ostream *out,
+                   std::vector< std::vector<bool> > *v );
+
 void getNeighbors( struct Histograms_s *Histograms,
                    std::vector<ListOfHBonds *> HBStrings,
                    struct PBC *Cell);

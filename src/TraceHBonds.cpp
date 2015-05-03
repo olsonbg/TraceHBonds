@@ -1,4 +1,3 @@
-#include "main.h"
 #include "Print.h"
 #include "OutputFormat.h"
 #include "TraceHBonds.h"
@@ -176,6 +175,7 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 			           wd.hb->end() );
 
 			wd.hb->clear();
+			delete wd.hb;
 		}
 #else
 		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
@@ -266,6 +266,20 @@ int doArcFile(char *ifilename,
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
 		getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
 
+	VERBOSE_MSG("Lifetime of a hydrogen bond.");
+	std::vector< std::vector<bool> >correlationData;
+	correlationData = Lifetime(&TrjIdx_iter, hb.begin(), NumFramesInTrajectory);
+
+	if ( 1 )
+	{
+		std::ofstream out;
+		out.open("Correlations.txt",std::ios::out);
+		if ( out.is_open() ) {
+			Correlations(&out, &correlationData); }
+
+		out.close();
+	}
+
 	VERBOSE_MSG("Saving neighbor histograms.");
 	if ( 1 )
 	{
@@ -294,7 +308,7 @@ int doArcFile(char *ifilename,
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 	{
 		if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
-			VERBOSE_RMSG("Saving histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
+			VERBOSE_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
 
 		std::stringstream ofilename;
 		ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
@@ -535,6 +549,61 @@ bool SameAtom( struct thbAtom *A,
 	return(false);
 }
 
+std::vector< std::vector<bool> >
+Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
+               std::vector<struct HydrogenBond *>::iterator iter_hbmain,
+               unsigned int NumFrames)
+{
+	// Look to see if this hydrogen bond exists in other frames.
+
+	std::vector<struct HydrogenBond *>::iterator iter_hb;
+	std::vector<struct HydrogenBond *>::iterator iter_begin;
+	std::vector<struct HydrogenBond *>::iterator iter_end;
+
+	iter_begin = TrjIdx_iter->at( 0 );
+	iter_end   = TrjIdx_iter->at( 1 );
+	unsigned int NumHBsInFrameZero=0;
+	for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb ) {
+		NumHBsInFrameZero++; }
+	std::cout << " Number of hydrogen bonds in initial frame: " << NumHBsInFrameZero << "\n";
+
+	std::vector< std::vector<bool> >b(NumHBsInFrameZero, std::vector<bool>(NumFrames,false));
+
+	for( unsigned int h=0; h < NumHBsInFrameZero; ++h)
+	{
+		b.at(h).at(0) = true;
+		for( unsigned int f=1; f < NumFrames; ++f )
+		{
+			// The range of hydrogen bonds in frame f.
+			iter_begin = TrjIdx_iter->at( f );
+			iter_end   = TrjIdx_iter->at( f+1 );
+
+			bool found = false;
+			for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
+			{
+				if ( ((*iter_hb)->hydrogen == (*(iter_hbmain+h))->hydrogen) &&
+				     ((*iter_hb)->acceptor == (*(iter_hbmain+h))->acceptor) )
+				{
+					// This matched the hydrogen bond in the first frame.
+					found = true;
+					break;
+				}
+			}
+			if (found == true) {
+				b.at(h).at(f) = true; }
+		}
+	}
+	for( std::vector< std::vector<bool> >::iterator vbit=b.begin(); vbit < b.begin()+1; ++vbit)
+	{
+		for( std::vector<bool>::iterator bit=vbit->begin(); bit < vbit->end(); ++bit)
+		{
+			std::cout << (*bit==true?"|":" ");
+		}
+	std::cout << "\n";
+	}
+
+	return b;
+}
 /*
  * Return values:
  *

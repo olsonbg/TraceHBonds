@@ -14,12 +14,6 @@ extern Queue<struct worker_data_s> inQueue;
 extern Queue<struct worker_data_s> outQueue;
 #endif
 
-inline
-double Round (double r,double f=1.0)
-{
-	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
-}
-
 void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
                               std::vector<struct thbAtom *> *hydrogendonors,
                               std::vector<struct thbAtom *> *acceptors,

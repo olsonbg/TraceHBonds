@@ -128,6 +128,7 @@ void getNeighbors( struct Histograms_s *Histograms,
 		// Make sure the coordinates are the minimum Image of their neighbors.
 		std::vector< Point >p;
 		p.push_back( *(pCoord.at(0)) );
+
 		for( unsigned int j = 1; j < pCoord.size(); ++j) {
 			Point image = p.at(j-1) + pCoord.at(j-1)->minimumImage( *(pCoord.at(j)), cellp );
 			p.push_back(image);

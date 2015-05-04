@@ -6,7 +6,9 @@ ListOfHBonds::ListOfHBonds()
 }
 
 unsigned int ListOfHBonds::AtomCount() {
-	return size; }
+	// return (2*HBsize + 1);
+	return size;
+}
 
 unsigned int ListOfHBonds::HydrogenBondCount() {
 	return HBsize; }

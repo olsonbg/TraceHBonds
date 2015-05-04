@@ -175,12 +175,11 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
 #endif
 	}
+	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 
 #ifdef PTHREADS
 	// Cleanup
 #endif
-
-	VERBOSE_MSG("");
 }
 
 int doArcFile(char *ifilename,
@@ -635,9 +634,9 @@ bool Trace( ListOfHBonds **HBonds,
 		bool FoundOne = false;
 		for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
 		{
-			// If this hydrogen bond has already been fully assigned to a
+			// If this hydrogen bond has already been assigned to a
 			// chain, skip it
-			if ( ( (*iter_hb)->Next != NULL) &&
+			if ( ( (*iter_hb)->Next != NULL) ||
 			     ( (*iter_hb)->Previous != NULL) )
 				continue;
 

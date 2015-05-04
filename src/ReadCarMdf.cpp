@@ -103,6 +103,7 @@ bool ReadMdf( const char *filename,
              std::vector<struct thbAtom *> *atom)
 {
 	struct thbAtom *NewAtom;
+	int lineno=0; // Line number of datafile, used for error messages.
 
 	int magicNum;
 
@@ -156,13 +157,14 @@ bool ReadMdf( const char *filename,
 
 	VERBOSE_MSG("Reading atom configuration from " << filename);
 
-	in.getline(line,255);
+	in.getline(line,255); lineno++;
 	bool ReadingMolecule = false;
 	while ( !in.eof() )
 	{
-		if( line[0] == '!' )
+		if( (line[0] == '!') ||
+		    (line[0] == ' ') )
 		{
-			in.getline(line,255);
+			in.getline(line,255); lineno++;
 			continue;
 		}
 
@@ -191,8 +193,8 @@ bool ReadMdf( const char *filename,
 			if ( n != 6 )
 			{
 				std::cerr << "Error. Expected 6 arguments, read "
-				          << n << "." << "\n";
-						  // << " L1: '" << lineno << "'" << "\n";
+				          << n << "." << "\n"
+						  << " L" << lineno <<": '" << line << "'" << "\n";
 
 				ifp.close();
 				return(1);
@@ -228,7 +230,7 @@ bool ReadMdf( const char *filename,
 
 		}
 
-		in.getline(line,255);
+		in.getline(line,255); lineno++;
 	}
 
 	return(true);

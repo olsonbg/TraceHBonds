@@ -71,6 +71,7 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 template<class T> void DeleteVectorPointers( T v );
 
 std::vector< std::vector<struct HydrogenBond *>::iterator >
-TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb);
+TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
+                         unsigned int NumFramesInTrajectory);
 
 #endif

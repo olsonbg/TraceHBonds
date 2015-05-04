@@ -216,7 +216,7 @@ int doArcFile(char *ifilename,
 	times["finding pairs"] = difftime(t_start, time(NULL));
 
 	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
-	TrjIdx_iter = TrajectoryIndexIterator( &hb );
+	TrjIdx_iter = TrajectoryIndexIterator( &hb, NumFramesInTrajectory );
 
 	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
 
@@ -226,7 +226,7 @@ int doArcFile(char *ifilename,
 	VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
 
 	// Update TrjIdx_iter after removing elements.
-	TrjIdx_iter = TrajectoryIndexIterator( &hb );
+	TrjIdx_iter = TrajectoryIndexIterator( &hb, NumFramesInTrajectory );
 
 	unsigned int TrjIdx;
 
@@ -272,6 +272,24 @@ int doArcFile(char *ifilename,
 
 		out.close();
 	}
+
+	// Save Hydrogen bond length H...Acceptor, and angle.
+	if ( 1 )
+	{
+		std::ofstream out;
+		out.open("Lengths-Angles.txt",std::ios::out);
+		if ( out.is_open() )
+		{
+			for( unsigned int i=0; i < hb.size(); i++ ) {
+				out << hb.at(i)->length << "\n"; }
+			out << "\n";
+			for( unsigned int i=0; i < hb.size(); i++ ) {
+				out << hb.at(i)->angle << "\n"; }
+		}
+
+		out.close();
+	}
+
 
 	VERBOSE_MSG("Saving neighbor histograms.");
 	if ( 1 )
@@ -362,26 +380,27 @@ int doArcFile(char *ifilename,
 
 // Save Iterators which point to just past the end of a Trajectory Index.
 // TrjIdx_iter.at(1) points to first element of TrjIdx 1. TrjIdx_iter.at(2)
-// points to just past the last element of TrjIdx 1, or the first element
-// of TrjIdx 2.
+// points to just past the last element of TrjIdx 1, or the first element of
+// TrjIdx 2. The hbs are grouped by trajectory index number, however the order
+// of the groups may not be in sequence.
 std::vector< std::vector<struct HydrogenBond *>::iterator >
-TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb)
+TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
+                         unsigned int N)
 {
-	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
+	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter(N+1, hb->begin());
 
-	TrjIdx_iter.push_back( hb->begin() );
+	unsigned int curIdx=(*hb->begin())->TrajIdx;
 
-	unsigned int counter=1;
 	std::vector<struct HydrogenBond *>::iterator it_hb;
 	for(it_hb = hb->begin(); it_hb < hb->end(); ++it_hb)
 	{
-		if ( (*it_hb)->TrajIdx == counter )
+		if ( (*it_hb)->TrajIdx != curIdx )
 		{
-			TrjIdx_iter.push_back( it_hb );
-			counter++;
+			curIdx = (*it_hb)->TrajIdx;
+			TrjIdx_iter.at(curIdx) = it_hb;
 		}
 	}
-	TrjIdx_iter.push_back( hb->end() );
+	TrjIdx_iter.at(N) = hb->end();
 
 	return(TrjIdx_iter);
 }

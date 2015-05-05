@@ -35,8 +35,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
           double TrjIdx,
-          double rCutoff, double angleCutoff,
-          unsigned int ThreadID, unsigned int Threads)
+          double rCutoff, double angleCutoff)
 {
 
 	std::vector<struct thbAtom *>::iterator it_h;
@@ -49,9 +48,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 
 	Point a,b,c;
 
-	for( it_h = hydrogens->begin() + ThreadID;
-	     it_h < hydrogens->end();
-	     it_h += Threads)
+	for( it_h = hydrogens->begin(); it_h < hydrogens->end(); ++it_h)
 	{
 		a = (*it_h)->p.at(TrjIdx);
 
@@ -131,55 +128,49 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 	Point cell;
 	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
 	{
-		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
-			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
-		
-
 		cell = Cell->p.at(TrjIdx);
 
 #ifdef PTHREADS
-		// put the job in the queue.
-		for (unsigned int j=0; j < NumberOfCPUs(); ++j)
-		{
-			// setup the job data.
-			struct worker_data_s wd;
-			wd.jobtype = THREAD_JOB_HBS;
-			wd.jobnum = j;
-			wd.num_threads = NumberOfCPUs();
-			wd.cell = cell;
-			wd.hydrogens = &hydrogens;
-			wd.acceptors = &acceptors;
-			wd.TrjIdx = TrjIdx;
-			wd.rCutoff = rCutoff;
-			wd.angleCutoff = angleCutoff;
+		struct worker_data_s wd;
+		wd.jobtype = THREAD_JOB_HBS;
+		wd.jobnum = TrjIdx;
+		wd.num_threads = NumberOfCPUs();
+		wd.cell = cell;
+		wd.hydrogens = &hydrogens;
+		wd.acceptors = &acceptors;
+		wd.TrjIdx = TrjIdx;
+		wd.rCutoff = rCutoff;
+		wd.angleCutoff = angleCutoff;
 
-			wd.hb = new std::vector<struct HydrogenBond *>;
-			wd.hb->reserve(5000);
+		wd.hb = new std::vector<struct HydrogenBond *>;
+		wd.hb->reserve(5000);
 
-			inQueue.push(wd);
-		}
+		inQueue.push(wd);
 
-		// Get the results from the threads.
-		for(unsigned int j=0; j < NumberOfCPUs(); ++j)
-		{
-			struct worker_data_s wd = outQueue.pop();
-			hb->reserve( hb->size() + wd.hb->size() );
-			hb->insert(hb->end(),
-			           wd.hb->begin(),
-			           wd.hb->end() );
-
-			wd.hb->clear();
-			delete wd.hb;
-		}
 #else
 		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
 #endif
 	}
-	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 
 #ifdef PTHREADS
-	// Cleanup
-#endif
+	// Get the results back from the worker threads.
+	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
+	{
+		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
+			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+
+		struct worker_data_s wd = outQueue.pop();
+		hb->reserve( hb->size() + wd.hb->size() );
+		hb->insert(hb->end(),
+		           wd.hb->begin(),
+		           wd.hb->end() );
+
+		wd.hb->clear();
+		delete wd.hb;
+	}
+	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+
+#endif // PTHREADS
 }
 
 int doArcFile(char *ifilename,

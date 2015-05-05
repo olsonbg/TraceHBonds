@@ -24,9 +24,7 @@ void *MyThread::run()
 				     wd.acceptors,
 				     wd.TrjIdx,
 				     wd.rCutoff,
-				     wd.angleCutoff,
-				     wd.jobnum,
-				     wd.num_threads );
+				     wd.angleCutoff );
 				break;
 			case THREAD_JOB_EXIT:
 				return NULL;

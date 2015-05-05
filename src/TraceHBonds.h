@@ -43,8 +43,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
-          double TrjIdx, double rCutoff, double angleCutoff,
-          unsigned int ThreadID=0, unsigned int Threads=1);
+          double TrjIdx, double rCutoff, double angleCutoff);
 
 int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,

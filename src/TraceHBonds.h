@@ -39,6 +39,12 @@ struct HydrogenBondMatching
 	std::set<std::string>Acceptors;
 };
 
+struct HydrogenBondIterator_s
+{
+	std::vector<struct HydrogenBond *>::iterator begin;
+	std::vector<struct HydrogenBond *>::iterator end;
+};
+
 void HBs( std::vector<struct HydrogenBond *> *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
@@ -55,21 +61,22 @@ bool SameAtom( struct thbAtom *A,
                struct thbAtom *B);
 
 bool Trace( ListOfHBonds **HBonds,
-            std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
+            std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
             std::vector<struct HydrogenBond *>::iterator iter_hbmain);
 
 std::vector< std::vector<bool> >
-Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
-               std::vector<struct HydrogenBond *>::iterator iter_hbmain,
-               unsigned int NumFrames);
+Lifetime( std::vector<struct HydrogenBondIterator_s > *TrjIdx_iter,
+          std::vector<struct HydrogenBond *>::iterator iter_hbmain,
+          unsigned int NumFrames);
 
 void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
-            std::vector< std::vector<struct HydrogenBond *>::iterator > *);
+                       std::vector< struct HydrogenBondIterator_s > *);
 
+void RemoveDuplicatesThread( struct HydrogenBondIterator_s );
 
 template<class T> void DeleteVectorPointers( T v );
 
-std::vector< std::vector<struct HydrogenBond *>::iterator >
+std::vector<struct HydrogenBondIterator_s>
 TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
                          unsigned int NumFramesInTrajectory);
 

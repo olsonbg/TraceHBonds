@@ -206,7 +206,7 @@ int doArcFile(char *ifilename,
 	AtomNeighbors( &hb, &atom, Cell, match, rCutoff, angleCutoff );
 	times["finding pairs"] = difftime(t_start, time(NULL));
 
-	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter;
+	std::vector< struct HydrogenBondIterator_s >TrjIdx_iter;
 	TrjIdx_iter = TrajectoryIndexIterator( &hb, NumFramesInTrajectory );
 
 	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
@@ -370,15 +370,17 @@ int doArcFile(char *ifilename,
 }
 
 // Save Iterators which point to just past the end of a Trajectory Index.
-// TrjIdx_iter.at(1) points to first element of TrjIdx 1. TrjIdx_iter.at(2)
-// points to just past the last element of TrjIdx 1, or the first element of
-// TrjIdx 2. The hbs are grouped by trajectory index number, however the order
-// of the groups may not be in sequence.
-std::vector< std::vector<struct HydrogenBond *>::iterator >
+// TrjIdx_iter.at(1).begin points to first element of TrjIdx 1.
+// TrjIdx_iter.at(1).end points to just past the last element of TrjIdx 1 The
+// hbs are grouped by trajectory index number, however the order of the groups
+// may not be in sequence.
+std::vector< struct HydrogenBondIterator_s >
 TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
                          unsigned int N)
 {
-	std::vector< std::vector<struct HydrogenBond *>::iterator >TrjIdx_iter(N+1, hb->begin());
+	struct HydrogenBondIterator_s HBit;
+	HBit.begin = hb->begin();
+	std::vector<struct HydrogenBondIterator_s>TrjIdx_iter(N,HBit);
 
 	unsigned int curIdx=(*hb->begin())->TrajIdx;
 
@@ -387,11 +389,13 @@ TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
 	{
 		if ( (*it_hb)->TrajIdx != curIdx )
 		{
+			unsigned int newIdx = (*it_hb)->TrajIdx;
+			TrjIdx_iter.at(newIdx).begin = it_hb;
+			TrjIdx_iter.at(curIdx).end = it_hb;
 			curIdx = (*it_hb)->TrajIdx;
-			TrjIdx_iter.at(curIdx) = it_hb;
 		}
 	}
-	TrjIdx_iter.at(N) = hb->end();
+	TrjIdx_iter.at(curIdx).end = hb->end();
 
 	return(TrjIdx_iter);
 }
@@ -406,21 +410,18 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
 {
 	std::vector<struct HydrogenBond *>::iterator iter_hb = hb->begin();
 
-	for( ; iter_hb < hb->end(); )
+	for( iter_hb = hb->end()-1; iter_hb >= hb->begin(); --iter_hb)
 	{
 		if ( (*iter_hb)->markedDuplicate )
 		{
 			delete *iter_hb;
-			iter_hb  = hb->erase(iter_hb);
-		}
-		else
-		{
-			++iter_hb;
+			iter_hb = hb->erase(iter_hb);
 		}
 	}
 }
 
 /*
+ * TODO: Make this work with threads.
  * Possible to have more than one:
  *
  *   - acceptor Oxygen (aO) with a single Hydrogen (H)
@@ -430,7 +431,21 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
  */
 
 void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
-                       std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter)
+                       std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter)
+{
+
+	for(unsigned int i=0; i < TrjIdx_iter->size()-1; ++i) {
+		RemoveDuplicatesThread(TrjIdx_iter->at(i));
+	}
+
+	VERBOSE_MSG("Removing Marked");
+	removeMarked(hb);
+	VERBOSE_MSG("Removed");
+	return;
+
+}
+
+void RemoveDuplicatesThread( struct HydrogenBondIterator_s HBit )
 {
 	double MinLength;
 
@@ -438,17 +453,11 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 	std::vector<struct HydrogenBond *>::iterator iter_hb;
 	std::vector<struct HydrogenBond *>::iterator iter_hbmin;
 
-	std::vector<struct HydrogenBond *>::iterator iter_begin;
-	std::vector<struct HydrogenBond *>::iterator iter_end;
-
-	if ( hb->size() == 0 )
-		return;
-
 	/*
 	 * Look for acceptor duplicates
 	 */
 
-	for( iter_hbmain = hb->begin(); iter_hbmain < hb->end()-1; ++iter_hbmain )
+	for( iter_hbmain = HBit.begin; iter_hbmain != HBit.end-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
 		if ( (*iter_hbmain)->markedDuplicate )
@@ -459,14 +468,11 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 		iter_hbmin = iter_hbmain;
 		MinLength = (*iter_hbmin)->length;
 
-		// The Range of HydrogenBonds to search.
-		iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx+1 );
-
 		/*
 		 * Go through entire vector looking for duplicate of
 		 * iter_hbmain acceptor, and find the one with the shortest length
 		 */
-		for( iter_hb = iter_hbmain+1; iter_hb < iter_end; ++iter_hb )
+		for( iter_hb = iter_hbmain+1; iter_hb != HBit.end; ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
@@ -495,7 +501,7 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 	// Look for H duplicates
 	//
 
-	for(iter_hbmain = hb->begin(); iter_hbmain < hb->end()-1; ++iter_hbmain )
+	for(iter_hbmain = HBit.begin; iter_hbmain != HBit.end-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
 		if ( (*iter_hbmain)->markedDuplicate )
@@ -506,13 +512,10 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 		iter_hbmin = iter_hbmain;
 		MinLength = (*iter_hbmin)->length;
 
-		// The Range of HydrogenBonds to search.
-		iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx+1 );
-
 		// Go through entire vector looking for duplicate of
 		// iter_Hmain, and find the one with the shortest length
 
-		for( iter_hb = iter_hbmain+1 ; iter_hb < iter_end; ++iter_hb )
+		for( iter_hb = iter_hbmain+1 ; iter_hb != HBit.end; ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
@@ -537,7 +540,6 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 		}
 	}
 
-	removeMarked(hb);
 	return;
 }
 
@@ -553,9 +555,9 @@ bool SameAtom( struct thbAtom *A,
 }
 
 std::vector< std::vector<bool> >
-Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
-               std::vector<struct HydrogenBond *>::iterator iter_hbmain,
-               unsigned int NumFrames)
+Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
+          std::vector<struct HydrogenBond *>::iterator iter_hbmain,
+          unsigned int NumFrames)
 {
 	// Look to see if this hydrogen bond exists in other frames.
 
@@ -563,14 +565,19 @@ Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_it
 	std::vector<struct HydrogenBond *>::iterator iter_begin;
 	std::vector<struct HydrogenBond *>::iterator iter_end;
 
-	iter_begin = TrjIdx_iter->at( 0 );
-	iter_end   = TrjIdx_iter->at( 1 );
+	iter_begin = TrjIdx_iter->at( 0 ).begin;
+	iter_end   = TrjIdx_iter->at( 0 ).end;
+
 	unsigned int NumHBsInFrameZero=0;
+
 	for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb ) {
 		NumHBsInFrameZero++; }
 	std::cout << " Number of hydrogen bonds in initial frame: " << NumHBsInFrameZero << "\n";
 
 	std::vector< std::vector<bool> >b(NumHBsInFrameZero, std::vector<bool>(NumFrames,false));
+
+	if (NumHBsInFrameZero == 0)
+		return b;
 
 	for( unsigned int h=0; h < NumHBsInFrameZero; ++h)
 	{
@@ -578,8 +585,8 @@ Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_it
 		for( unsigned int f=1; f < NumFrames; ++f )
 		{
 			// The range of hydrogen bonds in frame f.
-			iter_begin = TrjIdx_iter->at( f );
-			iter_end   = TrjIdx_iter->at( f+1 );
+			iter_begin = TrjIdx_iter->at( f ).begin;
+			iter_end   = TrjIdx_iter->at( f ).end;
 
 			bool found = false;
 			for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
@@ -615,7 +622,7 @@ Lifetime( std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_it
  *
  */
 bool Trace( ListOfHBonds **HBonds,
-            std::vector< std::vector<struct HydrogenBond *>::iterator > *TrjIdx_iter,
+            std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
             std::vector<struct HydrogenBond *>::iterator iter_hbmain)
 {
 	// DonorO --- Hydrogen ... AcceptorO
@@ -632,8 +639,8 @@ bool Trace( ListOfHBonds **HBonds,
 		return(false);
 
 	// The Range of HydrogenBonds to search.
-	iter_begin = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx );
-	iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx+1 );
+	iter_begin = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx ).begin;
+	iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx ).end;
 
 	// Starting a new chain.
 	(*HBonds)->AddAtBegin(*iter_hbmain);

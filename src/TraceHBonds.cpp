@@ -21,12 +21,28 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 {
 	std::vector<struct thbAtom *>::iterator it_a1;
 
+	// The user may have specified a match more than once, when an acceptor may
+	// hydrogen bond nore than once. I don't think a hydrogen can hydrogen bond
+	// more than once, but I'll leave the option here.
+	std::map<std::string,unsigned int>H;
+	std::map<std::string,unsigned int>A;
+
+	for(unsigned int i=0; i < match->Hydrogens.size(); ++i) {
+		H[ match->Hydrogens.at(i) ]++; }
+
+	for(unsigned int i=0; i < match->Acceptors.size(); ++i) {
+		A[ match->Acceptors.at(i) ]++; }
+
 	for( it_a1 = atom->begin(); it_a1 < atom->end(); ++it_a1)
 	{
-		if ( match->Hydrogens.find((*it_a1)->ForceField) != match->Hydrogens.end())
-			hydrogendonors->push_back(*it_a1);
-		else if( match->Acceptors.find((*it_a1)->ForceField) != match->Acceptors.end())
-			acceptors->push_back(*it_a1);
+		if ( H.find((*it_a1)->ForceField) != H.end())
+			hydrogendonors->insert(hydrogendonors->end(),
+			                       H[(*it_a1)->ForceField],
+			                       *it_a1);
+		else if( A.find((*it_a1)->ForceField) != A.end())
+			acceptors->insert(acceptors->end(),
+			                  A[(*it_a1)->ForceField],
+			                  *it_a1);
 	}
 }
 
@@ -107,7 +123,7 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 
 	if (THB_VERBOSE)
 	{
-		std::set<std::string>::iterator it;
+		std::vector<std::string>::iterator it;
 
 		VERBOSE_CMSG("Total hydrogen donors: " << hydrogens.size() << " [ ");
 		for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
@@ -485,6 +501,13 @@ void RemoveDuplicatesThread( struct HydrogenBondIterator_s HBit )
 			if ( (*iter_hb)->markedDuplicate )
 				continue;
 
+			// If this hydrogen bond is the same, then it's because the
+			// acceptor can hydrogen bond twice or more. So, skip this one.
+			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) &&
+			     SameAtom( (*iter_hbmain)->donor   , (*iter_hb)->donor   ) &&
+			     SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
+				continue;
+			
 			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) )
 			{
 				// duplicate = true;
@@ -526,6 +549,14 @@ void RemoveDuplicatesThread( struct HydrogenBondIterator_s HBit )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
+				continue;
+
+			// If this hydrogen bond is the same, then it's because the
+			// hydrogen can hydrogen bond twice or more (Is this possible?).
+			// So, skip this one.
+			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) &&
+			     SameAtom( (*iter_hbmain)->donor   , (*iter_hb)->donor   ) &&
+			     SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
 				continue;
 
 			if ( SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )

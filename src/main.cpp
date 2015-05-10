@@ -88,10 +88,10 @@ int main(int argc, char *argv[])
 				angleCutoff = atof(optarg);
 				break;
 			case 'H':
-				match.Hydrogens.insert(optarg);
+				match.Hydrogens.push_back(optarg);
 				break;
 			case 'A':
-				match.Acceptors.insert(optarg);
+				match.Acceptors.push_back(optarg);
 				break;
 			case 'h':
 			case '?':

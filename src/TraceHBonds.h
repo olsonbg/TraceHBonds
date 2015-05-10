@@ -35,8 +35,8 @@ extern bool THB_VERBOSE;
 
 struct HydrogenBondMatching
 {
-	std::set<std::string>Hydrogens;
-	std::set<std::string>Acceptors;
+	std::vector<std::string>Hydrogens;
+	std::vector<std::string>Acceptors;
 };
 
 struct HydrogenBondIterator_s

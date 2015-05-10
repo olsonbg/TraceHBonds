@@ -406,18 +406,25 @@ template<class T> void DeleteVectorPointers( T v )
 		delete v[i];
 }
 
+bool marked( struct HydrogenBond *hb )
+{
+	if ( hb->markedDuplicate )
+		return true;
+
+	return false;
+}
+
 void removeMarked( std::vector<struct HydrogenBond *> *hb )
 {
-	std::vector<struct HydrogenBond *>::iterator iter_hb = hb->begin();
+	std::vector<struct HydrogenBond *>::iterator pos;
 
-	for( iter_hb = hb->end()-1; iter_hb >= hb->begin(); --iter_hb)
-	{
-		if ( (*iter_hb)->markedDuplicate )
-		{
-			delete *iter_hb;
-			iter_hb = hb->erase(iter_hb);
-		}
-	}
+	pos = remove_if(hb->begin(), hb->end(), marked);
+
+	std::vector<struct HydrogenBond *>::iterator toDelete;
+	for( toDelete=pos; toDelete != hb->end(); toDelete++ ) {
+		delete *toDelete; }
+
+	hb->erase(pos, hb->end() );
 }
 
 /*

@@ -9,7 +9,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 # Use this for debugging with valgrind.
 set(CMAKE_CXX_FLAGS_DEBUG
-	"${CMAKE_CXX_FLAGS_DEBUG} -ggdb -O3")
+	"${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -ggdb -O3")
+
 
 # The version number.
 set (TraceHBonds_VERSION_MAJOR 1)
@@ -30,9 +31,5 @@ if( CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	message( "Making static binary." )
 	set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc")
 endif( CMAKE_SYSTEM_NAME STREQUAL "Windows")
-
-if( CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG")
-endif( CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 
 add_subdirectory(src)

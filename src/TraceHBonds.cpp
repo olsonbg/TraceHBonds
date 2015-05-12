@@ -125,12 +125,12 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 	{
 		std::vector<std::string>::iterator it;
 
-		VERBOSE_CMSG("Total hydrogen donors: " << hydrogens.size() << " [ ");
+		VERBOSE_CMSG("Total hydrogen donors per frame: " << hydrogens.size() << " [ ");
 		for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
 			VERBOSE_CMSG(*it << " ");
 		VERBOSE_MSG("]");
 
-		VERBOSE_CMSG("Total acceptors      : " << acceptors.size() << " [ ");
+		VERBOSE_CMSG("Total acceptors per frame     : " << acceptors.size() << " [ ");
 		for(it=match->Acceptors.begin(); it != match->Acceptors.end();++it)
 			VERBOSE_CMSG(*it << " ");
 		VERBOSE_MSG("]");
@@ -266,12 +266,14 @@ int doArcFile(char *ifilename,
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
 		getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
 
-	VERBOSE_MSG("Lifetime of a hydrogen bond.");
-	std::vector< std::vector<bool> >correlationData;
-	correlationData = Lifetime(&TrjIdx_iter, hb.begin(), NumFramesInTrajectory);
 
-	if ( 1 )
+	// Hydrogen bond lifetime correlations.
+	if ( 0 )
 	{
+		VERBOSE_MSG("Lifetime of a hydrogen bond.");
+		std::vector< std::vector<bool> >correlationData;
+		correlationData = Lifetime(&TrjIdx_iter, hb.begin(), NumFramesInTrajectory);
+
 		std::ofstream out;
 		out.open("Correlations.txt",std::ios::out);
 		if ( out.is_open() ) {
@@ -281,7 +283,7 @@ int doArcFile(char *ifilename,
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
-	if ( 1 )
+	if ( 0 )
 	{
 		std::ofstream out;
 		out.open("Lengths-Angles.txt",std::ios::out);
@@ -401,7 +403,7 @@ TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
 	unsigned int curIdx=(*hb->begin())->TrajIdx;
 
 	std::vector<struct HydrogenBond *>::iterator it_hb;
-	for(it_hb = hb->begin(); it_hb < hb->end(); ++it_hb)
+	for(it_hb = hb->begin(); it_hb != hb->end(); ++it_hb)
 	{
 		if ( (*it_hb)->TrajIdx != curIdx )
 		{
@@ -432,6 +434,20 @@ bool marked( struct HydrogenBond *hb )
 
 void removeMarked( std::vector<struct HydrogenBond *> *hb )
 {
+	// TODO: Why does remove_if not work when cross compiling for windows? It
+	// causes the program to crash. I'll have to look into this, but for now
+	// use a very simple alternative (which is not very efficient).
+#ifdef _WIN32
+	std::vector<struct HydrogenBond *>::iterator iter_hb = hb->begin();
+	for( iter_hb = hb->end()-1; iter_hb >= hb->begin(); --iter_hb)
+	{
+		if ( (*iter_hb)->markedDuplicate )
+		{
+			delete *iter_hb;
+			iter_hb = hb->erase(iter_hb);
+		}
+	}
+#else
 	std::vector<struct HydrogenBond *>::iterator pos;
 
 	pos = remove_if(hb->begin(), hb->end(), marked);
@@ -441,6 +457,7 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
 		delete *toDelete; }
 
 	hb->erase(pos, hb->end() );
+#endif
 }
 
 /*
@@ -457,7 +474,7 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
                        std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter)
 {
 
-	for(unsigned int i=0; i < TrjIdx_iter->size()-1; ++i) {
+	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
 		RemoveDuplicatesThread(TrjIdx_iter->at(i));
 	}
 

@@ -221,19 +221,19 @@ void ListOfHBonds::PrintAllPovRay(unsigned int TrjIdx)
 		std::cout << "\t<";
 		std::cout << col << current->donor->p.at(TrjIdx).x() << ", ";
 		std::cout << col << current->donor->p.at(TrjIdx).y() << ",  ";
-		std::cout << col << current->donor->p.at(TrjIdx).z() << ">,0.7" << "\n";
+		std::cout << col << current->donor->p.at(TrjIdx).z() << ">,ChainRadius" << "\n";
 
 		std::cout << "\t<";
 		std::cout << col << current->hydrogen->p.at(TrjIdx).x() << ", ";
 		std::cout << col << current->hydrogen->p.at(TrjIdx).y() << ",  ";
-		std::cout << col << current->hydrogen->p.at(TrjIdx).z() << ">,0.7" << "\n";
+		std::cout << col << current->hydrogen->p.at(TrjIdx).z() << ">,ChainRadius" << "\n";
 
 		if ( current == End() )
 		{
 			std::cout << "\t<";
 			std::cout << col << current->acceptor->p.at(TrjIdx).x() << ", ";
 			std::cout << col << current->acceptor->p.at(TrjIdx).y() << ",  ";
-			std::cout << col << current->acceptor->p.at(TrjIdx).z() << ">,0.7" << "\n";
+			std::cout << col << current->acceptor->p.at(TrjIdx).z() << ">,ChainRadius" << "\n";
 		}
 
 		current = current->Next;
@@ -293,13 +293,13 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			*out << "\t<";
 			*out << colX << Round(r.x(),10000.0) << ", ";
 			*out << colY << Round(r.y(),10000.0) << ", ";
-			*out << colZ << Round(r.z(),10000.0) << ">,0.7" << "\n";
+			*out << colZ << Round(r.z(),10000.0) << ">,ChainRadius" << "\n";
 
 			r = r + MinimumImage( current->hydrogen, TrjIdx, r, Cell );
 			*out << "\t<";
 			*out << colX << Round(r.x(),10000.0) << ", ";
 			*out << colY << Round(r.y(),10000.0) << ", ";
-			*out << colZ << Round(r.z(),10000.0) << ">,0.7" << "\n";
+			*out << colZ << Round(r.z(),10000.0) << ">,ChainRadius" << "\n";
 
 			if ( current == End() )
 			{
@@ -307,7 +307,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 				*out << "\t<";
 				*out << colX << Round(r.x(),10000.0) << ", ";
 				*out << colY << Round(r.y(),10000.0) << ", ";
-				*out << colZ << Round(r.z(),10000.0) << ">,0.7" << "\n";
+				*out << colZ << Round(r.z(),10000.0) << ">,ChainRadius" << "\n";
 			}
 		}
 		else
@@ -352,7 +352,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 	}
 
 	if (POVRAY)
-		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount() 
+		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount()
 		          << "}\n}" << "\n";
 
 

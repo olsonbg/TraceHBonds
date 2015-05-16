@@ -34,6 +34,7 @@ struct thbAtom
 	unsigned int ResidueNum;
 	std::string Molecule;
 	std::string ForceField;
+	unsigned int HydrogenBondMax;
 	// float BondOrder;
 	// Atoms connected to this one.
 	std::vector<struct thbAtom *> ConnectedAtom;
@@ -46,10 +47,7 @@ struct thbAtom
 	public:
 	thbAtom()
 	{
-		// Hydrogen = false;
-		// x = y = z = 0.0;
-		// length = angle = 0.0;
-		// markedDuplicate = false;
+		HydrogenBondMax = 0;
 	}
 };
 

@@ -14,6 +14,8 @@ extern Queue<struct worker_data_s> inQueue;
 extern Queue<struct worker_data_s> outQueue;
 #endif
 
+typedef std::vector<struct HydrogenBond *> HBVec;
+
 void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
                               std::vector<struct thbAtom *> *hydrogendonors,
                               std::vector<struct thbAtom *> *acceptors,
@@ -36,17 +38,25 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 	for( it_a1 = atom->begin(); it_a1 < atom->end(); ++it_a1)
 	{
 		if ( H.find((*it_a1)->ForceField) != H.end())
-			hydrogendonors->insert(hydrogendonors->end(),
-			                       H[(*it_a1)->ForceField],
-			                       *it_a1);
+		{
+			(*it_a1)->HydrogenBondMax = H[(*it_a1)->ForceField];
+			hydrogendonors->push_back( *it_a1 );
+			// hydrogendonors->insert(hydrogendonors->end(),
+			//                        H[(*it_a1)->ForceField],
+			//                        *it_a1);
+		}
 		else if( A.find((*it_a1)->ForceField) != A.end())
-			acceptors->insert(acceptors->end(),
-			                  A[(*it_a1)->ForceField],
-			                  *it_a1);
+		{
+			(*it_a1)->HydrogenBondMax = A[(*it_a1)->ForceField];
+			acceptors->push_back( *it_a1 );
+			// acceptors->insert(acceptors->end(),
+			//                   A[(*it_a1)->ForceField],
+			//                   *it_a1);
+		}
 	}
 }
 
-void HBs( std::vector<struct HydrogenBond *> *hb,
+void HBs( HBVec *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
@@ -62,11 +72,14 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 	double rCutoff2 = pow(rCutoff,2.0);
 	double r2;
 
-	Point a,b,c;
+	// Location of the Hydrogen (H) atom, the Acceptor (A) atom, and the Donor
+	// (D) covalently bonded to the Hydrogen.
+	Point H,A,D;
 
 	for( it_h = hydrogens->begin(); it_h < hydrogens->end(); ++it_h)
 	{
-		a = (*it_h)->p.at(TrjIdx);
+		// location of the hydrogen of interest.
+		H = (*it_h)->p.at(TrjIdx);
 
 		for( it_a = acceptors->begin(); it_a < acceptors->end(); ++it_a)
 		{
@@ -76,17 +89,19 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
 				continue;
 
-			b = (*it_a)->p.at(TrjIdx);
+			// location of the acceptor atom of interest.
+			A = (*it_a)->p.at(TrjIdx);
 
-			r = a.minimumImage( b, cell );
+			r = H.minimumImage( A, cell );
 			r2 = r.magnitudeSquared();
 
 			if ( r2 < rCutoff2)
 			{
 				// Distance cutoff is good, now check the angle.
-				c = (*it_h)->ConnectedAtom.at(0)->p.at(TrjIdx);
+				// location of the donor atom connected to the Hydrogen.
+				D = (*it_h)->ConnectedAtom.at(0)->p.at(TrjIdx);
 
-				double angle = a.angle(b,c);
+				double angle = H.angle(A,D);
 				if ( angle > angleCutoff )
 				{
 					struct HydrogenBond *NewHB;
@@ -99,7 +114,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
 					NewHB->TrajIdx  = TrjIdx;
 
-					NewHB->acceptorDonorDistance=c.minimumImageDistance(b,cell);
+					NewHB->acceptorDonorDistance=D.minimumImageDistance(A,cell);
 
 					hb->push_back(NewHB);
 				}
@@ -108,7 +123,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
 	}
 }
 
-void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
+void AtomNeighbors( HBVec *hb,
                     std::vector<struct thbAtom *> *atom,
                     struct PBC *Cell, struct HydrogenBondMatching *match,
                     double rCutoff, double angleCutoff )
@@ -135,7 +150,7 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 			VERBOSE_CMSG(*it << " ");
 		VERBOSE_MSG("]");
 
-		VERBOSE_MSG("Finding hydrogen bonds with Rc < " << rCutoff << " Angstroms, and angle > " << angleCutoff << " degrees.");
+		VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
 	}
 
 	unsigned int NumFramesInTrajectory = 0;
@@ -158,7 +173,7 @@ void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
 		wd.rCutoff = rCutoff;
 		wd.angleCutoff = angleCutoff;
 
-		wd.hb = new std::vector<struct HydrogenBond *>;
+		wd.hb = new HBVec;
 		wd.hb->reserve(5000);
 
 		inQueue.push(wd);
@@ -195,7 +210,7 @@ int doArcFile(char *ifilename,
               double rCutoff, double angleCutoff,
               int NumBins, bool POVRAY)
 {
-	std::vector<struct HydrogenBond *> hb;
+	HBVec hb;
 	std::vector<struct thbAtom *> atom;
 
 	std::map<std::string,double> times;
@@ -393,7 +408,7 @@ int doArcFile(char *ifilename,
 // hbs are grouped by trajectory index number, however the order of the groups
 // may not be in sequence.
 std::vector< struct HydrogenBondIterator_s >
-TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
+TrajectoryIndexIterator( HBVec *hb,
                          unsigned int N)
 {
 	struct HydrogenBondIterator_s HBit;
@@ -402,7 +417,7 @@ TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
 
 	unsigned int curIdx=(*hb->begin())->TrajIdx;
 
-	std::vector<struct HydrogenBond *>::iterator it_hb;
+	HBVec::iterator it_hb;
 	for(it_hb = hb->begin(); it_hb != hb->end(); ++it_hb)
 	{
 		if ( (*it_hb)->TrajIdx != curIdx )
@@ -424,21 +439,16 @@ template<class T> void DeleteVectorPointers( T v )
 		delete v[i];
 }
 
-bool marked( struct HydrogenBond *hb )
-{
-	if ( hb->markedDuplicate )
-		return true;
+bool marked( struct HydrogenBond *hb ) {
+	return hb->markedDuplicate;  }
 
-	return false;
-}
-
-void removeMarked( std::vector<struct HydrogenBond *> *hb )
+void removeMarked( HBVec *hb )
 {
 	// TODO: Why does remove_if not work when cross compiling for windows? It
 	// causes the program to crash. I'll have to look into this, but for now
 	// use a very simple alternative (which is not very efficient).
 #ifdef _WIN32
-	std::vector<struct HydrogenBond *>::iterator iter_hb = hb->begin();
+	HBVec::iterator iter_hb = hb->begin();
 	for( iter_hb = hb->end()-1; iter_hb >= hb->begin(); --iter_hb)
 	{
 		if ( (*iter_hb)->markedDuplicate )
@@ -448,11 +458,11 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
 		}
 	}
 #else
-	std::vector<struct HydrogenBond *>::iterator pos;
+	HBVec::iterator pos;
 
 	pos = remove_if(hb->begin(), hb->end(), marked);
 
-	std::vector<struct HydrogenBond *>::iterator toDelete;
+	HBVec::iterator toDelete;
 	for( toDelete=pos; toDelete != hb->end(); toDelete++ ) {
 		delete *toDelete; }
 
@@ -470,7 +480,7 @@ void removeMarked( std::vector<struct HydrogenBond *> *hb )
  * Find the all duplicates and keep the shortest Hydrogen Bond length.
  */
 
-void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
+void RemoveDuplicates( HBVec *hb,
                        std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter)
 {
 
@@ -485,140 +495,104 @@ void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
 
 }
 
+struct sort_Neighbors {
+	bool operator()(const HBVec::iterator &left, const HBVec::iterator &right)
+	{
+		return (*left)->length < (*right)->length;
+	}
+};
+
 void RemoveDuplicatesThread( struct HydrogenBondIterator_s HBit )
 {
-	double MinLength;
-
-	std::vector<struct HydrogenBond *>::iterator iter_hbmain;
-	std::vector<struct HydrogenBond *>::iterator iter_hb;
-	std::vector<struct HydrogenBond *>::iterator iter_hbmin;
+	HBVec::iterator iter_hbmain;
+	HBVec::iterator iter_hb;
 
 	/*
 	 * Look for acceptor duplicates
 	 */
 
-	for( iter_hbmain = HBit.begin; iter_hbmain != HBit.end-1; ++iter_hbmain )
+	for( iter_hbmain = HBit.begin; iter_hbmain < HBit.end-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
 		if ( (*iter_hbmain)->markedDuplicate )
 			continue;
 
-		// Save the iterators for the minimum distance HBond atoms.
-		// Set them to iter_?main initially.
-		iter_hbmin = iter_hbmain;
-		MinLength = (*iter_hbmin)->length;
+		// Store all hydrogen bonds which have the same acceptor atom as
+		// iter_hbmain.
+		std::vector< HBVec::iterator > Neighbors;
+		Neighbors.push_back( iter_hbmain );
 
-		/*
-		 * Go through entire vector looking for duplicate of
-		 * iter_hbmain acceptor, and find the one with the shortest length
-		 */
-		for( iter_hb = iter_hbmain+1; iter_hb != HBit.end; ++iter_hb )
+		for( iter_hb = iter_hbmain+1; iter_hb < HBit.end; ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
 				continue;
 
-			// If this hydrogen bond is the same, then it's because the
-			// acceptor can hydrogen bond twice or more. So, skip this one.
-			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) &&
-			     SameAtom( (*iter_hbmain)->donor   , (*iter_hb)->donor   ) &&
-			     SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
-				continue;
-			
-			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) )
-			{
-				// duplicate = true;
-				if ( (*iter_hb)->length < MinLength )
-				{
-					MinLength  = (*iter_hb)->length;
-					// Mark the old iter_?min as duplicated;
-					(*iter_hbmin)->markedDuplicate = true;
-					iter_hbmin = iter_hb;
-				}
-				else
-				{
-					// Mark this one as duplicated;
-					(*iter_hb)->markedDuplicate = true;
-				}
-			}
+			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) ) {
+				Neighbors.push_back( iter_hb ); }
 		}
+
+		// Sort the Neighbors vector by length, smallest first.
+		std::sort( Neighbors.begin(), Neighbors.end(), sort_Neighbors());
+
+		// Mark all but the shortest length hydrogen bond as duplicate
+		unsigned int HydrogenBondMax = (*iter_hbmain)->acceptor->HydrogenBondMax;
+		for( unsigned int i=HydrogenBondMax; i < Neighbors.size(); ++i) {
+				(*Neighbors[i])->markedDuplicate = true; }
 	}
 
 	//
 	// Look for H duplicates
 	//
 
-	for(iter_hbmain = HBit.begin; iter_hbmain != HBit.end-1; ++iter_hbmain )
+	for(iter_hbmain = HBit.begin; iter_hbmain < HBit.end-1; ++iter_hbmain )
 	{
 		// If this is already marked as a duplicate, skip it.
 		if ( (*iter_hbmain)->markedDuplicate )
 			continue;
 
-		// Save the iterator for the minimum distance HBond atoms.
-		// Set them to iter_?main initially.
-		iter_hbmin = iter_hbmain;
-		MinLength = (*iter_hbmin)->length;
+		// Store all hydrogen bonds which have the same hydrogen atom as
+		// iter_hbmain.
+		std::vector< HBVec::iterator > Neighbors;
+		Neighbors.push_back( iter_hbmain );
 
-		// Go through entire vector looking for duplicate of
-		// iter_Hmain, and find the one with the shortest length
-
-		for( iter_hb = iter_hbmain+1 ; iter_hb != HBit.end; ++iter_hb )
+		for( iter_hb = iter_hbmain+1 ; iter_hb < HBit.end; ++iter_hb )
 		{
 			// If this is already marked as a duplicate, skip it.
 			if ( (*iter_hb)->markedDuplicate )
 				continue;
 
-			// If this hydrogen bond is the same, then it's because the
-			// hydrogen can hydrogen bond twice or more (Is this possible?).
-			// So, skip this one.
-			if ( SameAtom( (*iter_hbmain)->acceptor, (*iter_hb)->acceptor) &&
-			     SameAtom( (*iter_hbmain)->donor   , (*iter_hb)->donor   ) &&
-			     SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
-				continue;
-
-			if ( SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) )
-			{
-				if ( (*iter_hb)->length < MinLength )
-				{
-					MinLength = (*iter_hb)->length;
-					// Mark the old iter_?min as duplicated;
-					(*iter_hbmin)->markedDuplicate = true;
-					iter_hbmin = iter_hb;
-				}
-				else
-				{
-					// This one isn't the minimum length.
-					// Mark this one as duplicated;
-					(*iter_hb)->markedDuplicate = true;
-				}
-			}
+			if ( SameAtom( (*iter_hbmain)->hydrogen, (*iter_hb)->hydrogen) ) {
+				Neighbors.push_back( iter_hb ); }
 		}
+
+		// Sort the Neighbors vector by length, smallest first.
+		std::sort( Neighbors.begin(), Neighbors.end(), sort_Neighbors());
+
+		// Mark all but the shortest length hydrogen bond as duplicate
+		unsigned int HydrogenBondMax = (*iter_hbmain)->hydrogen->HydrogenBondMax;
+		for( unsigned int i=HydrogenBondMax; i < Neighbors.size(); ++i) {
+				(*Neighbors[i])->markedDuplicate = true; }
 	}
 
 	return;
 }
 
 bool SameAtom( struct thbAtom *A,
-               struct thbAtom *B)
-{
+               struct thbAtom *B) {
+	return A == B; }
 
-	if ( A == B )
-		return(true);
-
-
-	return(false);
-}
 
 std::vector< std::vector<bool> >
 Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
-          std::vector<struct HydrogenBond *>::iterator iter_hbmain,
+          HBVec::iterator iter_hbmain,
           unsigned int NumFrames)
 {
 	// Look to see if this hydrogen bond exists in other frames.
 
-	std::vector<struct HydrogenBond *>::iterator iter_hb;
-	std::vector<struct HydrogenBond *>::iterator iter_begin;
-	std::vector<struct HydrogenBond *>::iterator iter_end;
+	HBVec::iterator iter_hb;
+	HBVec::iterator iter_begin;
+	HBVec::iterator iter_end;
 
 	iter_begin = TrjIdx_iter->at( 0 ).begin;
 	iter_end   = TrjIdx_iter->at( 0 ).end;
@@ -678,15 +652,14 @@ Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
  */
 bool Trace( ListOfHBonds **HBonds,
             std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
-            std::vector<struct HydrogenBond *>::iterator iter_hbmain)
+            HBVec::iterator iter_hbmain)
 {
 	// DonorO --- Hydrogen ... AcceptorO
 	// ... Denotes the Hydrogen bond.
 
-	std::vector<struct HydrogenBond *>::iterator iter_hb;
-
-	std::vector<struct HydrogenBond *>::iterator iter_begin;
-	std::vector<struct HydrogenBond *>::iterator iter_end;
+	HBVec::iterator iter_hb;
+	HBVec::iterator iter_begin;
+	HBVec::iterator iter_end;
 
 
 	// If this hydrogen bond has already been assigned to a chain, skip it

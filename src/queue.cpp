@@ -51,6 +51,6 @@ T Queue<T>::pop()
 	return(work);
 }
 
-// template class Queue<unsigned int>;
+// Explicit template instantiation
 template class Queue<struct worker_data_s>;
 #endif // PTHREADS

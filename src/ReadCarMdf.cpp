@@ -1,5 +1,8 @@
 #include "MagicNumber.h"
 #include "ReadCarMdf.h"
+#ifdef USE_LZMA
+#include "lzma.h"
+#endif
 
 extern bool THB_VERBOSE;
 
@@ -131,6 +134,13 @@ bool ReadMdf( const char *filename,
 	if ( magicNum == MAGICNUMBER_BZIP2 )
 	{
 		in.push(boost::iostreams::bzip2_decompressor());
+		ifp.open(filename,std::ios::in|std::ios::binary);
+	}
+#endif
+#ifdef USE_LZMA
+	if ( magicNum == MAGICNUMBER_LZMA )
+	{
+		in.push(lzma_input_filter());
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
@@ -371,6 +381,13 @@ int ReadCar(const char *filename,
 		ifp.open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
+#ifdef USE_LZMA
+	if ( magicNum == MAGICNUMBER_LZMA )
+	{
+		in.push(lzma_input_filter());
+		ifp.open(filename,std::ios::in|std::ios::binary);
+	}
+#endif
 
 	if ( magicNum == MAGICNUMBER_UNKNOWN )
 		ifp.open(filename,std::ios::in);
@@ -393,6 +410,7 @@ int ReadCar(const char *filename,
 	in.getline(line,82); lineno++;
 	while ( ! in.eof() )
 	{
+		// VERBOSE_MSG(":" << line);
 		if ( line[0] == '!' )
 		{}//	std::cout << "# Found a comment." << "\n";
 		else if ( ! strncmp(line, "Materials Studio Generated CAR File", 35) )

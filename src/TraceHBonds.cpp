@@ -271,19 +271,11 @@ int doArcFile(char *ifilename,
 	}
 	times["finding hydrogen bond strings"] = difftime(t_start, time(NULL));
 
-	// Make histograms.
-	VERBOSE_MSG("Generating size histograms.");
-	std::vector<struct Histograms_s> Histograms;
-	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-		Histograms.push_back( makeHistograms(HBStrings, TrjIdx) ); }
 
-	VERBOSE_MSG("Generating neighbor histograms.");
-	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-		getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
 
 
 	// Hydrogen bond lifetime correlations.
-	if ( 0 )
+	if ( 1 )
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		std::vector< std::vector<bool> >correlationData;
@@ -315,60 +307,74 @@ int doArcFile(char *ifilename,
 	}
 
 
-	VERBOSE_MSG("Saving neighbor histograms.");
-	if ( 1 )
-	{
-		std::ofstream out;
-		out.open("Neighbors.txt",std::ios::out);
-		if ( out.is_open() )
+	if ( 0 ) {
+		// Make histograms.
+		VERBOSE_MSG("Generating size histograms.");
+		std::vector<struct Histograms_s> Histograms;
+		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
+			Histograms.push_back( makeHistograms(HBStrings, TrjIdx) ); }
+
+		// Save the histograms.
+		const char *CC1 = "#";
+		const char *CC2 = "//";
+		std::string CC;
+
+		// Povray uses a different comment string.
+		if ( POVRAY )
+			CC = CC2;
+		else
+			CC = CC1;
+
+		t_start = time(NULL);
+		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 		{
-			Print_AllFrames(&out, &Histograms);
-			Print_CombineFrames(&out, &Histograms);
-			Print_CombineNeighbors(&out, &Histograms);
+			if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
+				VERBOSE_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
+
+			std::stringstream ofilename;
+			ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
+
+			std::ofstream out;
+			out.open(ofilename.str().c_str(),std::ios::out);
+			if ( out.is_open() )
+			{
+				// Header
+				out << CC
+					<< " PBC "
+					<< Cell->p.at(TrjIdx).x()      << " "
+					<< Cell->p.at(TrjIdx).y()      << " "
+					<< Cell->p.at(TrjIdx).z()      << " "
+					<< Cell->angles.at(TrjIdx).x() << " "
+					<< Cell->angles.at(TrjIdx).y() << " "
+					<< Cell->angles.at(TrjIdx).z()
+					<< "\n";
+
+				out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
+				out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
+				out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
+
+				// print the histograms and chains.
+				prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, POVRAY);
+
+				out.close();
+			}
 		}
 
-		out.close();
-	}
-	const char *CC1 = "#";
-	const char *CC2 = "//";
-	std::string CC;
-
-	// Povray uses a different comment string.
-	if ( POVRAY )
-		CC = CC2;
-	else
-		CC = CC1;
-
-	t_start = time(NULL);
-	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
-	{
-		if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
-			VERBOSE_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
-
-		std::stringstream ofilename;
-		ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
-
-		std::ofstream out;
-		out.open(ofilename.str().c_str(),std::ios::out);
-		if ( out.is_open() )
+		VERBOSE_MSG("Saving neighbor histograms.");
+		if ( 0 )
 		{
-			// Header
-			out << CC
-				<< " PBC "
-				<< Cell->p.at(TrjIdx).x()      << " "
-				<< Cell->p.at(TrjIdx).y()      << " "
-				<< Cell->p.at(TrjIdx).z()      << " "
-				<< Cell->angles.at(TrjIdx).x() << " "
-				<< Cell->angles.at(TrjIdx).y() << " "
-				<< Cell->angles.at(TrjIdx).z()
-				<< "\n";
+			VERBOSE_MSG("Generating neighbor histograms.");
+			for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
+				getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
 
-			out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
-			out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
-			out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
-			
-			// print the histograms and chains.
-			prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, POVRAY);
+			std::ofstream out;
+			out.open("Neighbors.txt",std::ios::out);
+			if ( out.is_open() )
+			{
+				Print_AllFrames(&out, &Histograms);
+				Print_CombineFrames(&out, &Histograms);
+				Print_CombineNeighbors(&out, &Histograms);
+			}
 
 			out.close();
 		}

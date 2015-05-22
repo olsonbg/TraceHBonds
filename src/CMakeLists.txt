@@ -1,8 +1,6 @@
-ADD_EXECUTABLE(TraceHBonds TraceHBonds.cpp ListOfHBonds.cpp
-               ReadCarMdf.cpp MagicNumber.cpp Print.cpp
-			   Histograms.cpp NeighborPrint.cpp SimpleMath.cpp
-			   Point.cpp cpu.cpp
-               WorkerThreads.cpp Thread.cpp queue.cpp main.cpp)
+# get all *.cpp files
+file(GLOB SRC_FILES *.cpp)
+ADD_EXECUTABLE(TraceHBonds ${SRC_FILES})
 
 # Link the executable to a library.
 FIND_PACKAGE( Boost REQUIRED COMPONENTS iostreams REQUIRED )
@@ -21,6 +19,13 @@ IF( BZIP2_FOUND )
 	INCLUDE_DIRECTORIES( ${BZIP2_INCLUDE_DIR} )
 	TARGET_LINK_LIBRARIES(TraceHBonds ${BZIP2_LIBRARIES} )
 endif()
+
+FIND_PACKAGE( LibLZMA )
+if ( LIBLZMA_FOUND )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_LZMA")
+	INCLUDE_DIRECTORIES( ${LIBLZMA_INCLUDE_DIRS} )
+	TARGET_LINK_LIBRARIES(TraceHBonds ${LIBLZMA_LIBRARIES} )
+endif ( LIBLZMA_FOUND )
 
 IF( NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	FIND_PACKAGE( ZLIB )

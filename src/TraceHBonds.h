@@ -45,11 +45,6 @@ struct HydrogenBondIterator_s
 	std::vector<struct HydrogenBond *>::iterator end;
 };
 
-void HBs( std::vector<struct HydrogenBond *> *hb,
-          Point cell,
-          std::vector<struct thbAtom *>*hydrogens,
-          std::vector<struct thbAtom *>*acceptors,
-          double TrjIdx, double rCutoff, double angleCutoff);
 
 int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
@@ -57,19 +52,10 @@ int doArcFile(char *ifilename,
               double rCutoff, double angleCutoff,
               int NumBins, bool POVRAY);
 
-bool SameAtom( struct thbAtom *A,
-               struct thbAtom *B);
 
-bool TraceThread( std::vector<ListOfHBonds *> *HBStrings,
-                  struct HydrogenBondIterator_s *HBit);
 
 std::vector< std::vector<bool> >
 Lifetime( std::vector<struct HydrogenBondIterator_s > *TrjIdx_iter );
-
-void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
-                       std::vector< struct HydrogenBondIterator_s > *);
-
-void RemoveDuplicatesThread( struct HydrogenBondIterator_s );
 
 template<class T> void DeleteVectorPointers( std::vector<T*> v );
 

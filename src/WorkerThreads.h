@@ -9,6 +9,9 @@
 #include "Point.h"
 #include "TraceHBonds.h"
 #include "ListOfHBonds.h"
+#include "Trace.h"
+#include "HydrogenBonds.h"
+#include "RemoveDuplicates.h"
 
 
 //Shared data.

@@ -146,14 +146,11 @@ unsigned int ListOfHBonds::ForcefieldCount()
 
 int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 {
-	struct HydrogenBond *Item;
+	NewItem->Next     = NULL;
+	NewItem->Previous = End();
 
-	Item           = NewItem;
-	Item->Next     = NULL;
-	Item->Previous = End();
-
-	if ( Item->Previous != NULL )
-		Item->Previous->Next = Item;
+	if ( NewItem->Previous != NULL )
+		NewItem->Previous->Next = NewItem;
 
 	++HBsize;
 
@@ -163,8 +160,8 @@ int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 		size += 2;
 
 	// This is actually the first element.
-	if( Item->Previous == NULL )
-		Beginning = Item;
+	if( NewItem->Previous == NULL )
+		Beginning = NewItem;
 
 
 	return (size);
@@ -362,14 +359,11 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 
 int ListOfHBonds::AddAtBegin(struct HydrogenBond *NewItem)
 {
-	struct HydrogenBond *Item;
+	NewItem->Next     = Beginning;
+	NewItem->Previous = NULL;
 
-	Item           = NewItem;
-	Item->Next     = Begin();
-	Item->Previous = NULL;
-
-	if ( Item->Next != NULL )
-		(Item->Next)->Previous = Item;
+	if ( NewItem->Next != NULL )
+		(NewItem->Next)->Previous = NewItem;
 
 	++HBsize;
 

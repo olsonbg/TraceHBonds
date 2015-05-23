@@ -22,7 +22,8 @@ float toFloat(std::string s)
 	float result;
 	
 	in >> result;
-	
+
+
 	return result;
 };
 

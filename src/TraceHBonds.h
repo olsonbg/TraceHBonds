@@ -60,24 +60,24 @@ int doArcFile(char *ifilename,
 bool SameAtom( struct thbAtom *A,
                struct thbAtom *B);
 
-bool Trace( ListOfHBonds **HBonds,
-            std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
-            std::vector<struct HydrogenBond *>::iterator iter_hbmain);
+bool TraceThread( std::vector<ListOfHBonds *> *HBStrings,
+                  struct HydrogenBondIterator_s *HBit);
 
 std::vector< std::vector<bool> >
-Lifetime( std::vector<struct HydrogenBondIterator_s > *TrjIdx_iter,
-          std::vector<struct HydrogenBond *>::iterator iter_hbmain,
-          unsigned int NumFrames);
+Lifetime( std::vector<struct HydrogenBondIterator_s > *TrjIdx_iter );
 
 void RemoveDuplicates( std::vector<struct HydrogenBond *> *hb,
                        std::vector< struct HydrogenBondIterator_s > *);
 
 void RemoveDuplicatesThread( struct HydrogenBondIterator_s );
 
-template<class T> void DeleteVectorPointers( T v );
+template<class T> void DeleteVectorPointers( std::vector<T*> v );
 
-std::vector<struct HydrogenBondIterator_s>
-TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
-                         unsigned int NumFramesInTrajectory);
+// std::vector<struct HydrogenBondIterator_s>
+// TrajectoryIndexIterator( std::vector<struct HydrogenBond *> *hb,
+//                          unsigned int NumFramesInTrajectory);
 
+void
+TrajectoryIndexIterator( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
+                         std::vector< struct HydrogenBond *> *hb);
 #endif

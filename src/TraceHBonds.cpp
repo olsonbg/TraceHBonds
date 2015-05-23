@@ -15,6 +15,37 @@ extern Queue<struct worker_data_s> outQueue;
 #endif
 
 typedef std::vector<struct HydrogenBond *> HBVec;
+typedef std::vector<struct HydrogenBondIterator_s> HBVecIter;
+
+// Used with remove_if()
+bool deleteMarked( struct HydrogenBond *hb ) {
+	if ( hb->markedDuplicate )
+	{
+		delete hb;
+		return true;
+	}
+	return false;
+}
+
+// Used with remove_if()
+template <typename T> bool deleteVectorPointers( T* v ) {
+	delete v;
+	return true;
+}
+
+template<class T> void DeleteVectorPointers( std::vector<T *> v )
+{
+	remove_if(v.begin(),v.end(),deleteVectorPointers<T>);
+	// for(unsigned int i =0; i < v.size(); ++i)
+	//     delete v[i];
+}
+
+// Used with remove_if()
+bool deleteAtom( struct thbAtom *atom ) {
+	// delete atom->Molecule;
+	delete atom;
+	return true;
+}
 
 void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
                               std::vector<struct thbAtom *> *hydrogendonors,
@@ -179,6 +210,8 @@ void AtomNeighbors( HBVec *hb,
 		inQueue.push(wd);
 
 #else
+		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
+			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
 #endif
 	}
@@ -199,9 +232,52 @@ void AtomNeighbors( HBVec *hb,
 		wd.hb->clear();
 		delete wd.hb;
 	}
-	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 
 #endif // PTHREADS
+	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+}
+
+void Trace( std::vector<ListOfHBonds *> *HBStrings,
+            HBVecIter *TrjIdx_iter )
+{
+	for( unsigned int f=0; f < TrjIdx_iter->size(); ++f )
+	{
+#ifdef PTHREADS
+		struct worker_data_s wd;
+		wd.jobtype = THREAD_JOB_TRACE;
+		wd.jobnum = f;
+		wd.num_threads = NumberOfCPUs();
+		wd.HBit = &(TrjIdx_iter->at(f));
+		wd.HBStrings = new std::vector<ListOfHBonds *>;
+		wd.HBStrings->reserve(5000);
+
+		inQueue.push(wd);
+#else
+		if (  ((f+1)%50==0) || ((f+1)==TrjIdx_iter->size())  )
+			VERBOSE_RMSG("Processing frame " << f+1 <<"/"<< TrjIdx_iter->size() << ".");
+
+		HBVec::iterator iter_hb = TrjIdx_iter->at(f).begin;
+		TraceThread( HBStrings, &TrjIdx_iter->at(f) );
+#endif // PTHREADS
+	}
+#ifdef PTHREADS
+	// Get the results back from the worker threads.
+	for( unsigned int f=0; f < TrjIdx_iter->size(); ++f )
+	{
+		if (  ((f+1)%50==0) || ((f+1)==TrjIdx_iter->size())  )
+			VERBOSE_RMSG("Processing frame " << f+1 <<"/"<< TrjIdx_iter->size() << ".");
+
+		struct worker_data_s wd = outQueue.pop();
+		HBStrings->reserve( HBStrings->size() + wd.HBStrings->size() );
+		HBStrings->insert( HBStrings->end(),
+		                   wd.HBStrings->begin(),
+		                   wd.HBStrings->end() );
+
+		wd.HBStrings->clear();
+		delete wd.HBStrings;
+	}
+#endif // PTHREADS
+	VERBOSE_MSG("Processing frame " << TrjIdx_iter->size() <<"/"<< TrjIdx_iter->size() << ".");
 }
 
 int doArcFile(char *ifilename,
@@ -220,25 +296,44 @@ int doArcFile(char *ifilename,
 	Cell = new struct PBC;
 
 	atom.reserve(50000);
+	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	t_start = time(NULL);
 	ReadCarMdf( ifilename, &atom, Cell );
 	times["reading data"]  = difftime(t_start, time(NULL));
-	std::vector<double>A, B, C;
+	// Free up some space, if possible.
+	if ( atom.size() != atom.capacity() )
+		std::vector<struct thbAtom *>(atom).swap(atom);
+	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
+	// std::vector<double>A, B, C;
 
 	unsigned int NumFramesInTrajectory = 0;
 	NumFramesInTrajectory = Cell->frames;
 
 	VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
 
-	// Reserve space for 10000 hydrogen bonds to minimize reallocations.
-	hb.reserve(10000);
+	// Reserve space for hydrogen bonds to minimize reallocations.
+	// This is just an emperical guess for reserve size.
+	hb.reserve((atom.size()/4)*NumFramesInTrajectory);
+	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	// Now  determine the hydrogen bonds
 	t_start = time(NULL);
 	AtomNeighbors( &hb, &atom, Cell, match, rCutoff, angleCutoff );
 	times["finding pairs"] = difftime(t_start, time(NULL));
+	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
+	if ( hb.size() != hb.capacity() )
+		HBVec(hb).swap(hb);
+	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 
-	std::vector< struct HydrogenBondIterator_s >TrjIdx_iter;
-	TrjIdx_iter = TrajectoryIndexIterator( &hb, NumFramesInTrajectory );
+	struct HydrogenBondIterator_s HBit;
+	HBVecIter TrjIdx_iter(NumFramesInTrajectory);
+
+	TrajectoryIndexIterator( &TrjIdx_iter, &hb );
+
+	// for(unsigned int i=0; i != TrjIdx_iter.size(); ++i)
+	// {
+	//     VERBOSE_MSG("TrjIdx_iter.begin:" << std::distance(hb.begin(), TrjIdx_iter.at(i).begin) );
+	//     VERBOSE_MSG("TrjIdx_iter.end  :" << std::distance(TrjIdx_iter.at(i).begin, TrjIdx_iter.at(i).end) );
+	// }
 
 	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
 
@@ -246,29 +341,31 @@ int doArcFile(char *ifilename,
 	RemoveDuplicates ( &hb, &TrjIdx_iter );
 	times["finding hydrogen bonds"] = difftime(t_start, time(NULL));
 	VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
+	if ( hb.size() != hb.capacity() )
+		HBVec(hb).swap(hb);
+	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 
 	// Update TrjIdx_iter after removing elements.
-	TrjIdx_iter = TrajectoryIndexIterator( &hb, NumFramesInTrajectory );
+	TrajectoryIndexIterator( &TrjIdx_iter, &hb );
+
+	// for(unsigned int i=0; i != TrjIdx_iter.size(); ++i)
+	// {
+	//     VERBOSE_MSG("TrjIdx_iter.begin:" << std::distance(hb.begin(), TrjIdx_iter.at(i).begin) );
+	//     VERBOSE_MSG("TrjIdx_iter.end  :" << std::distance(TrjIdx_iter.at(i).begin, TrjIdx_iter.at(i).end) );
+	// }
 
 	unsigned int TrjIdx;
 
 	// Each element of the vector points to a string of hbonds.
 	// ListOfHBonds is a strings of hbonds.
 	std::vector<ListOfHBonds *>HBStrings;
-	HBStrings.reserve(5000);
+	HBStrings.reserve(1000*NumFramesInTrajectory);
 
 	//Find all the strings.
 	VERBOSE_MSG("Tracing HB strings.");
 
 	t_start = time(NULL);
-	for( unsigned int i=0; i < hb.size(); i++ )
-	{
-		ListOfHBonds *HBonds = new ListOfHBonds();
-		if ( Trace( &HBonds, &TrjIdx_iter, hb.begin()+i) )
-			HBStrings.push_back(HBonds);
-		else
-			delete HBonds;
-	}
+	Trace( &HBStrings, &TrjIdx_iter );
 	times["finding hydrogen bond strings"] = difftime(t_start, time(NULL));
 
 
@@ -279,7 +376,7 @@ int doArcFile(char *ifilename,
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		std::vector< std::vector<bool> >correlationData;
-		correlationData = Lifetime(&TrjIdx_iter, hb.begin(), NumFramesInTrajectory);
+		correlationData = Lifetime(&TrjIdx_iter);
 
 		std::ofstream out;
 		out.open("Correlations.txt",std::ios::out);
@@ -395,15 +492,9 @@ int doArcFile(char *ifilename,
 	}
 	//Cleanup
 	delete Cell;
-	DeleteVectorPointers(atom);
-	atom.clear();
-
-	DeleteVectorPointers(hb);
-	hb.clear();
-
-	for(unsigned int i=0; i < HBStrings.size(); ++i)
-		delete HBStrings[i];
-	HBStrings.clear();
+	DeleteVectorPointers( atom ); atom.clear();
+	DeleteVectorPointers( hb ); hb.clear();
+	DeleteVectorPointers( HBStrings ); HBStrings.clear();
 
 	return(0);
 }
@@ -413,15 +504,17 @@ int doArcFile(char *ifilename,
 // TrjIdx_iter.at(1).end points to just past the last element of TrjIdx 1 The
 // hbs are grouped by trajectory index number, however the order of the groups
 // may not be in sequence.
-std::vector< struct HydrogenBondIterator_s >
-TrajectoryIndexIterator( HBVec *hb,
-                         unsigned int N)
-{
-	struct HydrogenBondIterator_s HBit;
-	HBit.begin = hb->begin();
-	std::vector<struct HydrogenBondIterator_s>TrjIdx_iter(N,HBit);
 
+void
+TrajectoryIndexIterator( HBVecIter *TrjIdx_iter, HBVec *hb)
+{
+	// struct HydrogenBondIterator_s HBit;
+	// HBit.begin = hb->begin();
+	// HBVecIterTrjIdx_iter(N+1,HBit);
+
+	
 	unsigned int curIdx=(*hb->begin())->TrajIdx;
+	TrjIdx_iter->at(curIdx).begin = hb->begin();
 
 	HBVec::iterator it_hb;
 	for(it_hb = hb->begin(); it_hb != hb->end(); ++it_hb)
@@ -429,24 +522,14 @@ TrajectoryIndexIterator( HBVec *hb,
 		if ( (*it_hb)->TrajIdx != curIdx )
 		{
 			unsigned int newIdx = (*it_hb)->TrajIdx;
-			TrjIdx_iter.at(newIdx).begin = it_hb;
-			TrjIdx_iter.at(curIdx).end = it_hb;
-			curIdx = (*it_hb)->TrajIdx;
+			TrjIdx_iter->at(newIdx).begin = it_hb;
+			TrjIdx_iter->at(curIdx).end = it_hb;
+			curIdx = newIdx;
 		}
 	}
-	TrjIdx_iter.at(curIdx).end = hb->end();
-
-	return(TrjIdx_iter);
+	TrjIdx_iter->at(curIdx).end = hb->end();
 }
 
-template<class T> void DeleteVectorPointers( T v )
-{
-	for(unsigned int i =0; i < v.size(); ++i)
-		delete v[i];
-}
-
-bool marked( struct HydrogenBond *hb ) {
-	return hb->markedDuplicate;  }
 
 void removeMarked( HBVec *hb )
 {
@@ -466,18 +549,21 @@ void removeMarked( HBVec *hb )
 #else
 	HBVec::iterator pos;
 
-	pos = remove_if(hb->begin(), hb->end(), marked);
+	pos = remove_if(hb->begin(), hb->end(), deleteMarked);
 
-	HBVec::iterator toDelete;
-	for( toDelete=pos; toDelete != hb->end(); toDelete++ ) {
-		delete *toDelete; }
+	std::cout << "Distance:" <<std::distance(pos, hb->end()) << "\n";
+	if ( pos != hb->end() )
+	{
+		// HBVec::iterator toDelete;
+		// for( toDelete=pos; toDelete != hb->end(); toDelete++ ) {
+		//     delete *toDelete; }
 
-	hb->erase(pos, hb->end() );
+		hb->erase( pos, hb->end() );
+	}
 #endif
 }
 
 /*
- * TODO: Make this work with threads.
  * Possible to have more than one:
  *
  *   - acceptor Oxygen (aO) with a single Hydrogen (H)
@@ -487,12 +573,37 @@ void removeMarked( HBVec *hb )
  */
 
 void RemoveDuplicates( HBVec *hb,
-                       std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter)
+                       HBVecIter *TrjIdx_iter)
 {
 
 	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
+#ifdef PTHREADS
+		struct worker_data_s wd;
+		wd.jobtype = THREAD_JOB_RMDUPS;
+		wd.jobnum = i;
+		wd.num_threads = NumberOfCPUs();
+		wd.HBit = &(TrjIdx_iter->at(i));
+		inQueue.push(wd);
+#else
+		if (  ((i+1)%50==0) || ((i+1)==TrjIdx_iter->size())  )
+			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
+
 		RemoveDuplicatesThread(TrjIdx_iter->at(i));
+#endif
 	}
+
+#ifdef PTHREADS
+	// Get the results back from the worker threads.
+	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
+		if (  ((i+1)%50==0) || ((i+1)==TrjIdx_iter->size())  )
+			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
+
+		// Do not need to do anything with result of outQueue.pop,
+		// just have to wait for it to complete.
+		outQueue.pop();
+	}
+#endif // PTHREADS
+	VERBOSE_MSG("Processing frame " << TrjIdx_iter->size() <<"/"<< TrjIdx_iter->size() << ".");
 
 	VERBOSE_MSG("Removing Marked");
 	removeMarked(hb);
@@ -590,9 +701,7 @@ bool SameAtom( struct thbAtom *A,
 
 
 std::vector< std::vector<bool> >
-Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
-          HBVec::iterator iter_hbmain,
-          unsigned int NumFrames)
+Lifetime( HBVecIter *TrjIdx_iter )
 {
 	// Look to see if this hydrogen bond exists in other frames.
 
@@ -600,8 +709,11 @@ Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
 	HBVec::iterator iter_begin;
 	HBVec::iterator iter_end;
 
+	unsigned int NumFrames = TrjIdx_iter->size();
 	iter_begin = TrjIdx_iter->at( 0 ).begin;
 	iter_end   = TrjIdx_iter->at( 0 ).end;
+
+	HBVec::iterator iter_hbmain = iter_begin;
 
 	unsigned int NumHBsInFrameZero=0;
 
@@ -638,14 +750,14 @@ Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
 				b.at(h).at(f) = true; }
 		}
 	}
-	for( std::vector< std::vector<bool> >::iterator vbit=b.begin(); vbit < b.begin()+1; ++vbit)
-	{
-		for( std::vector<bool>::iterator bit=vbit->begin(); bit < vbit->end(); ++bit)
-		{
-			std::cout << (*bit==true?"|":" ");
-		}
-	std::cout << "\n";
-	}
+	// for( std::vector< std::vector<bool> >::iterator vbit=b.begin(); vbit < b.begin()+1; ++vbit)
+	// {
+	//     for( std::vector<bool>::iterator bit=vbit->begin(); bit < vbit->end(); ++bit)
+	//     {
+	//         std::cout << (*bit==true?"|":" ");
+	//     }
+	// std::cout << "\n";
+	// }
 
 	return b;
 }
@@ -656,60 +768,63 @@ Lifetime( std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
  * false  : Not a new string.
  *
  */
-bool Trace( ListOfHBonds **HBonds,
-            std::vector< struct HydrogenBondIterator_s > *TrjIdx_iter,
-            HBVec::iterator iter_hbmain)
+bool TraceThread( std::vector<ListOfHBonds *> *HBStrings,
+                  struct HydrogenBondIterator_s *HBit)
 {
 	// DonorO --- Hydrogen ... AcceptorO
 	// ... Denotes the Hydrogen bond.
 
-	HBVec::iterator iter_hb;
-	HBVec::iterator iter_begin;
-	HBVec::iterator iter_end;
-
-
-	// If this hydrogen bond has already been assigned to a chain, skip it
-	if ( ( (*iter_hbmain)->Next != NULL) || ( (*iter_hbmain)->Previous != NULL) )
-		return(false);
-
 	// The Range of HydrogenBonds to search.
-	iter_begin = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx ).begin;
-	iter_end   = TrjIdx_iter->at( (*iter_hbmain)->TrajIdx ).end;
+	HBVec::iterator iter_begin = HBit->begin;
+	HBVec::iterator iter_end   = HBit->end;
 
-	// Starting a new chain.
-	(*HBonds)->AddAtBegin(*iter_hbmain);
-
-	bool StillLooking = true;
-	while ( StillLooking )
+	HBVec::iterator iter_hbmain = iter_begin;
+	for( ; iter_hbmain < iter_end; ++iter_hbmain)
 	{
-		bool FoundOne = false;
-		for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
-		{
-			// If this hydrogen bond has already been assigned to a
-			// chain, skip it
-			if ( ( (*iter_hb)->Next != NULL) ||
-			     ( (*iter_hb)->Previous != NULL) )
-				continue;
 
-			// Check that this hydrogen bond is not in the chain already.
-			// Checking for only the H is sufficient.
-			if ( !(*HBonds)->Find(*iter_hb)  )
+		// If this hydrogen bond has already been assigned to a chain, skip it
+		if ( ( (*iter_hbmain)->Next != NULL) || ( (*iter_hbmain)->Previous != NULL) )
+			continue;
+
+
+		// Starting a new chain.
+		ListOfHBonds *HBonds = new ListOfHBonds();
+		(HBonds)->AddAtBegin(*iter_hbmain);
+
+		bool StillLooking = true;
+		while ( StillLooking )
+		{
+			bool FoundOne = false;
+			HBVec::iterator iter_hb;
+			for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
 			{
-				if ( (*HBonds)->linksAtBegin(*iter_hb) )
+				// If this hydrogen bond has already been assigned to a
+				// chain, skip it
+				if ( ( (*iter_hb)->Next != NULL) ||
+				     ( (*iter_hb)->Previous != NULL) )
+					continue;
+
+				// Check that this hydrogen bond is not in the chain already.
+				// Checking for only the H is sufficient.
+				if ( !(HBonds)->Find(*iter_hb)  )
 				{
-					// Found a new link at the beginning of the chain.
-					(*HBonds)->AddAtBegin(*iter_hb);
-					FoundOne = true;
-				}
-				else if ( (*HBonds)->linksAtEnd(*iter_hb) )
-				{
-					// Found a new link at the end of the chain.
-					(*HBonds)->AddAtEnd(*iter_hb);
-					FoundOne = true;
+					if ( (HBonds)->linksAtBegin(*iter_hb) )
+					{
+						// Found a new link at the beginning of the chain.
+						(HBonds)->AddAtBegin(*iter_hb);
+						FoundOne = true;
+					}
+					else if ( (HBonds)->linksAtEnd(*iter_hb) )
+					{
+						// Found a new link at the end of the chain.
+						(HBonds)->AddAtEnd(*iter_hb);
+						FoundOne = true;
+					}
 				}
 			}
+			StillLooking = FoundOne;
 		}
-		StillLooking = FoundOne;
+		HBStrings->push_back(HBonds);
 	}
 
 	return(true);

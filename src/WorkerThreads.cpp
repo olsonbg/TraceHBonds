@@ -1,7 +1,6 @@
-#include "WorkerThreads.h"
 #include "queue.h"
 #include "Thread.h"
-#include "TraceHBonds.h"
+#include "WorkerThreads.h"
 
 #ifdef PTHREADS
 
@@ -25,6 +24,12 @@ void *MyThread::run()
 				     wd.TrjIdx,
 				     wd.rCutoff,
 				     wd.angleCutoff );
+				break;
+			case THREAD_JOB_RMDUPS:
+				RemoveDuplicatesThread( *wd.HBit );
+				break;
+			case THREAD_JOB_TRACE:
+				TraceThread( wd.HBStrings, wd.HBit );
 				break;
 			case THREAD_JOB_EXIT:
 				return NULL;

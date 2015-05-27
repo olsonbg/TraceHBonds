@@ -36,7 +36,8 @@ bool TraceThread( std::vector<ListOfHBonds *> *HBStrings,
 	{
 
 		// If this hydrogen bond has already been assigned to a chain, skip it
-		if ( ( (*iter_hbmain)->Next != NULL) || ( (*iter_hbmain)->Previous != NULL) )
+		if ( ( (*iter_hbmain)->Next != NULL) ||
+		     ( (*iter_hbmain)->Previous != NULL) )
 			continue;
 
 
@@ -114,7 +115,7 @@ void Trace( std::vector<ListOfHBonds *> *HBStrings,
 			VERBOSE_RMSG("Processing frame " << f+1 <<"/"<< TrjIdx_iter->size() << ".");
 
 		struct worker_data_s wd = outQueue.pop();
-		HBStrings->reserve( HBStrings->size() + wd.HBStrings->size() );
+		HBStrings->reserve( TrjIdx_iter->size()*wd.HBStrings->size() );
 		HBStrings->insert( HBStrings->end(),
 		                   wd.HBStrings->begin(),
 		                   wd.HBStrings->end() );

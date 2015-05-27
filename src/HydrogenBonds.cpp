@@ -187,7 +187,7 @@ void AtomNeighbors( HBVec *hb,
 			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 
 		struct worker_data_s wd = outQueue.pop();
-		hb->reserve( hb->size() + wd.hb->size() );
+		hb->reserve( NumFramesInTrajectory*wd.hb->size() );
 		hb->insert(hb->end(),
 		           wd.hb->begin(),
 		           wd.hb->end() );

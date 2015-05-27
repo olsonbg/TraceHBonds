@@ -11,6 +11,7 @@
 #include <set>
 #include "ReadCarMdf.h"
 #include "ListOfHBonds.h"
+#include "Lifetime.h"
 #include "Point.h"
 
 extern bool THB_VERBOSE;
@@ -53,9 +54,6 @@ int doArcFile(char *ifilename,
               int NumBins, bool POVRAY);
 
 
-
-std::vector< std::vector<bool> >
-Lifetime( std::vector<struct HydrogenBondIterator_s > *TrjIdx_iter );
 
 template<class T> void DeleteVectorPointers( std::vector<T*> v );
 

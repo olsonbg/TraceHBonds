@@ -1,10 +1,8 @@
 #include "Lifetime.h"
 
-std::vector< std::vector<bool> >
-Lifetime( HBVecIter *TrjIdx_iter )
+void
+Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 {
-	// Look to see if this hydrogen bond exists in other frames.
-
 	HBVec::iterator iter_hb;
 	HBVec::iterator iter_begin;
 	HBVec::iterator iter_end;
@@ -21,43 +19,87 @@ Lifetime( HBVecIter *TrjIdx_iter )
 		NumHBsInFrameZero++; }
 	std::cout << " Number of hydrogen bonds in initial frame: " << NumHBsInFrameZero << "\n";
 
-	std::vector< std::vector<bool> >b(NumHBsInFrameZero, std::vector<bool>(NumFrames,false));
 
 	if (NumHBsInFrameZero == 0)
-		return b;
+		return;
 
-	for( unsigned int h=0; h < NumHBsInFrameZero; ++h)
+	// Initialize all elements to false.
+	b->assign(NumHBsInFrameZero, std::vector<bool>(NumFrames,false));
+
+#ifdef PTHREADS
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
 	{
-		b.at(h).at(0) = true;
+		struct worker_data_s wd;
+		wd.jobtype = THREAD_JOB_LIFETIME;
+		wd.jobnum = jobnum;
+		wd.num_threads = NumberOfCPUs();
+		wd.TrjIdx_iter = TrjIdx_iter;
+		
+		wd.b = new std::vector< std::vector<bool> >(NumHBsInFrameZero, 
+		                                            std::vector<bool>(NumFrames,false));
+
+		inQueue.push(wd);
+	}
+
+	// Get the results back from the worker threads.
+	struct worker_data_s wd[NumberOfCPUs()];
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) {
+		wd[jobnum] = outQueue.pop(); }
+
+	// Merge the results, if and b->at(i).at(j) is true, set it.
+	for ( unsigned int i=0; i < NumHBsInFrameZero; ++i ) {
+		for ( unsigned int j=0; j < NumFrames; ++j ) {
+			for ( unsigned int t=0; t < NumberOfCPUs(); ++t ) {
+				if ( wd[t].b->at(i).at(j) ) {
+					b->at(i).at(j) = true;
+					break;
+				}
+			}
+		}
+	}
+
+	for ( unsigned int i=0; i < NumberOfCPUs(); ++i ) {
+		delete wd[i].b; }
+#else
+	LifetimeThread( b, TrjIdx_iter );
+#endif // PTHREADS
+}
+
+void
+LifetimeThread(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter,
+               unsigned int NumThreads, unsigned int ThreadID)
+{
+	HBVec::iterator iter_hb;
+	HBVec::iterator iter_begin;
+	HBVec::iterator iter_end;
+
+	unsigned int NumFrames = TrjIdx_iter->size();
+	iter_begin = TrjIdx_iter->at( 0 ).begin;
+	iter_end   = TrjIdx_iter->at( 0 ).end;
+
+	HBVec::iterator iter_hbmain = iter_begin;
+
+	unsigned int NumHBsInFrameZero = b->size();
+
+	for( unsigned int h=ThreadID; h < NumHBsInFrameZero; h += NumThreads)
+	{
+		b->at(h).at(0) = true;
 		for( unsigned int f=1; f < NumFrames; ++f )
 		{
 			// The range of hydrogen bonds in frame f.
 			iter_begin = TrjIdx_iter->at( f ).begin;
 			iter_end   = TrjIdx_iter->at( f ).end;
 
-			bool found = false;
 			for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb )
 			{
 				if ( ((*iter_hb)->hydrogen == (*(iter_hbmain+h))->hydrogen) &&
 				     ((*iter_hb)->acceptor == (*(iter_hbmain+h))->acceptor) )
 				{
 					// This matched the hydrogen bond in the first frame.
-					found = true;
+					b->at(h).at(f) = true;
 					break;
 				}
 			}
-			if (found == true) {
-				b.at(h).at(f) = true; }
 		}
 	}
-	// for( std::vector< std::vector<bool> >::iterator vbit=b.begin(); vbit < b.begin()+1; ++vbit)
-	// {
-	//     for( std::vector<bool>::iterator bit=vbit->begin(); bit < vbit->end(); ++bit)
-	//     {
-	//         std::cout << (*bit==true?"|":" ");
-	//     }
-	// std::cout << "\n";
-	// }
-
-	return b;
 }

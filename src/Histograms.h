@@ -2,6 +2,9 @@
 #define _Histograms_h
 
 #include "ListOfHBonds.h"
+#include "queue.h"
+#include "WorkerThreads.h"
+#include "cpu.h"
 // Macros
 
 typedef std::vector<unsigned int> vui;
@@ -47,6 +50,10 @@ makeHistograms( std::vector<ListOfHBonds *> HBStrings,
 
 void Correlations( std::ostream *out,
                    std::vector< std::vector<bool> > *v );
+
+void CorrelationsThread(vd *C, vd *I, 
+                        vvui *continuous, vvui *intermittent,
+                        unsigned int NumThreads, unsigned int ThreadID );
 
 void getNeighbors( struct Histograms_s *Histograms,
                    std::vector<ListOfHBonds *> HBStrings,

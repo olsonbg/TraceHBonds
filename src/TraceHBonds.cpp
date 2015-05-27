@@ -134,11 +134,14 @@ int doArcFile(char *ifilename,
 	if ( 1 )
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
+		VERBOSE_MSG("\tGenerating truth table.");
 		std::vector< std::vector<bool> >correlationData;
-		correlationData = Lifetime(&TrjIdx_iter);
+		Lifetime(&correlationData, &TrjIdx_iter);
+		VERBOSE_MSG("\t\tFinished truth table.");
 
 		std::ofstream out;
 		out.open("Correlations.txt",std::ios::out);
+		VERBOSE_MSG("\tGenerating Correlations.");
 		if ( out.is_open() ) {
 			Correlations(&out, &correlationData); }
 

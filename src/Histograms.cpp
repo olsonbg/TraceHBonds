@@ -1,6 +1,11 @@
 #include "Histograms.h"
 #include "Print.h"
 
+#ifdef PTHREADS
+extern Queue<struct worker_data_s> inQueue;
+extern Queue<struct worker_data_s> outQueue;
+#endif
+
 /*
  * Make sure v is of size nelem, if not, initialize the needed number of
  * elements to val. Make sure not to touch/change any values that are already
@@ -148,11 +153,34 @@ void getNeighbors( struct Histograms_s *Histograms,
 
 }
 
+void CorrelationsThread(vd *C, vd *I, 
+                        vvui *continuous, vvui *intermittent,
+                        unsigned int NumThreads=1, unsigned int ThreadID=0 )
+{
+	unsigned int fcutoff = continuous->at(0).size();
+
+	for( unsigned int i=ThreadID; i < fcutoff; i += NumThreads)
+	{
+		for( unsigned int h=0; h < continuous->size(); ++h) {
+			C->at(i) += continuous->at(h).at(i); }
+
+		for( unsigned int h=0; h < intermittent->size(); ++h) {
+			I->at(i) += intermittent->at(h).at(i); }
+
+		// Normalize
+		C->at(i) = C->at(i)/continuous->size();
+		I->at(i) = I->at(i)/intermittent->size();
+	}
+
+}
+
 void Correlations( std::ostream *out,
                    std::vector< std::vector<bool> > *v )
 {
 	unsigned int numHBs = v->size();
 	unsigned int numFrames = v->at(0).size();
+	// Using a sliding window, therefore cutoff should be half
+	// the total.
 	unsigned int fcutoff=numFrames/2;
 
 	// Initialize the histograms to zero (0).
@@ -186,44 +214,53 @@ void Correlations( std::ostream *out,
 		}
 	}
 
-	// for( unsigned int h=0; h < c.size(); ++h)
-	// {
-		// for( unsigned int i=0; i < c.at(h).size(); ++i)
-			// *out << i << "\t" << c.at(h).at(i) << "\n";
-		// *out << "\n";
-	// }
+	// Combine all frames.
+	vd C(fcutoff,0.0);
+	vd I(fcutoff,0.0);
+
+#ifdef PTHREADS
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	{
+		struct worker_data_s wd;
+		wd.jobtype = THREAD_JOB_CORR;
+		wd.jobnum = jobnum;
+		wd.num_threads = NumberOfCPUs();
+		wd.vvuiC = &continuous;
+		wd.vvuiI = &intermittent;
+		
+		wd.vdC = new vd(fcutoff,0.0); // Cthread(fcutoff,0.0);
+		wd.vdI = new vd(fcutoff,0.0); // Ithread(fcutoff,0.0);
+		inQueue.push(wd);
+	}
+
+	// Get the results back from the worker threads.
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	{
+
+		struct worker_data_s wd = outQueue.pop();
+		for ( unsigned int i=0; i < wd.vdC->size(); ++i )
+		{
+			C.at(i) += wd.vdC->at(i);
+			I.at(i) += wd.vdI->at(i);
+		}
+		delete wd.vdC;
+		delete wd.vdI;
+	}
+#else
+	CorrelationsThread( &C, &I, &continuous, &intermittent );
+#endif // PTHREADS
+
+	std::cout << "Saving autocorrelation data.\n";
 
 	// Save the continuous hydrogen bond autocorrelation data.
-	double max=0.0;
-	for( unsigned int i=0; i < fcutoff; ++i)
-	{
-		double d=0.0;
-		for( unsigned int h=0; h < continuous.size(); ++h) {
-			d += continuous.at(h).at(i); }
-
-		d = d/continuous.size();
-
-		if ( i == 0 ) max = d;
-
-		*out << i << "\t" << d/max << "\n";
-	}
+	for( unsigned int i=0; i < fcutoff; ++i) {
+		*out << i << "\t" << C.at(i)/C.at(0) << "\n"; }
 
 	*out << "\n";
 
 	// Save the intermittent hydrogen bond autocorrelation data.
-	max=0.0;
-	for( unsigned int i=0; i < fcutoff; ++i)
-	{
-		double d=0.0;
-		for( unsigned int h=0; h < intermittent.size(); ++h) {
-			d += intermittent.at(h).at(i); }
-
-		d = d/intermittent.size();
-
-		if ( i == 0 ) max = d;
-
-		*out << i << "\t" << d/max << "\n";
-	}
+	for( unsigned int i=0; i < fcutoff; ++i) {
+		*out << i << "\t" << I.at(i)/I.at(0) << "\n"; }
 }
 
 /*

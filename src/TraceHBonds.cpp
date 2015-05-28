@@ -57,27 +57,37 @@ int doArcFile(char *ifilename,
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	t_start = time(NULL);
+	// Get Atoms and their connections.
+	ConnectionsMDF( ifilename, &atom );
+
+	// Find the Hydrogens and Acceptors.
+	std::vector<struct thbAtom *> hydrogens;
+	std::vector<struct thbAtom *> acceptors;
+	hydrogens.reserve(atom.size()/2);
+	acceptors.reserve(atom.size()/2);
+
+	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
+
+	// Get Atom positions and cell dimensions for each frame.
 #ifdef PTHREADS
 	struct worker_data_s wd;
-	wd.jobtype = THREAD_JOB_READCARMDF;
-	wd.jobnum = 1;
+	wd.jobtype     = THREAD_JOB_POSITIONS_CAR;
+	wd.jobnum      = 1;
 	wd.num_threads = NumberOfCPUs();
-	wd.filename = ifilename;
-	wd.atom = &atom;
-	wd.Cell = Cell;
+	wd.filename    = ifilename;
+	wd.atom        = &atom;
+	wd.hydrogens   = &hydrogens;
+	wd.acceptors   = &acceptors;
+	wd.Cell        = Cell;
 
 	inQueue.push(wd);
 
 	// Get the result back from the worker threads.
 	outQueue.pop();
 #else
-	ReadCarMdf( ifilename, &atom, Cell );
+	PositionsCAR( ifilename, &atom, Cell );
 #endif //PTHREADS
 	times["reading data"]  = difftime(t_start, time(NULL));
-	// Free up some space, if possible.
-	if ( atom.size() != atom.capacity() )
-		std::vector<struct thbAtom *>(atom).swap(atom);
-	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	// std::vector<double>A, B, C;
 
 	unsigned int NumFramesInTrajectory = 0;
@@ -91,7 +101,8 @@ int doArcFile(char *ifilename,
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	// Now  determine the hydrogen bonds
 	t_start = time(NULL);
-	AtomNeighbors( &hb, &atom, Cell, match, rCutoff, angleCutoff );
+	AtomNeighbors( &hb, Cell, &hydrogens, &acceptors, 
+	               rCutoff, angleCutoff );
 	times["finding pairs"] = difftime(t_start, time(NULL));
 	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	if ( hb.size() != hb.capacity() )

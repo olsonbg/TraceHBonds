@@ -48,6 +48,101 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 			//                   *it_a1);
 		}
 	}
+	DEBUG_MSG("Capacity/size of hydrogens: " << hydrogendonors->capacity() << "/" << hydrogendonors->size());
+	if ( hydrogendonors->size() != hydrogendonors->capacity() ) {
+		std::vector<struct thbAtom *>(*hydrogendonors).swap(*hydrogendonors);
+		DEBUG_MSG("Capacity/size of hydrogens: " << hydrogendonors->capacity() << "/" << hydrogendonors->size());
+	}
+
+	DEBUG_MSG("Capacity/size of acceptors: " << acceptors->capacity() << "/" << acceptors->size());
+	if ( acceptors->size() != acceptors->capacity() ) {
+		std::vector<struct thbAtom *>(*acceptors).swap(*acceptors);
+		DEBUG_MSG("Capacity/size of acceptors: " << acceptors->capacity() << "/" << acceptors->size());
+	}
+
+	if (THB_VERBOSE)
+	{
+		std::vector<std::string>::iterator it;
+
+		VERBOSE_CMSG("Hydrogen donors : " << hydrogendonors->size() << " [ ");
+		for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
+			VERBOSE_CMSG(*it << " ");
+		VERBOSE_MSG("]");
+
+		VERBOSE_CMSG("Acceptors       : " << acceptors->size() << " [ ");
+		for(it=match->Acceptors.begin(); it != match->Acceptors.end();++it)
+			VERBOSE_CMSG(*it << " ");
+		VERBOSE_MSG("]");
+	}
+}
+
+// Savemem version.
+void HBs( HBVec *hb,
+          Point cell,
+          std::vector<struct thbAtom *>*hydrogens,
+          std::vector<struct thbAtom *>*acceptors,
+          std::vector<Point>Coordinates,
+          double TrjIdx,
+          double rCutoff, double angleCutoff)
+{
+
+	std::vector<struct thbAtom *>::iterator it_h;
+	std::vector<struct thbAtom *>::iterator it_a;
+
+	Point r;
+
+	double rCutoff2 = pow(rCutoff,2.0);
+	double r2;
+
+	// Location of the Hydrogen (H) atom, the Acceptor (A) atom, and the Donor
+	// (D) covalently bonded to the Hydrogen.
+	Point H,A,D;
+
+	for( it_h = hydrogens->begin(); it_h < hydrogens->end(); ++it_h)
+	{
+		// location of the hydrogen of interest.
+		H = Coordinates.at( (*it_h)->ID );
+
+		for( it_a = acceptors->begin(); it_a < acceptors->end(); ++it_a)
+		{
+			// Make sure this acceptor is not covalently bonded to the hydrogen
+			// we are looking at.  The angle check would catch this, but this
+			// will skip a few calculations.
+			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
+				continue;
+
+			// location of the acceptor atom of interest.
+			A = Coordinates.at( (*it_a)->ID );
+
+			r = H.minimumImage( A, cell );
+			r2 = r.magnitudeSquared();
+
+			if ( r2 < rCutoff2)
+			{
+				// Distance cutoff is good, now check the angle.
+				// location of the donor atom connected to the Hydrogen.
+				D = Coordinates.at( (*it_h)->ConnectedAtom.at(0)->ID );
+
+				double angle = H.angle(A,D);
+				if ( angle > angleCutoff )
+				{
+					struct HydrogenBond *NewHB;
+					NewHB = new struct HydrogenBond;
+
+					NewHB->length   = sqrt(r2);
+					NewHB->angle    = angle;
+					NewHB->hydrogen = *it_h;
+					NewHB->acceptor = *it_a;
+					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
+					NewHB->TrajIdx  = TrjIdx;
+
+					NewHB->acceptorDonorDistance=D.minimumImageDistance(A,cell);
+
+					hb->push_back(NewHB);
+				}
+			}
+		}
+	}
 }
 
 void HBs( HBVec *hb,
@@ -118,34 +213,12 @@ void HBs( HBVec *hb,
 }
 
 void AtomNeighbors( HBVec *hb,
-                    std::vector<struct thbAtom *> *atom,
-                    struct PBC *Cell, struct HydrogenBondMatching *match,
+                    struct PBC *Cell,
+                    std::vector<struct thbAtom *>*hydrogens,
+                    std::vector<struct thbAtom *>*acceptors,
                     double rCutoff, double angleCutoff )
 {
-	std::vector<struct thbAtom *> hydrogens;
-	std::vector<struct thbAtom *> acceptors;
-
-	hydrogens.reserve(5000);
-	acceptors.reserve(5000);
-
-	getHydrogenBondElements( atom, &hydrogens, &acceptors, match );
-
-	if (THB_VERBOSE)
-	{
-		std::vector<std::string>::iterator it;
-
-		VERBOSE_CMSG("Total hydrogen donors per frame: " << hydrogens.size() << " [ ");
-		for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
-			VERBOSE_CMSG(*it << " ");
-		VERBOSE_MSG("]");
-
-		VERBOSE_CMSG("Total acceptors per frame     : " << acceptors.size() << " [ ");
-		for(it=match->Acceptors.begin(); it != match->Acceptors.end();++it)
-			VERBOSE_CMSG(*it << " ");
-		VERBOSE_MSG("]");
-
-		VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
-	}
+	VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
 
 	unsigned int NumFramesInTrajectory = 0;
 	NumFramesInTrajectory = Cell->frames;
@@ -161,21 +234,21 @@ void AtomNeighbors( HBVec *hb,
 		wd.jobnum = TrjIdx;
 		wd.num_threads = NumberOfCPUs();
 		wd.cell = cell;
-		wd.hydrogens = &hydrogens;
-		wd.acceptors = &acceptors;
+		wd.hydrogens = hydrogens;
+		wd.acceptors = acceptors;
 		wd.TrjIdx = TrjIdx;
 		wd.rCutoff = rCutoff;
 		wd.angleCutoff = angleCutoff;
 
 		wd.hb = new HBVec;
-		wd.hb->reserve(5000);
+		wd.hb->reserve(acceptors->size()*2);
 
 		inQueue.push(wd);
 
 #else
 		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
 			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
-		HBs( hb, cell, &hydrogens, &acceptors, TrjIdx, rCutoff, angleCutoff);
+		HBs( hb, cell, hydrogens, acceptors, TrjIdx, rCutoff, angleCutoff);
 #endif
 	}
 
@@ -187,7 +260,7 @@ void AtomNeighbors( HBVec *hb,
 			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 
 		struct worker_data_s wd = outQueue.pop();
-		hb->reserve( NumFramesInTrajectory*wd.hb->size() );
+		hb->reserve( hb->size() + wd.hb->size() );
 		hb->insert(hb->end(),
 		           wd.hb->begin(),
 		           wd.hb->end() );

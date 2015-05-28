@@ -18,9 +18,12 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom,
              struct PBC *Cell );
 
-bool ReadCarMdf(const char *filename,
-                std::vector<struct thbAtom *> *atom,
-                struct PBC *Cell );
+bool ConnectionsMDF(const char *filename,
+                    std::vector<struct thbAtom *> *atom);
+
+bool PositionsCAR(const char *filename,
+                  std::vector<struct thbAtom *> *atom,
+                  struct PBC *Cell );
 
 bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom);

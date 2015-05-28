@@ -11,6 +11,15 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
                               std::vector<struct thbAtom *> *acceptors,
                               struct HydrogenBondMatching *match);
 
+// Savemem version.
+void HBs( std::vector<struct HydrogenBond *> *hb,
+          Point cell,
+          std::vector<struct thbAtom *>*hydrogens,
+          std::vector<struct thbAtom *>*acceptors,
+          std::vector<Point>Coordinates,
+          double TrjIdx,
+          double rCutoff, double angleCutoff);
+
 void HBs( std::vector<struct HydrogenBond *> *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
@@ -18,7 +27,8 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
           double TrjIdx, double rCutoff, double angleCutoff);
 
 void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
-                    std::vector<struct thbAtom *> *atom,
-                    struct PBC *Cell, struct HydrogenBondMatching *match,
+                    struct PBC *Cell, 
+                    std::vector<struct thbAtom *>*hydrogens,
+                    std::vector<struct thbAtom *>*acceptors,
                     double rCutoff, double angleCutoff );
 #endif // _HydrogenBonds_h

@@ -16,14 +16,14 @@
 
 
 //Shared data.
-const unsigned int THREAD_JOB_HBS        =  1; // Run HBs().
-const unsigned int THREAD_JOB_RMDUPS     =  2; // Run RemoveDuplicatesThread().
-const unsigned int THREAD_JOB_TRACE      =  3; // Run TraceThread().
-const unsigned int THREAD_JOB_CORR       =  4; // Run CorrelationsThread().
-const unsigned int THREAD_JOB_LIFETIME   =  5; // Run LifetimeThread().
-const unsigned int THREAD_JOB_READCARMDF =  6; // Run LifetimeThread().
-const unsigned int THREAD_JOB_PAUSE      = 90; // Pause thread.
-const unsigned int THREAD_JOB_EXIT       = 99; // Exit thread.
+const unsigned int THREAD_JOB_HBS           =  1; // HBs().
+const unsigned int THREAD_JOB_RMDUPS        =  2; // RemoveDuplicatesThread().
+const unsigned int THREAD_JOB_TRACE         =  3; // TraceThread().
+const unsigned int THREAD_JOB_CORR          =  4; // CorrelationsThread().
+const unsigned int THREAD_JOB_LIFETIME      =  5; // LifetimeThread().
+const unsigned int THREAD_JOB_POSITIONS_CAR =  6; // PositionsCAR().
+const unsigned int THREAD_JOB_PAUSE         = 90; // Pause thread.
+const unsigned int THREAD_JOB_EXIT          = 99; // Exit thread.
 
 //The queues.
 

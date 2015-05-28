@@ -28,6 +28,7 @@ struct thbAtom
 	std::vector<class Point> p;
 
 	// These should not change with different frames(snapshots).
+	unsigned int ID;
 	std::string Type; // E.g., C, H, N, Au.
 	std::string Name;
 	std::string Residue;

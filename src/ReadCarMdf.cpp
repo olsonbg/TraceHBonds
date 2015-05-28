@@ -163,6 +163,7 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 	char molecule[80];
 	char residue[4];
 	unsigned int residueNum;
+	unsigned int ID=0;
 	char name[80];
 	char type[4];
 	char forcefield[4];
@@ -215,6 +216,7 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 			std::vector<std::string> cA = connectedAtoms(connected);
 
 			NewAtom = new struct thbAtom;
+			NewAtom->ID         = ID; ID++;
 			NewAtom->Name       = name;
 			NewAtom->Type       = type;
 			NewAtom->Molecule   = molecule;
@@ -316,9 +318,8 @@ void doAtomConnections( std::vector<struct thbAtom *> *atom )
 	}
 }
 
-bool ReadCarMdf(const char *filename,
-                std::vector<struct thbAtom *> *atom,
-                struct PBC *Cell )
+bool ConnectionsMDF(const char *filename,
+                    std::vector<struct thbAtom *> *atom)
 {
 	// 
 	// Read atoms from MDF files.
@@ -348,9 +349,21 @@ bool ReadCarMdf(const char *filename,
 		MDFifp.close();
     }
 
+	// Free up some space, if possible.
+	if ( atom->size() != atom->capacity() )
+		std::vector<struct thbAtom *>(*atom).swap(*atom);
+	DEBUG_MSG("Capacity/size of atom: " << atom->capacity() << "/" << atom->size());
+
 	VERBOSE_MSG("Determining atom connections.");
 	doAtomConnections( atom );
 
+	return(true);
+}
+
+bool PositionsCAR(const char *filename,
+                  std::vector<struct thbAtom *> *atom,
+                  struct PBC *Cell )
+{
 	//
 	// Read coordinates from CAR files.
 	// 

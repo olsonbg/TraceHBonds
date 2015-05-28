@@ -103,12 +103,10 @@ std::vector< std::string >connectedAtoms( const char *connected)
 	return(connections);
 }
 
-bool ReadMdf( const char *filename,
-             std::vector<struct thbAtom *> *atom)
+bool openfile( const char *filename,
+               boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+               std::ifstream *ifp)
 {
-	struct thbAtom *NewAtom;
-	int lineno=0; // Line number of datafile, used for error messages.
-
 	int magicNum;
 
 	magicNum = getMagicNumber(filename);
@@ -116,46 +114,50 @@ bool ReadMdf( const char *filename,
 	if ( magicNum == -1 )
 	{
 		std::cout << "Error opening " << filename << "\n";
-		return(1);
+		return(false);
 	}
 
-	boost::iostreams::filtering_stream<boost::iostreams::input> in;
-	std::ifstream ifp;
-	if (ifp == NULL)
-		return(false);
 
 #ifdef USE_ZLIB
 	if ( magicNum == MAGICNUMBER_GZIP )
 	{
-		in.push(boost::iostreams::gzip_decompressor());
-		ifp.open(filename,std::ios::in|std::ios::binary);
+		in->push(boost::iostreams::gzip_decompressor());
+		ifp->open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
 #ifdef USE_BZIP2
 	if ( magicNum == MAGICNUMBER_BZIP2 )
 	{
-		in.push(boost::iostreams::bzip2_decompressor());
-		ifp.open(filename,std::ios::in|std::ios::binary);
+		in->push(boost::iostreams::bzip2_decompressor());
+		ifp->open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
 #ifdef USE_LZMA
 	if ( magicNum == MAGICNUMBER_LZMA )
 	{
-		in.push(lzma_input_filter());
-		ifp.open(filename,std::ios::in|std::ios::binary);
+		in->push(lzma_input_filter());
+		ifp->open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
 	
 	if ( magicNum == MAGICNUMBER_UNKNOWN )
-		ifp.open(filename,std::ios::in);
+		ifp->open(filename,std::ios::in);
 
-	if ( !ifp.is_open() )
+	if ( !ifp->is_open() )
 	{
 		std::cerr << "Error: can not open this type of file." << "\n";
 		return(false);
 	}
 
-	in.push(ifp);
+	in->push(*ifp);
+	return(true);
+}
+
+bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+             std::vector<struct thbAtom *> *atom)
+{
+	struct thbAtom *NewAtom;
+	int lineno=0; // Line number of datafile, used for error messages.
 
 	char line[256];
 	char molecule[80];
@@ -166,16 +168,16 @@ bool ReadMdf( const char *filename,
 	char forcefield[4];
 	char connected[256];
 
-	VERBOSE_MSG("Reading atom configuration from " << filename);
 
-	in.getline(line,255); lineno++;
+	in->getline(line,255); lineno++;
+	DEBUG_MSG("line[0]: " << line);
 	bool ReadingMolecule = false;
-	while ( !in.eof() )
+	while ( !in->eof() )
 	{
 		if( (line[0] == '!') ||
 		    (line[0] == ' ') )
 		{
-			in.getline(line,255); lineno++;
+			in->getline(line,255); lineno++;
 			continue;
 		}
 
@@ -207,7 +209,7 @@ bool ReadMdf( const char *filename,
 				          << n << "." << "\n"
 						  << " L" << lineno <<": '" << line << "'" << "\n";
 
-				ifp.close();
+				// ifp.close();
 				return(1);
 			}
 			std::vector<std::string> cA = connectedAtoms(connected);
@@ -241,7 +243,7 @@ bool ReadMdf( const char *filename,
 
 		}
 
-		in.getline(line,255); lineno++;
+		in->getline(line,255); lineno++;
 	}
 
 	return(true);
@@ -314,11 +316,14 @@ void doAtomConnections( std::vector<struct thbAtom *> *atom )
 	}
 }
 
-int ReadCarMdf( const char *filename,
+bool ReadCarMdf(const char *filename,
                 std::vector<struct thbAtom *> *atom,
                 struct PBC *Cell )
 {
+	// 
 	// Read atoms from MDF files.
+	//
+
 	std::string MDFfile = filename;
 
 	// The user may specify either a .arc, or .car file. They both use a .mdf
@@ -330,77 +335,51 @@ int ReadCarMdf( const char *filename,
 	if ( tag != std::string::npos )
 		MDFfile.replace(tag, 4, ".mdf");
 
-	if ( !ReadMdf( MDFfile.c_str(), atom ) )
-		return(1);
+	std::ifstream MDFifp;
+	if (MDFifp == NULL)
+		return(false);
+    boost::iostreams::filtering_stream<boost::iostreams::input> MDFin;
 
+    if ( !openfile( MDFfile.c_str(), &MDFin, &MDFifp ) ) {
+	    return(false); } 
+    else {
+		VERBOSE_MSG("Reading atom configuration from " << MDFfile);
+		ReadMdf( &MDFin, atom ); 
+		MDFifp.close();
+    }
 
 	VERBOSE_MSG("Determining atom connections.");
 	doAtomConnections( atom );
 
+	//
+	// Read coordinates from CAR files.
+	// 
 	std::string CARfile = filename;
 
-	VERBOSE_MSG("Reading atom coordinates from " << CARfile);
+	std::ifstream CARifp;
+	if (CARifp == NULL)
+		return(false);
+    boost::iostreams::filtering_stream<boost::iostreams::input> CARin;
 
-	ReadCar( CARfile.c_str(), atom, Cell );
+	if ( !openfile( CARfile.c_str(), &CARin, &CARifp ) ) {
+		return(false); }
+	else {
+		VERBOSE_MSG("Reading atom coordinates from " << CARfile);
+		ReadCar( &CARin, atom, Cell ); 
+		CARifp.close();
+	}
 
-	return(0);
+	return(true);
 }
 
-int ReadCar(const char *filename,
-            std::vector<struct thbAtom *> *atom,
-            struct PBC *Cell )
+bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+             std::vector<struct thbAtom *> *atom,
+             struct PBC *Cell )
 {
 	char line[83];
 	char CarEND[] = "end                                                                             ";
 	int n; // To check number of assigned values in sscanf
 	int lineno=0; // Line number of datafile, used for error messages.
-
-	int magicNum = getMagicNumber(filename);
-
-	if ( magicNum == -1 )
-	{
-		std::cout << "Error opening " << filename << "\n";
-		return(1);
-	}
-
-	boost::iostreams::filtering_stream<boost::iostreams::input> in;
-	std::ifstream ifp;
-	if (ifp == NULL)
-		return(false);
-
-#ifdef USE_ZLIB
-	if ( magicNum == MAGICNUMBER_GZIP )
-	{
-		in.push(boost::iostreams::gzip_decompressor());
-		ifp.open(filename,std::ios::in|std::ios::binary);
-	}
-#endif
-#ifdef USE_BZIP2
-	if ( magicNum == MAGICNUMBER_BZIP2 )
-	{
-		in.push(boost::iostreams::bzip2_decompressor());
-		ifp.open(filename,std::ios::in|std::ios::binary);
-	}
-#endif
-#ifdef USE_LZMA
-	if ( magicNum == MAGICNUMBER_LZMA )
-	{
-		in.push(lzma_input_filter());
-		ifp.open(filename,std::ios::in|std::ios::binary);
-	}
-#endif
-
-	if ( magicNum == MAGICNUMBER_UNKNOWN )
-		ifp.open(filename,std::ios::in);
-
-	if ( !ifp.is_open() )
-	{
-		std::cerr << "Error: can not open this type of file." << "\n";
-		return(false);
-	}
-
-
-	in.push(ifp);
 
 	/*
 	 * For each frame, start counting from atomNum=0. car/arc/mdf files
@@ -408,8 +387,9 @@ int ReadCar(const char *filename,
 	 * atoms in the car/arc files are the same as in the mdf file.
 	 */
 	unsigned int atomNum = 0;
-	in.getline(line,82); lineno++;
-	while ( ! in.eof() )
+	in->getline(line,82); lineno++;
+	DEBUG_MSG("line[0]: " << line);
+	while ( ! in->eof() )
 	{
 		// VERBOSE_MSG(":" << line);
 		if ( line[0] == '!' )
@@ -418,7 +398,7 @@ int ReadCar(const char *filename,
 		{}//	std::cout << "# Found Materials Studio comment." << "\n";
 		else if ( *line == *CarEND )
 		{
-			in.getline(line,82); lineno++;
+			in->getline(line,82); lineno++;
 			// Two 'end' statements in a row indicate a new frame of the
 			// trajectory.
 			if ( *line == *CarEND )
@@ -450,7 +430,7 @@ int ReadCar(const char *filename,
 				          << n << "." << "\n"
 				          << " L1: '" << lineno << "'" << "\n";
 
-				ifp.close();
+				// ifp.close();
 				return(1);
 			}
 			Cell->p.push_back( Point(CellX, CellY, CellZ) );
@@ -470,7 +450,7 @@ int ReadCar(const char *filename,
 				std::cerr << "Error on line 1. Expected 3 coordinates, read "
 				          << n << "." << "\n"
 				          << " L1: '" << lineno << "'" << "\n";
-				ifp.close();
+				// ifp.close();
 				return(1);
 			}
 			atom->at(atomNum)->p.push_back( Point(x,y,z) );
@@ -478,9 +458,10 @@ int ReadCar(const char *filename,
 			// Update atomNum counter.
 			atomNum++;
 		}
-		in.getline(line,82); lineno++;
+		in->getline(line,82); lineno++;
 	}
-	ifp.close();
+	// ifp.close();
+	// in.close();
 
 	return(0);
 }

@@ -10,15 +10,19 @@
 #include "ListOfHBonds.h"
 #include "TraceHBonds.h"
 
-int ReadCarMdf( const char *filename,
+bool openfile(const char *filename,
+              boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+              std::ifstream *ifp);
+
+bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+             std::vector<struct thbAtom *> *atom,
+             struct PBC *Cell );
+
+bool ReadCarMdf(const char *filename,
                 std::vector<struct thbAtom *> *atom,
-                struct PBC *Cell);
+                struct PBC *Cell );
 
-int ReadCar( const char *filename,
-            std::vector<struct thbAtom *> *atom,
-            struct PBC *Cell );
-
-bool ReadMdf( const char *filename,
+bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom);
 #endif
 

@@ -57,7 +57,22 @@ int doArcFile(char *ifilename,
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	t_start = time(NULL);
+#ifdef PTHREADS
+	struct worker_data_s wd;
+	wd.jobtype = THREAD_JOB_READCARMDF;
+	wd.jobnum = 1;
+	wd.num_threads = NumberOfCPUs();
+	wd.filename = ifilename;
+	wd.atom = &atom;
+	wd.Cell = Cell;
+
+	inQueue.push(wd);
+
+	// Get the result back from the worker threads.
+	outQueue.pop();
+#else
 	ReadCarMdf( ifilename, &atom, Cell );
+#endif //PTHREADS
 	times["reading data"]  = difftime(t_start, time(NULL));
 	// Free up some space, if possible.
 	if ( atom.size() != atom.capacity() )

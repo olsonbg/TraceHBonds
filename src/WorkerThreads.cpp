@@ -40,6 +40,9 @@ void *MyThread::run()
 				LifetimeThread( wd.b, wd.TrjIdx_iter, 
 				                wd.num_threads, wd.jobnum);
 				break;
+			case THREAD_JOB_READCARMDF:
+				ReadCarMdf( wd.filename, wd.atom, wd.Cell );
+				break;
 			case THREAD_JOB_EXIT:
 				return NULL;
 				break;

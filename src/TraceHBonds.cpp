@@ -106,12 +106,13 @@ int doArcFile(char *ifilename,
 			delete wd.coordinates;
 			FramesProcessed++;
 
-			if (  ((FramesProcessed)%10==0)  )
+			// Only show this message if we are done reading all frames.
+			if ( (NumFramesInTrajectory != 0) &&
+				 (FramesProcessed%10==0)  )
 			{
 				VERBOSE_CMSG("Processing frame " << FramesProcessed );
-				if ( NumFramesInTrajectory != 0 )
-					VERBOSE_CMSG("/" << NumFramesInTrajectory);
-				VERBOSE_MSG(". Hydrogen-acceptor pairs found: " << hb.size() << ".");
+				VERBOSE_CMSG("/" << NumFramesInTrajectory);
+				VERBOSE_RMSG(". Hydrogen-acceptor pairs found: " << hb.size() << ".");
 			}
 
 			if ( FramesProcessed == NumFramesInTrajectory )
@@ -153,12 +154,6 @@ int doArcFile(char *ifilename,
 
 	TrajectoryIndexIterator( &TrjIdx_iter, &hb );
 
-	// for(unsigned int i=0; i != TrjIdx_iter.size(); ++i)
-	// {
-	//     VERBOSE_MSG("TrjIdx_iter.begin:" << std::distance(hb.begin(), TrjIdx_iter.at(i).begin) );
-	//     VERBOSE_MSG("TrjIdx_iter.end  :" << std::distance(TrjIdx_iter.at(i).begin, TrjIdx_iter.at(i).end) );
-	// }
-
 	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
 
 	t_start = time(NULL);
@@ -171,12 +166,6 @@ int doArcFile(char *ifilename,
 
 	// Update TrjIdx_iter after removing elements.
 	TrajectoryIndexIterator( &TrjIdx_iter, &hb );
-
-	// for(unsigned int i=0; i != TrjIdx_iter.size(); ++i)
-	// {
-	//     VERBOSE_MSG("TrjIdx_iter.begin:" << std::distance(hb.begin(), TrjIdx_iter.at(i).begin) );
-	//     VERBOSE_MSG("TrjIdx_iter.end  :" << std::distance(TrjIdx_iter.at(i).begin, TrjIdx_iter.at(i).end) );
-	// }
 
 	unsigned int TrjIdx;
 
@@ -191,9 +180,6 @@ int doArcFile(char *ifilename,
 	t_start = time(NULL);
 	Trace( &HBStrings, &TrjIdx_iter );
 	times["finding hydrogen bond strings"] = difftime(t_start, time(NULL));
-
-
-
 
 	// Hydrogen bond lifetime correlations.
 	if ( 1 )

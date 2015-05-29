@@ -23,6 +23,7 @@ const unsigned int THREAD_JOB_CORR          =  4; // CorrelationsThread().
 const unsigned int THREAD_JOB_LIFETIME      =  5; // LifetimeThread().
 const unsigned int THREAD_JOB_POSITIONS_CAR =  6; // PositionsCAR().
 const unsigned int THREAD_JOB_HBS2          =  7; // HBs().
+const unsigned int THREAD_JOB_CORR_TABLE    =  8; // CorrelationsTableThread().
 const unsigned int THREAD_JOB_PAUSE         = 90; // Pause thread.
 const unsigned int THREAD_JOB_EXIT          = 99; // Exit thread.
 
@@ -63,6 +64,8 @@ struct worker_data_s
 	std::vector< double > *vdI;
 	std::vector< std::vector<bool> > *b;
 	std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter;
+	unsigned int numHBs;
+	unsigned int fcutoff;
 	//
 	// ReadCarMdf
 	//

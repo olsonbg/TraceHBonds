@@ -55,6 +55,13 @@ void CorrelationsThread(vd *C, vd *I,
                         vvui *continuous, vvui *intermittent,
                         unsigned int NumThreads, unsigned int ThreadID );
 
+void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
+                              vvui *continuous, vvui *intermittent,
+                              unsigned int numHBs,
+                              unsigned int fcutoff,
+                              unsigned int NumThreads,
+                              unsigned int ThreadID);
+
 void getNeighbors( struct Histograms_s *Histograms,
                    std::vector<ListOfHBonds *> HBStrings,
                    struct PBC *Cell);

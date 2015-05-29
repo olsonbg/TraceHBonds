@@ -135,8 +135,7 @@ void HBs( HBVec *hb,
 					NewHB->acceptor = *it_a;
 					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
 					NewHB->TrajIdx  = TrjIdx;
-
-					NewHB->acceptorDonorDistance=D.minimumImageDistance(A,cell);
+					// NewHB->acceptorDonorDistance=D.minimumImageDistance(A,cell);
 
 					hb->push_back(NewHB);
 				}

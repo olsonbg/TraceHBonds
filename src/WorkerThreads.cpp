@@ -46,6 +46,12 @@ void *MyThread::run()
 				                    wd.vvuiC, wd.vvuiI,
 				                    wd.num_threads, wd.jobnum );
 				break;
+			case THREAD_JOB_CORR_TABLE:
+				CorrelationsTableThread( wd.b,
+				                         wd.vvuiC, wd.vvuiI,
+				                         wd.numHBs, wd.fcutoff,
+				                         wd.num_threads, wd.jobnum );
+				break;
 			case THREAD_JOB_LIFETIME:
 				LifetimeThread( wd.b, wd.TrjIdx_iter, 
 				                wd.num_threads, wd.jobnum);

@@ -464,7 +464,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 		else if ( ! strncmp(line, "PBC ", 4) )
 		{
 			if ( (Cell->frames)%50==0 )
-				VERBOSE_MSG("Frames : " << Cell->frames);
+				VERBOSE_RMSG("Frames : " << Cell->frames);
 
 			// if (Cell->frames == 100)
 			//     break;

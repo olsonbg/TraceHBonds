@@ -174,6 +174,42 @@ void CorrelationsThread(vd *C, vd *I,
 
 }
 
+void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
+                              vvui *continuous, vvui *intermittent,
+                              unsigned int numHBs,
+                              unsigned int fcutoff,
+                              unsigned int NumThreads=1,
+                              unsigned int ThreadID=0)
+{
+	for( unsigned int h=ThreadID; h < numHBs; h += NumThreads)
+	{
+		for( unsigned int f1=0; f1 < fcutoff; ++f1)
+		{
+			unsigned int f2=f1+1;
+			if ( v->at(h).at(f1) ) {
+				continuous->at(h).at(0)++;
+				intermittent->at(h).at(0)++;
+				for( ; f2 < f1+fcutoff; ++f2)
+				{
+					if( ! v->at(h).at(f2) ) break;
+
+					continuous->at(h).at(f2-f1)++;
+					intermittent->at(h).at(f2-f1)++;
+				}
+				// Continue until fcutoff to calculate the intermittent
+				// hydrogen bond autocorrelation.
+				for(f2 = f2+1; f2 < f1+fcutoff; ++f2)
+				{
+					if( v->at(h).at(f2) )
+						intermittent->at(h).at(f2-f1)++;
+				}
+
+			}
+		}
+	}
+}
+
+
 void Correlations( std::ostream *out,
                    std::vector< std::vector<bool> > *v )
 {
@@ -187,33 +223,44 @@ void Correlations( std::ostream *out,
 	vvui continuous  ( numHBs, vui(fcutoff, 0) );
 	vvui intermittent( numHBs, vui(fcutoff, 0) );
 
-	for( unsigned int h=0; h < numHBs; ++h)
+#ifdef PTHREADS
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
 	{
-		for( unsigned int f1=0; f1 < fcutoff; ++f1)
-		{
-			unsigned int f2=f1+1;
-			if ( v->at(h).at(f1) ) {
-				continuous.at(h).at(0)++;
-				intermittent.at(h).at(0)++;
-				for( ; f2 < f1+fcutoff; ++f2)
-				{
-					if( ! v->at(h).at(f2) ) break;
+		struct worker_data_s wd;
+		wd.jobtype     = THREAD_JOB_CORR_TABLE;
+		wd.jobnum      = jobnum;
+		wd.num_threads = NumberOfCPUs();
+		wd.b           = v;
+		wd.numHBs      = numHBs;
+		wd.fcutoff     = fcutoff;
+		wd.vvuiC       = new vvui(numHBs, vui(fcutoff, 0) );
+		wd.vvuiI       = new vvui(numHBs, vui(fcutoff, 0) );
 
-					continuous.at(h).at(f2-f1)++;
-					intermittent.at(h).at(f2-f1)++;
-				}
-				// Continue until fcutoff to calculate the intermittent
-				// hydrogen bond autocorrelation.
-				for(f2 = f2+1; f2 < f1+fcutoff; ++f2)
-				{
-					if( v->at(h).at(f2) )
-						intermittent.at(h).at(f2-f1)++;
-				}
-
-			}
-		}
+		inQueue.push(wd);
 	}
 
+	// Get the results back from the worker threads.
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	{
+		struct worker_data_s wd = outQueue.pop();
+
+		for( unsigned int h=0; h < numHBs; ++h)
+		{
+			for( unsigned int f = 0; f < fcutoff; ++f)
+			{
+				continuous.at(h).at(f)   += wd.vvuiC->at(h).at(f);
+				intermittent.at(h).at(f) += wd.vvuiI->at(h).at(f);
+			}
+		}
+		delete wd.vvuiC;
+		delete wd.vvuiI;
+	}
+#else
+	CorrelationsTableThread( v, &continuous, &intermittent, 
+	                         numHBs, fcutoff );
+#endif // PTHREADS
+
+	VERBOSE_MSG("Calculating autocorrelation.");
 	// Combine all frames.
 	vd C(fcutoff,0.0);
 	vd I(fcutoff,0.0);
@@ -236,7 +283,6 @@ void Correlations( std::ostream *out,
 	// Get the results back from the worker threads.
 	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
 	{
-
 		struct worker_data_s wd = outQueue.pop();
 		for ( unsigned int i=0; i < wd.vdC->size(); ++i )
 		{

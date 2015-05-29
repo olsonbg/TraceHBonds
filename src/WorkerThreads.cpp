@@ -25,6 +25,16 @@ void *MyThread::run()
 				     wd.rCutoff,
 				     wd.angleCutoff );
 				break;
+			case THREAD_JOB_HBS2:
+				HBs( wd.hb,
+				     wd.cell,
+				     wd.hydrogens,
+				     wd.acceptors,
+				     wd.coordinates,
+				     wd.TrjIdx,
+				     wd.rCutoff,
+				     wd.angleCutoff );
+				break;
 			case THREAD_JOB_RMDUPS:
 				RemoveDuplicatesThread( *wd.HBit );
 				break;
@@ -41,7 +51,10 @@ void *MyThread::run()
 				                wd.num_threads, wd.jobnum);
 				break;
 			case THREAD_JOB_POSITIONS_CAR:
-				PositionsCAR( wd.filename, wd.atom, wd.Cell );
+				PositionsCAR( wd.filename, wd.atom, wd.Cell,
+				              wd.hydrogens, wd.acceptors,
+				              wd.rCutoff, wd.angleCutoff);
+				wd.TrjIdx = wd.Cell->frames;
 				break;
 			case THREAD_JOB_EXIT:
 				return NULL;

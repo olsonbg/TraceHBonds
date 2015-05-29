@@ -47,6 +47,7 @@ int doArcFile(char *ifilename,
 {
 	HBVec hb;
 	std::vector<struct thbAtom *> atom;
+	unsigned int NumFramesInTrajectory = 0;
 
 	std::map<std::string,double> times;
 	time_t t_start;
@@ -79,30 +80,68 @@ int doArcFile(char *ifilename,
 	wd.hydrogens   = &hydrogens;
 	wd.acceptors   = &acceptors;
 	wd.Cell        = Cell;
+	wd.rCutoff     = rCutoff;
+	wd.angleCutoff = angleCutoff;
 
 	inQueue.push(wd);
 
 	// Get the result back from the worker threads.
-	outQueue.pop();
+	unsigned int FramesProcessed=0;
+	while ( 1 )
+	{
+		struct worker_data_s wd = outQueue.pop();
+		if ( wd.jobtype == THREAD_JOB_HBS2 )
+		{
+			// hb.reserve(hb.size() + wd.hb->size() );
+			hb.reserve(5000*wd.hb->size() );
+			if ( NumFramesInTrajectory != 0 )
+				hb.reserve(NumFramesInTrajectory*wd.hb->size() );
+
+			hb.insert(hb.end(),
+			          wd.hb->begin(),
+			          wd.hb->end() );
+			wd.hb->clear();
+			delete wd.hb;
+			wd.coordinates->clear();
+			delete wd.coordinates;
+			FramesProcessed++;
+
+			if (  ((FramesProcessed)%10==0)  )
+			{
+				VERBOSE_CMSG("Processing frame " << FramesProcessed );
+				if ( NumFramesInTrajectory != 0 )
+					VERBOSE_CMSG("/" << NumFramesInTrajectory);
+				VERBOSE_MSG(". Hydrogen-acceptor pairs found: " << hb.size() << ".");
+			}
+
+			if ( FramesProcessed == NumFramesInTrajectory )
+				break;
+		}
+		if ( wd.jobtype == THREAD_JOB_POSITIONS_CAR )
+		{
+			NumFramesInTrajectory = wd.TrjIdx;
+			if ( FramesProcessed == NumFramesInTrajectory )
+				break;
+		}
+	}
 #else
 	PositionsCAR( ifilename, &atom, Cell );
 #endif //PTHREADS
 	times["reading data"]  = difftime(t_start, time(NULL));
 	// std::vector<double>A, B, C;
 
-	unsigned int NumFramesInTrajectory = 0;
 	NumFramesInTrajectory = Cell->frames;
 
 	VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
 
 	// Reserve space for hydrogen bonds to minimize reallocations.
 	// This is just an emperical guess for reserve size.
-	hb.reserve((atom.size()/4)*NumFramesInTrajectory);
+	// hb.reserve((atom.size()/4)*NumFramesInTrajectory);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	// Now  determine the hydrogen bonds
 	t_start = time(NULL);
-	AtomNeighbors( &hb, Cell, &hydrogens, &acceptors, 
-	               rCutoff, angleCutoff );
+	// AtomNeighbors( &hb, Cell, &hydrogens, &acceptors, 
+	//                rCutoff, angleCutoff );
 	times["finding pairs"] = difftime(t_start, time(NULL));
 	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	if ( hb.size() != hb.capacity() )

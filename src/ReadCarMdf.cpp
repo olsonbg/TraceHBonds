@@ -6,6 +6,11 @@
 
 extern bool THB_VERBOSE;
 
+#ifdef PTHREADS
+extern Queue<struct worker_data_s> inQueue;
+extern Queue<struct worker_data_s> outQueue;
+#endif
+
 unsigned int toUInt(std::string s)
 {
 	std::stringstream in(s, std::ios_base::in);
@@ -362,9 +367,11 @@ bool ConnectionsMDF(const char *filename,
 
 bool PositionsCAR(const char *filename,
                   std::vector<struct thbAtom *> *atom,
-                  struct PBC *Cell )
+                  struct PBC *Cell,
+                  std::vector<struct thbAtom *> *hydrogens,
+                  std::vector<struct thbAtom *> *acceptors,
+                  double rCutoff, double angleCutoff)
 {
-	//
 	// Read coordinates from CAR files.
 	// 
 	std::string CARfile = filename;
@@ -378,7 +385,31 @@ bool PositionsCAR(const char *filename,
 		return(false); }
 	else {
 		VERBOSE_MSG("Reading atom coordinates from " << CARfile);
-		ReadCar( &CARin, atom, Cell ); 
+
+		while ( 1 ) {
+			struct worker_data_s wd;
+			wd.coordinates = new std::vector<Point>;
+			wd.coordinates->reserve(atom->size());
+
+			if ( !ReadCar(&CARin, atom, Cell, wd.coordinates) ) {
+				delete wd.coordinates;
+				break;
+			}
+
+			wd.jobtype = THREAD_JOB_HBS2;
+			wd.jobnum = Cell->frames;
+			wd.num_threads = NumberOfCPUs();
+			wd.cell = Cell->p.back();
+			wd.hydrogens = hydrogens;
+			wd.acceptors = acceptors;
+			wd.TrjIdx = Cell->frames - 1;
+			wd.rCutoff = rCutoff;
+			wd.angleCutoff = angleCutoff;
+			wd.hb = new HBVec;
+			wd.hb->reserve(acceptors->size()*2);
+
+			inQueue.push(wd);
+		}
 		CARifp.close();
 	}
 
@@ -387,7 +418,8 @@ bool PositionsCAR(const char *filename,
 
 bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom,
-             struct PBC *Cell )
+             struct PBC *Cell,
+             std::vector<Point> *Coordinates)
 {
 	char line[83];
 	char CarEND[] = "end                                                                             ";
@@ -400,8 +432,13 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 	 * atoms in the car/arc files are the same as in the mdf file.
 	 */
 	unsigned int atomNum = 0;
+
+	if ( in->eof() ) { return(false);}
 	in->getline(line,82); lineno++;
-	DEBUG_MSG("line[0]: " << line);
+	if ( in->eof() ) {
+		DEBUG_MSG("line[0]: <EOF>" << line);
+		return(false);
+	}
 	while ( ! in->eof() )
 	{
 		// VERBOSE_MSG(":" << line);
@@ -414,8 +451,11 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 			in->getline(line,82); lineno++;
 			// Two 'end' statements in a row indicate a new frame of the
 			// trajectory.
-			if ( *line == *CarEND )
+			if ( *line == *CarEND ) {
 				atomNum = 0;
+				// return after reading a full frame.
+				return(true);
+			}
 			continue;
 		}
 		else if ( ! strncmp(line, "PBC=ON", 6) ) {  }
@@ -424,7 +464,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 		else if ( ! strncmp(line, "PBC ", 4) )
 		{
 			if ( (Cell->frames)%50==0 )
-				VERBOSE_RMSG("Frames : " << Cell->frames);
+				VERBOSE_MSG("Frames : " << Cell->frames);
 
 			// if (Cell->frames == 100)
 			//     break;
@@ -444,7 +484,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 				          << " L1: '" << lineno << "'" << "\n";
 
 				// ifp.close();
-				return(1);
+				return(false);
 			}
 			Cell->p.push_back( Point(CellX, CellY, CellZ) );
 
@@ -464,9 +504,10 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 				          << n << "." << "\n"
 				          << " L1: '" << lineno << "'" << "\n";
 				// ifp.close();
-				return(1);
+				return(false);
 			}
-			atom->at(atomNum)->p.push_back( Point(x,y,z) );
+			// atom->at(atomNum)->p.push_back( Point(x,y,z) );
+			Coordinates->push_back( Point(x, y, z) );
 
 			// Update atomNum counter.
 			atomNum++;
@@ -476,5 +517,5 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 	// ifp.close();
 	// in.close();
 
-	return(0);
+	return(false);
 }

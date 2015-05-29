@@ -22,6 +22,7 @@ const unsigned int THREAD_JOB_TRACE         =  3; // TraceThread().
 const unsigned int THREAD_JOB_CORR          =  4; // CorrelationsThread().
 const unsigned int THREAD_JOB_LIFETIME      =  5; // LifetimeThread().
 const unsigned int THREAD_JOB_POSITIONS_CAR =  6; // PositionsCAR().
+const unsigned int THREAD_JOB_HBS2          =  7; // HBs().
 const unsigned int THREAD_JOB_PAUSE         = 90; // Pause thread.
 const unsigned int THREAD_JOB_EXIT          = 99; // Exit thread.
 
@@ -68,6 +69,7 @@ struct worker_data_s
 	const char *filename;
 	std::vector<struct thbAtom *> *atom;
 	struct PBC *Cell;
+	std::vector<Point> *coordinates;
 };
 
 struct thread_detail_s {

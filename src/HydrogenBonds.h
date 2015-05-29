@@ -16,7 +16,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
-          std::vector<Point>Coordinates,
+          std::vector<Point> *Coordinates,
           double TrjIdx,
           double rCutoff, double angleCutoff);
 

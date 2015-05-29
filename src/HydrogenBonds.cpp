@@ -81,7 +81,7 @@ void HBs( HBVec *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
-          std::vector<Point>Coordinates,
+          std::vector<Point> *Coordinates,
           double TrjIdx,
           double rCutoff, double angleCutoff)
 {
@@ -101,7 +101,7 @@ void HBs( HBVec *hb,
 	for( it_h = hydrogens->begin(); it_h < hydrogens->end(); ++it_h)
 	{
 		// location of the hydrogen of interest.
-		H = Coordinates.at( (*it_h)->ID );
+		H = Coordinates->at( (*it_h)->ID );
 
 		for( it_a = acceptors->begin(); it_a < acceptors->end(); ++it_a)
 		{
@@ -112,7 +112,7 @@ void HBs( HBVec *hb,
 				continue;
 
 			// location of the acceptor atom of interest.
-			A = Coordinates.at( (*it_a)->ID );
+			A = Coordinates->at( (*it_a)->ID );
 
 			r = H.minimumImage( A, cell );
 			r2 = r.magnitudeSquared();
@@ -121,7 +121,7 @@ void HBs( HBVec *hb,
 			{
 				// Distance cutoff is good, now check the angle.
 				// location of the donor atom connected to the Hydrogen.
-				D = Coordinates.at( (*it_h)->ConnectedAtom.at(0)->ID );
+				D = Coordinates->at( (*it_h)->ConnectedAtom.at(0)->ID );
 
 				double angle = H.angle(A,D);
 				if ( angle > angleCutoff )
@@ -220,20 +220,16 @@ void AtomNeighbors( HBVec *hb,
 {
 	VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
 
-	unsigned int NumFramesInTrajectory = 0;
-	NumFramesInTrajectory = Cell->frames;
+	unsigned int NumFramesInTrajectory = Cell->frames;
 
-	Point cell;
 	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
 	{
-		cell = Cell->p.at(TrjIdx);
-
 #ifdef PTHREADS
 		struct worker_data_s wd;
 		wd.jobtype = THREAD_JOB_HBS;
 		wd.jobnum = TrjIdx;
 		wd.num_threads = NumberOfCPUs();
-		wd.cell = cell;
+		wd.cell = Cell->p.at(TrjIdx);
 		wd.hydrogens = hydrogens;
 		wd.acceptors = acceptors;
 		wd.TrjIdx = TrjIdx;
@@ -244,7 +240,6 @@ void AtomNeighbors( HBVec *hb,
 		wd.hb->reserve(acceptors->size()*2);
 
 		inQueue.push(wd);
-
 #else
 		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
 			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
@@ -268,7 +263,7 @@ void AtomNeighbors( HBVec *hb,
 		wd.hb->clear();
 		delete wd.hb;
 	}
-
 #endif // PTHREADS
+
 	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
 }

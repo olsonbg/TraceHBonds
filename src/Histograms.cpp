@@ -260,7 +260,7 @@ void Correlations( std::ostream *out,
 	                         numHBs, fcutoff );
 #endif // PTHREADS
 
-	VERBOSE_MSG("Calculating autocorrelation.");
+	VERBOSE_MSG("\tCalculating autocorrelation.");
 	// Combine all frames.
 	vd C(fcutoff,0.0);
 	vd I(fcutoff,0.0);
@@ -296,7 +296,7 @@ void Correlations( std::ostream *out,
 	CorrelationsThread( &C, &I, &continuous, &intermittent );
 #endif // PTHREADS
 
-	std::cout << "Saving autocorrelation data.\n";
+	std::cout << "\tSaving autocorrelation data.\n";
 
 	// Save the continuous hydrogen bond autocorrelation data.
 	for( unsigned int i=0; i < fcutoff; ++i) {

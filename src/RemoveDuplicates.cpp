@@ -34,7 +34,6 @@ void removeMarked( HBVec *hb )
 
 	pos = remove_if(hb->begin(), hb->end(), deleteMarked);
 
-	std::cout << "Distance:" <<std::distance(pos, hb->end()) << "\n";
 	if ( pos != hb->end() )
 	{
 		// HBVec::iterator toDelete;
@@ -166,7 +165,6 @@ void RemoveDuplicates( HBVec *hb,
 
 	VERBOSE_MSG("Removing Marked");
 	removeMarked(hb);
-	VERBOSE_MSG("Removed");
 	return;
 
 }

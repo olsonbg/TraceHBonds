@@ -49,15 +49,11 @@ int doArcFile(char *ifilename,
 	std::vector<struct thbAtom *> atom;
 	unsigned int NumFramesInTrajectory = 0;
 
-	std::map<std::string,double> times;
-	time_t t_start;
-
 	struct PBC *Cell;
 	Cell = new struct PBC;
 
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
-	t_start = time(NULL);
 	// Get Atoms and their connections.
 	ConnectionsMDF( ifilename, &atom );
 
@@ -128,7 +124,6 @@ int doArcFile(char *ifilename,
 #else
 	PositionsCAR( ifilename, &atom, Cell );
 #endif //PTHREADS
-	times["reading data"]  = difftime(t_start, time(NULL));
 	// std::vector<double>A, B, C;
 
 	NumFramesInTrajectory = Cell->frames;
@@ -140,10 +135,8 @@ int doArcFile(char *ifilename,
 	// hb.reserve((atom.size()/4)*NumFramesInTrajectory);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	// Now  determine the hydrogen bonds
-	t_start = time(NULL);
 	// AtomNeighbors( &hb, Cell, &hydrogens, &acceptors, 
 	//                rCutoff, angleCutoff );
-	times["finding pairs"] = difftime(t_start, time(NULL));
 	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	if ( hb.size() != hb.capacity() )
 		HBVec(hb).swap(hb);
@@ -156,10 +149,8 @@ int doArcFile(char *ifilename,
 
 	VERBOSE_MSG("Looking for smallest hydrogen-acceptor bond lengths in all frames...");
 
-	t_start = time(NULL);
 	RemoveDuplicates ( &hb, &TrjIdx_iter );
-	times["finding hydrogen bonds"] = difftime(t_start, time(NULL));
-	VERBOSE_MSG("Hydrogen bonds:          " << hb.size() << ".");
+	VERBOSE_MSG("Hydrogen bonds: " << hb.size() << ".");
 	if ( hb.size() != hb.capacity() )
 		HBVec(hb).swap(hb);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
@@ -175,11 +166,8 @@ int doArcFile(char *ifilename,
 	HBStrings.reserve(1000*NumFramesInTrajectory);
 
 	//Find all the strings.
-	VERBOSE_MSG("Tracing HB strings.");
-
-	t_start = time(NULL);
+	VERBOSE_RMSG("Tracing HB strings.");
 	Trace( &HBStrings, &TrjIdx_iter );
-	times["finding hydrogen bond strings"] = difftime(t_start, time(NULL));
 
 	// Hydrogen bond lifetime correlations.
 	if ( 1 )
@@ -188,7 +176,7 @@ int doArcFile(char *ifilename,
 		VERBOSE_MSG("\tGenerating truth table.");
 		std::vector< std::vector<bool> >correlationData;
 		Lifetime(&correlationData, &TrjIdx_iter);
-		VERBOSE_MSG("\t\tFinished truth table.");
+		VERBOSE_MSG("\tFinished truth table.");
 
 		std::ofstream out;
 		out.open("Correlations.txt",std::ios::out);
@@ -235,7 +223,6 @@ int doArcFile(char *ifilename,
 		else
 			CC = CC1;
 
-		t_start = time(NULL);
 		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 		{
 			if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
@@ -289,20 +276,7 @@ int doArcFile(char *ifilename,
 			out.close();
 		}
 	}
-	times["Saving files"] = difftime(t_start, time(NULL));
 
-	VERBOSE_MSG("\n\nTime spend:");
-	std::map<std::string,double>::iterator time_it;
-	for( time_it = times.begin(); time_it!=times.end(); ++time_it)
-	{
-		double t = -1.0*time_it->second;
-
-		VERBOSE_CMSG("  " << time_it->first << " - ");
-		if ( t > 60.0 )
-			VERBOSE_MSG(t/60.0 << " min.");
-		else
-			VERBOSE_MSG(t << " sec.");
-	}
 	//Cleanup
 	delete Cell;
 	DeleteVectorPointers( atom ); atom.clear();

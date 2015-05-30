@@ -43,7 +43,7 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, bool POVRAY)
+              int NumBins, unsigned char flags)
 {
 	HBVec hb;
 	std::vector<struct thbAtom *> atom;
@@ -170,7 +170,7 @@ int doArcFile(char *ifilename,
 	Trace( &HBStrings, &TrjIdx_iter );
 
 	// Hydrogen bond lifetime correlations.
-	if ( 1 )
+	if ( flags & LIFETIME )
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		VERBOSE_MSG("\tGenerating truth table.");
@@ -188,7 +188,7 @@ int doArcFile(char *ifilename,
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
-	if ( 0 )
+	if ( flags & LENGTHS )
 	{
 		std::ofstream out;
 		out.open("Lengths-Angles.txt",std::ios::out);
@@ -205,7 +205,7 @@ int doArcFile(char *ifilename,
 	}
 
 
-	if ( 0 ) {
+	if ( flags & SIZE_HIST ) {
 		// Make histograms.
 		VERBOSE_MSG("Generating size histograms.");
 		std::vector<struct Histograms_s> Histograms;
@@ -218,7 +218,7 @@ int doArcFile(char *ifilename,
 		std::string CC;
 
 		// Povray uses a different comment string.
-		if ( POVRAY )
+		if ( flags & POVRAY )
 			CC = CC2;
 		else
 			CC = CC1;
@@ -251,14 +251,14 @@ int doArcFile(char *ifilename,
 				out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
 
 				// print the histograms and chains.
-				prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, POVRAY);
+				prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, flags & POVRAY);
 
 				out.close();
 			}
 		}
 
 		VERBOSE_MSG("Saving neighbor histograms.");
-		if ( 0 )
+		if ( flags & NEIGHBOR_HIST )
 		{
 			VERBOSE_MSG("Generating neighbor histograms.");
 			for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {

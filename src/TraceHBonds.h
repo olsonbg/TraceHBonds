@@ -17,6 +17,16 @@
 
 extern bool THB_VERBOSE;
 
+enum {
+	VERBOSE       = 0x01,
+	LIFETIME      = 0x02,
+	SIZE_HIST     = 0x04,
+	LENGTHS       = 0x08,
+	POVRAY        = 0x10,
+	NEIGHBOR_HIST = 0x20,
+	ALL           = 0xFF,
+};
+
 struct HydrogenBondMatching
 {
 	std::vector<std::string>Hydrogens;
@@ -34,7 +44,7 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, bool POVRAY);
+              int NumBins, unsigned char flags);
 
 
 

@@ -23,8 +23,9 @@ int main(int argc, char *argv[])
 	double angleCutoff= 180.0; // Angle Cutoff for Hydrogen bonds.
 	// Matching keys for hydrogens and acceptors.
 	struct HydrogenBondMatching match;
-	int   flag_verbose= 0;
+	int   flag[8] = {}; // Initialize all element of flag to zero (0).
 	int   POVRAY = 0;
+	unsigned char flags = 0;
 
 	// Read command line arguments.
 	int c;
@@ -33,9 +34,14 @@ int main(int argc, char *argv[])
 		static struct option long_options[] =
 		{
 			/* These options set a flag. */
-			{"verbose", no_argument,       &flag_verbose, 1},
-			{"brief",   no_argument,       &flag_verbose, 0},
-			{"povray",  no_argument,       &POVRAY,       1},
+			{"verbose"     , no_argument, &flag[0], VERBOSE},
+			{"brief"       , no_argument, &flag[0], 0},
+			{"povray"      , no_argument, &flag[1], POVRAY},
+			{"lifetime"    , no_argument, &flag[2], LIFETIME},
+			{"lengths"     , no_argument, &flag[3], LENGTHS},
+			{"sizehist"    , no_argument, &flag[4], SIZE_HIST},
+			{"neighborhist", no_argument, &flag[5], NEIGHBOR_HIST},
+			{"all"         , no_argument, &flag[6], ALL},
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
@@ -101,7 +107,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ( flag_verbose ) THB_VERBOSE=true;
+	// Set the flags;
+	for ( int i=0; i < 8; i++ ) { flags |= flag[i]; };
+	// NEIGHBOR_HIST flag implies SIZE_HIST, so make sure it is set
+	// when NEIGHBOR_HIST is.
+	if ( flags & NEIGHBOR_HIST ) { flags |= SIZE_HIST; };
+
+	if ( flags & VERBOSE ) THB_VERBOSE=true;
 
 	// Done reading command line arguments
 	// 
@@ -128,7 +140,7 @@ int main(int argc, char *argv[])
 	doArcFile(fArc, ofPrefix, ofSuffix,
 	          &match,
 	          rCutoff, angleCutoff,
-	          NumBins, POVRAY);
+	          NumBins, flags);
 
 #ifdef PTHREADS
 	// Tell the threads to exit.

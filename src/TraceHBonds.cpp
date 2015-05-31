@@ -85,21 +85,21 @@ int doArcFile(char *ifilename,
 	unsigned int FramesProcessed=0;
 	while ( 1 )
 	{
-		struct worker_data_s wd = outQueue.pop();
-		if ( wd.jobtype == THREAD_JOB_HBS2 )
+		struct worker_data_s wdOut = outQueue.pop();
+		if ( wdOut.jobtype == THREAD_JOB_HBS2 )
 		{
-			// hb.reserve(hb.size() + wd.hb->size() );
-			hb.reserve(5000*wd.hb->size() );
+			// TODO: Use a more appropriate value than 5000.
+			hb.reserve(5000*wdOut.hb->size() );
 			if ( NumFramesInTrajectory != 0 )
-				hb.reserve(NumFramesInTrajectory*wd.hb->size() );
+				hb.reserve(NumFramesInTrajectory*wdOut.hb->size() );
 
 			hb.insert(hb.end(),
-			          wd.hb->begin(),
-			          wd.hb->end() );
-			wd.hb->clear();
-			delete wd.hb;
-			wd.coordinates->clear();
-			delete wd.coordinates;
+			          wdOut.hb->begin(),
+			          wdOut.hb->end() );
+			wdOut.hb->clear();
+			delete wdOut.hb;
+			wdOut.coordinates->clear();
+			delete wdOut.coordinates;
 			FramesProcessed++;
 
 			// Only show this message if we are done reading all frames.
@@ -114,9 +114,9 @@ int doArcFile(char *ifilename,
 			if ( FramesProcessed == NumFramesInTrajectory )
 				break;
 		}
-		if ( wd.jobtype == THREAD_JOB_POSITIONS_CAR )
+		if ( wdOut.jobtype == THREAD_JOB_POSITIONS_CAR )
 		{
-			NumFramesInTrajectory = wd.TrjIdx;
+			NumFramesInTrajectory = wdOut.TrjIdx;
 			if ( FramesProcessed == NumFramesInTrajectory )
 				break;
 		}

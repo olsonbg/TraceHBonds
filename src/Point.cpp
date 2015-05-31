@@ -12,10 +12,10 @@ Point Point::Round (Point v, double f) {
 
 // Constructor: Can be called with zero, one, two, or three
 // arguments.
-Point::Point(double x, double y, double z) {
-	u1 = x;
-	u2 = y;
-	u3 = z;
+Point::Point(double xx, double yy, double zz) {
+	u1 = xx;
+	u2 = yy;
+	u3 = zz;
 }
 
 double Point::x() {return u1; }

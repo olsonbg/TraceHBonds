@@ -13,7 +13,7 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 		lzma_stream strm;
 		uint8_t inbuf[BUFSIZ];
 		uint8_t outbuf[BUFSIZ];
-		lzma_ret retcode;
+		// lzma_ret retcode;
 		size_t out_size;
 		size_t out_curr;
 		bool lzma_done;

@@ -34,14 +34,14 @@ int main(int argc, char *argv[])
 		static struct option long_options[] =
 		{
 			/* These options set a flag. */
-			{"verbose"     , no_argument, &flag[0], VERBOSE},
-			{"brief"       , no_argument, &flag[0], 0},
-			{"povray"      , no_argument, &flag[1], POVRAY},
-			{"lifetime"    , no_argument, &flag[2], LIFETIME},
-			{"lengths"     , no_argument, &flag[3], LENGTHS},
-			{"sizehist"    , no_argument, &flag[4], SIZE_HIST},
+			{"verbose"     , no_argument, &flag[0], VERBOSE      },
+			{"brief"       , no_argument, &flag[0], 0            },
+			{"povray"      , no_argument, &flag[1], POVRAY       },
+			{"lifetime"    , no_argument, &flag[2], LIFETIME     },
+			{"lengths"     , no_argument, &flag[3], LENGTHS      },
+			{"sizehist"    , no_argument, &flag[4], SIZE_HIST    },
 			{"neighborhist", no_argument, &flag[5], NEIGHBOR_HIST},
-			{"all"         , no_argument, &flag[6], ALL},
+			{"all"         , no_argument, &flag[6], ALL          },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},

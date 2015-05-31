@@ -172,7 +172,7 @@ void HelpIndented(const char *text, unsigned int indent, unsigned int wrap)
 		std::cerr << wrapped_text[i];
 		if ( wrapped_text[i] == '\n')
 		{
-			for( unsigned int i = 0; i < indent; i++)
+			for( unsigned int ii = 0; ii < indent; ii++)
 				std::cerr << " ";
 		}
 	}

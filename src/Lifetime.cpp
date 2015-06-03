@@ -17,7 +17,8 @@ Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 
 	for(iter_hb = iter_begin ; iter_hb < iter_end; ++iter_hb ) {
 		NumHBsInFrameZero++; }
-	std::cout << "\tHydrogen bonds in initial frame: " << NumHBsInFrameZero << "\n";
+	
+	VERBOSE_MSG("\tHydrogen bonds in initial frame: " << NumHBsInFrameZero);
 
 
 	if (NumHBsInFrameZero == 0)

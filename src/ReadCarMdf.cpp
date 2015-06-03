@@ -370,7 +370,7 @@ bool PositionsCAR(const char *filename,
                   struct PBC *Cell,
                   std::vector<struct thbAtom *> *hydrogens,
                   std::vector<struct thbAtom *> *acceptors,
-                  double rCutoff, double angleCutoff)
+                  double rCutoff, double angleCutoff, bool SaveMemory)
 {
 	// Read coordinates from CAR files.
 	// 
@@ -388,15 +388,24 @@ bool PositionsCAR(const char *filename,
 
 		while ( 1 ) {
 			struct worker_data_s wd;
-			wd.coordinates = new std::vector<Point>;
-			wd.coordinates->reserve(atom->size());
+			if ( SaveMemory ) {
+				wd.coordinates = new std::vector<Point>;
+				wd.coordinates->reserve(atom->size());
+			} else {
+				wd.coordinates = NULL;
+			}
 
-			if ( !ReadCar(&CARin, atom, Cell, wd.coordinates) ) {
-				delete wd.coordinates;
+			if ( !ReadCar(&CARin, atom, Cell, wd.coordinates, SaveMemory) ) {
+				if ( SaveMemory ) { delete wd.coordinates; }
 				break;
 			}
 
-			wd.jobtype = THREAD_JOB_HBS2;
+			if ( SaveMemory ) {
+				wd.jobtype = THREAD_JOB_HBS2;
+
+			} else {
+				wd.jobtype = THREAD_JOB_HBS;
+			}
 			wd.jobnum = Cell->frames;
 			wd.num_threads = NumberOfCPUs();
 			wd.cell = Cell->p.back();
@@ -419,7 +428,8 @@ bool PositionsCAR(const char *filename,
 bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom,
              struct PBC *Cell,
-             std::vector<Point> *Coordinates)
+             std::vector<Point> *Coordinates,
+             bool SaveMemory)
 {
 	char line[83];
 	char CarEND[] = "end                                                                             ";
@@ -506,8 +516,10 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 				// ifp.close();
 				return(false);
 			}
-			// atom->at(atomNum)->p.push_back( Point(x,y,z) );
-			Coordinates->push_back( Point(x, y, z) );
+			if ( SaveMemory )
+				Coordinates->push_back( Point(x, y, z) );
+			else
+				atom->at(atomNum)->p.push_back( Point(x,y,z) );
 
 			// Update atomNum counter.
 			atomNum++;

@@ -60,20 +60,17 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 		DEBUG_MSG("Capacity/size of acceptors: " << acceptors->capacity() << "/" << acceptors->size());
 	}
 
-	if (THB_VERBOSE)
-	{
-		std::vector<std::string>::iterator it;
+	std::vector<std::string>::iterator it;
 
-		VERBOSE_CMSG("Hydrogen donors : " << hydrogendonors->size() << " [ ");
-		for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
-			VERBOSE_CMSG(*it << " ");
-		VERBOSE_MSG("]");
+	BRIEF_CMSG("Hydrogen donors : " << hydrogendonors->size() << " [ ");
+	for(it=match->Hydrogens.begin(); it != match->Hydrogens.end();++it)
+		BRIEF_CMSG(*it << " ");
+	BRIEF_MSG("]");
 
-		VERBOSE_CMSG("Acceptors       : " << acceptors->size() << " [ ");
-		for(it=match->Acceptors.begin(); it != match->Acceptors.end();++it)
-			VERBOSE_CMSG(*it << " ");
-		VERBOSE_MSG("]");
-	}
+	BRIEF_CMSG("Acceptors       : " << acceptors->size() << " [ ");
+	for(it=match->Acceptors.begin(); it != match->Acceptors.end();++it)
+		BRIEF_CMSG(*it << " ");
+	BRIEF_MSG("]");
 }
 
 // Savemem version.

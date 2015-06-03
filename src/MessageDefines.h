@@ -28,10 +28,16 @@
 	#define VERBOSE_MSG(str)  do { if (THB_VERBOSE) std::cout << str << "\n"; } while ( false )
 	#define VERBOSE_CMSG(str) do { if (THB_VERBOSE) std::cout << str; } while ( false )
 	#define VERBOSE_RMSG(str) do { if (THB_VERBOSE) std::cout << str << "\r" << std::flush; } while ( false )
+	#define BRIEF_MSG(str)  do { std::cout << str << "\n"; } while ( false )
+	#define BRIEF_CMSG(str) do { std::cout << str; } while ( false )
+	#define BRIEF_RMSG(str) do { std::cout << str << "\r" << std::flush; } while ( false )
 #elif _WIN32
 	#define VERBOSE_MSG(str)  do { if (THB_VERBOSE) std::cout << str << "\n" << std::flush; } while ( false )
 	#define VERBOSE_CMSG(str) do { if (THB_VERBOSE) std::cout << str << std::flush; } while ( false )
 	#define VERBOSE_RMSG(str) do { if (THB_VERBOSE) std::cout << str << "\r" << std::flush; } while ( false )
+	#define BRIEF_MSG(str)  do { std::cout << str << "\n" << std::flush; } while ( false )
+	#define BRIEF_CMSG(str) do { std::cout << str << std::flush; } while ( false )
+	#define BRIEF_RMSG(str) do { std::cout << str << "\r" << std::flush; } while ( false )
 #endif
 
 #endif // _MessageDefines_h

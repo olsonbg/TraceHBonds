@@ -24,7 +24,7 @@ enum {
 	LENGTHS       = 0x08,
 	POVRAY        = 0x10,
 	NEIGHBOR_HIST = 0x20,
-	ALL           = 0xFF,
+	ALL           = (SIZE_HIST|LENGTHS|NEIGHBOR_HIST|LIFETIME),
 };
 
 struct HydrogenBondMatching

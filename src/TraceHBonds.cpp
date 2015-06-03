@@ -52,6 +52,14 @@ int doArcFile(char *ifilename,
 	struct PBC *Cell;
 	Cell = new struct PBC;
 
+	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
+	// save some memory by storing the atom coordinates only as long as we 
+	// need the.
+	bool SaveMemory = true;
+	if ( flags&(NEIGHBOR_HIST|SIZE_HIST) )
+		SaveMemory = false;
+	VERBOSE_MSG("SaveMemory: " << SaveMemory);
+
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	// Get Atoms and their connections.
@@ -78,6 +86,7 @@ int doArcFile(char *ifilename,
 	wd.Cell        = Cell;
 	wd.rCutoff     = rCutoff;
 	wd.angleCutoff = angleCutoff;
+	wd.saveMemory  = SaveMemory;
 
 	inQueue.push(wd);
 
@@ -86,7 +95,8 @@ int doArcFile(char *ifilename,
 	while ( 1 )
 	{
 		struct worker_data_s wdOut = outQueue.pop();
-		if ( wdOut.jobtype == THREAD_JOB_HBS2 )
+		if ( (wdOut.jobtype == THREAD_JOB_HBS2) ||
+		     (wdOut.jobtype == THREAD_JOB_HBS ) )
 		{
 			// TODO: Use a more appropriate value than 5000.
 			hb.reserve(5000*wdOut.hb->size() );
@@ -98,13 +108,16 @@ int doArcFile(char *ifilename,
 			          wdOut.hb->end() );
 			wdOut.hb->clear();
 			delete wdOut.hb;
-			wdOut.coordinates->clear();
-			delete wdOut.coordinates;
+
+			if ( wdOut.jobtype == THREAD_JOB_HBS2 ) {
+				wdOut.coordinates->clear();
+				delete wdOut.coordinates;
+			}
 			FramesProcessed++;
 
 			// Only show this message if we are done reading all frames.
 			if ( (NumFramesInTrajectory != 0) &&
-				 (FramesProcessed%10==0)  )
+				 ((FramesProcessed%10==0) || (FramesProcessed == NumFramesInTrajectory))  )
 			{
 				VERBOSE_CMSG("Processing frame " << FramesProcessed );
 				VERBOSE_CMSG("/" << NumFramesInTrajectory);
@@ -121,14 +134,14 @@ int doArcFile(char *ifilename,
 				break;
 		}
 	}
+	VERBOSE_MSG("");
 #else
-	PositionsCAR( ifilename, &atom, Cell );
+	PositionsCAR( ifilename, &atom, Cell, SaveMemory );
 #endif //PTHREADS
 	// std::vector<double>A, B, C;
 
 	NumFramesInTrajectory = Cell->frames;
 
-	VERBOSE_MSG("Total frames: " << NumFramesInTrajectory);
 
 	// Reserve space for hydrogen bonds to minimize reallocations.
 	// This is just an emperical guess for reserve size.
@@ -225,16 +238,16 @@ int doArcFile(char *ifilename,
 
 		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 		{
-			if (  ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
-				VERBOSE_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory);
-
 			std::stringstream ofilename;
 			ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
+
 
 			std::ofstream out;
 			out.open(ofilename.str().c_str(),std::ios::out);
 			if ( out.is_open() )
 			{
+				if ( ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory) )
+					BRIEF_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory << " (" << ofilename.str() << ")");
 				// Header
 				out << CC
 					<< " PBC "
@@ -254,10 +267,12 @@ int doArcFile(char *ifilename,
 				prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, flags & POVRAY);
 
 				out.close();
+			} else {
+				BRIEF_MSG("ERROR: Can not save " <<ofilename.str() << "!" );
 			}
 		}
+		BRIEF_MSG("");
 
-		VERBOSE_MSG("Saving neighbor histograms.");
 		if ( flags & NEIGHBOR_HIST )
 		{
 			VERBOSE_MSG("Generating neighbor histograms.");
@@ -268,10 +283,12 @@ int doArcFile(char *ifilename,
 			out.open("Neighbors.txt",std::ios::out);
 			if ( out.is_open() )
 			{
+				BRIEF_MSG("Saving neighbor histograms: " << "Neighbors.txt" << ".");
 				Print_AllFrames(&out, &Histograms);
 				Print_CombineFrames(&out, &Histograms);
 				Print_CombineNeighbors(&out, &Histograms);
-			}
+			} else {
+				BRIEF_MSG("ERROR: Can not save to " << "Neighbors.txt" << "!"); }
 
 			out.close();
 		}

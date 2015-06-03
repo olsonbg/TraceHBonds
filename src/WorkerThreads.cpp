@@ -59,7 +59,8 @@ void *MyThread::run()
 			case THREAD_JOB_POSITIONS_CAR:
 				PositionsCAR( wd.filename, wd.atom, wd.Cell,
 				              wd.hydrogens, wd.acceptors,
-				              wd.rCutoff, wd.angleCutoff);
+				              wd.rCutoff, wd.angleCutoff,
+				              wd.saveMemory);
 				wd.TrjIdx = wd.Cell->frames;
 				break;
 			case THREAD_JOB_EXIT:

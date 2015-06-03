@@ -19,7 +19,8 @@ bool openfile(const char *filename,
 
 bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom,
-             struct PBC *Cell, std::vector<Point> *Coordinates);
+             struct PBC *Cell, std::vector<Point> *Coordinates,
+             bool SaveMemory);
 
 bool ConnectionsMDF(const char *filename,
                     std::vector<struct thbAtom *> *atom);
@@ -29,7 +30,7 @@ bool PositionsCAR(const char *filename,
                   struct PBC *Cell,
                   std::vector<struct thbAtom *> *hydrogens,
                   std::vector<struct thbAtom *> *acceptors,
-                  double rCutoff, double angleCutoff);
+                  double rCutoff, double angleCutoff, bool SaveMemory);
 
 bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
              std::vector<struct thbAtom *> *atom);

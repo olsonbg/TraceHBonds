@@ -73,6 +73,7 @@ struct worker_data_s
 	std::vector<struct thbAtom *> *atom;
 	struct PBC *Cell;
 	std::vector<Point> *coordinates;
+	bool saveMemory;
 };
 
 struct thread_detail_s {

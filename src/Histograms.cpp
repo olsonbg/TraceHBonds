@@ -296,7 +296,7 @@ void Correlations( std::ostream *out,
 	CorrelationsThread( &C, &I, &continuous, &intermittent );
 #endif // PTHREADS
 
-	std::cout << "\tSaving autocorrelation data.\n";
+	BRIEF_MSG("Saving autocorrelation data: " << "Correlations.txt");
 
 	// Save the continuous hydrogen bond autocorrelation data.
 	for( unsigned int i=0; i < fcutoff; ++i) {

@@ -73,6 +73,13 @@ int doArcFile(char *ifilename,
 
 	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
+	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
+	{
+		DeleteVectorPointers( atom ); atom.clear();
+		return(0);
+	}
+
+
 	// Get Atom positions and cell dimensions for each frame.
 #ifdef PTHREADS
 	struct worker_data_s wd;

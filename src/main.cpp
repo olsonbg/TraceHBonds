@@ -114,10 +114,9 @@ int main(int argc, char *argv[])
 	if ( flags & NEIGHBOR_HIST ) { flags |= SIZE_HIST; };
 
 	if ( flags & VERBOSE ) THB_VERBOSE=true;
+	
 
 	// Done reading command line arguments
-	// 
-	// 
 
 	if ( (fArc == NULL) || (ofPrefix == NULL) )
 	{

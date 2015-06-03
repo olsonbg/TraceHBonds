@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 	if ( flags & LIFETIME ) VERBOSE_MSG("\tHydrogen bond lifetime correlations.");
 	if ( flags & SIZE_HIST) VERBOSE_MSG("\tChain lengths in each frame.");
 	if ( flags & NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths.");
-	if ( flags * LENGTHS) VERBOSE_MSG("\tHydrogen - Acceptor distances.");
+	if ( flags & LENGTHS) VERBOSE_MSG("\tHydrogen - Acceptor distances.");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS

@@ -49,9 +49,6 @@ int doArcFile(char *ifilename,
 	std::vector<struct thbAtom *> atom;
 	unsigned int NumFramesInTrajectory = 0;
 
-	struct PBC *Cell;
-	Cell = new struct PBC;
-
 	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
 	// save some memory by storing the atom coordinates only as long as we 
 	// need the.
@@ -63,7 +60,8 @@ int doArcFile(char *ifilename,
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	// Get Atoms and their connections.
-	ConnectionsMDF( ifilename, &atom );
+	if ( ! ConnectionsMDF( ifilename, &atom ) ) {
+		return 1; }
 
 	// Find the Hydrogens and Acceptors.
 	std::vector<struct thbAtom *> hydrogens;
@@ -75,10 +73,13 @@ int doArcFile(char *ifilename,
 
 	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
 	{
+		delete Cell;
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}
 
+	struct PBC *Cell;
+	Cell = new struct PBC;
 
 	// Get Atom positions and cell dimensions for each frame.
 #ifdef PTHREADS

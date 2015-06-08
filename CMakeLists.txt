@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat -Wstrict-aliasing
 
 # Use this for debugging with valgrind.
 set(CMAKE_CXX_FLAGS_DEBUG
-	"${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -ggdb -O3")
+	"${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -ggdb -O2")
 
 
 # The version number.

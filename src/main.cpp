@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 	VERBOSE_MSG("Starting " << NumberOfCPUs() << " threads.");
 
 	std::vector<MyThread *>MyThreads;
-	for (unsigned int j=0; j < NumberOfCPUs(); ++j)
+	for (unsigned int j=0; j != NumberOfCPUs(); ++j)
 	{
 		// Setup and start a thread.
 		MyThreads.push_back( new MyThread() );
@@ -164,12 +164,17 @@ int main(int argc, char *argv[])
 	wd.rCutoff = 0.0;
 	wd.angleCutoff = 0.0;
 
-	for (unsigned int j=0; j < NumberOfCPUs(); ++j) {
+	for (unsigned int j=0; j != NumberOfCPUs(); ++j) {
 		inQueue.push(wd); }
 
 	// Wait for the threads to return.
-	for (unsigned int j=0; j < NumberOfCPUs(); ++j) {
+	for (unsigned int j=0; j != NumberOfCPUs(); ++j) {
 		MyThreads.at(j)->join(); }
+
+	while ( !MyThreads.empty() ) {
+		delete MyThreads.back();
+		MyThreads.pop_back();
+	}
 
 	std::vector<MyThread *>::iterator it=MyThreads.begin();
 	for (; it < MyThreads.end(); ++it) {

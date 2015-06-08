@@ -73,7 +73,6 @@ int doArcFile(char *ifilename,
 
 	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
 	{
-		delete Cell;
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}

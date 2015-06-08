@@ -175,10 +175,6 @@ int main(int argc, char *argv[])
 		delete MyThreads.back();
 		MyThreads.pop_back();
 	}
-
-	std::vector<MyThread *>::iterator it=MyThreads.begin();
-	for (; it < MyThreads.end(); ++it) {
-		delete *it; }
 #endif
 
 	return(0);

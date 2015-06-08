@@ -7,7 +7,7 @@ Thread::~Thread()
 {
 	if ( running && !detached ) {
 		pthread_detach(tid); }
-	else {
+	else if ( running ) {
 		pthread_cancel(tid); }
 }
 
@@ -21,6 +21,7 @@ int Thread::start()
 	return(result);
 }
 
+// run() is defined in WorkerThreads.cpp 
 static void *runThread(void *arg)
 {
 	return ((Thread*)arg)->run();
@@ -33,8 +34,7 @@ int Thread::join()
 	{
 		result = pthread_join(tid, NULL);
 		if ( result == 0 ) {
-			detached = 1;
-		}
+			running = false; }
 	}
 	return result;
 }
@@ -46,8 +46,7 @@ int Thread::detach()
 	{
 		result = pthread_detach(tid);
 		if ( result == 0 ) {
-			detached = 1;
-		}
+			detached = 1; }
 	}
 	return result;
 }

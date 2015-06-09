@@ -107,6 +107,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if ( match.Hydrogens.size() == 0 ) {
+		std::cout << "Error: Must specify at least one type of Hydrogen.\n";
+		return(1);
+	}
+	if ( match.Acceptors.size() == 0 ) {
+		std::cout << "Error: Must specify at least one type of Acceptor.\n";
+		return(1);
+	}
 	// Set the flags;
 	for ( int i=0; i < 8; i++ ) { flags |= flag[i]; };
 	// NEIGHBOR_HIST flag implies SIZE_HIST, so make sure it is set

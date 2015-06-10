@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'i':
 				fArc = optarg;
+				break;
 			case 'p':
 				ofPrefix = optarg;
 				break;
@@ -106,6 +107,7 @@ int main(int argc, char *argv[])
 				return(1);
 		}
 	}
+	// Done reading command line arguments
 
 	if ( match.Hydrogens.size() == 0 ) {
 		std::cout << "Error: Must specify at least one type of Hydrogen.\n";
@@ -122,9 +124,6 @@ int main(int argc, char *argv[])
 	if ( flags & NEIGHBOR_HIST ) { flags |= SIZE_HIST; };
 
 	if ( flags & VERBOSE ) THB_VERBOSE=true;
-	
-
-	// Done reading command line arguments
 
 	if ( (fArc == NULL) || (ofPrefix == NULL) )
 	{

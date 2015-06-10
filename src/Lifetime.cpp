@@ -57,7 +57,7 @@ Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) {
 		wd[jobnum] = outQueue.pop(); }
 
-	// Merge the results, if and b->at(i).at(j) is true, set it.
+	// Merge the results, if any b->at(i).at(j) is true, set it.
 	for ( unsigned int i=0; i < MaxNumHBsInFrame; ++i ) {
 		for ( unsigned int j=0; j < NumFrames; ++j ) {
 			for ( unsigned int t=0; t < NumberOfCPUs(); ++t ) {

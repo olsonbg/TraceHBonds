@@ -110,25 +110,32 @@ int main(int argc, char *argv[])
 	// Done reading command line arguments
 
 	if ( match.Hydrogens.size() == 0 ) {
-		std::cout << "Error: Must specify at least one type of Hydrogen.\n";
-		return(1);
+		Help(argv[0]);
+		BRIEF_MSG("\nError: Must specify at least one type of Hydrogen.");
+		return EXIT_FAILURE;
 	}
 	if ( match.Acceptors.size() == 0 ) {
-		std::cout << "Error: Must specify at least one type of Acceptor.\n";
-		return(1);
+		Help(argv[0]);
+		BRIEF_MSG("\nError: Must specify at least one type of Acceptor.");
+		return EXIT_FAILURE;
 	}
 	// Set the flags;
 	for ( int i=0; i < 8; i++ ) { flags |= flag[i]; };
-	// NEIGHBOR_HIST flag implies SIZE_HIST, so make sure it is set
-	// when NEIGHBOR_HIST is.
-	if ( flags & NEIGHBOR_HIST ) { flags |= SIZE_HIST; };
 
 	if ( flags & VERBOSE ) THB_VERBOSE=true;
 
-	if ( (fArc == NULL) || (ofPrefix == NULL) )
+	if ( (fArc == NULL) )
 	{
 		Help(argv[0]);
-		return(1);
+		BRIEF_MSG("\nError: Must specify an input file.");
+		return EXIT_FAILURE;
+	}
+
+	if ( (flags & SIZE_HIST) && (ofPrefix == NULL) )
+	{
+		Help(argv[0]);
+		BRIEF_MSG("\nError: Must specify a prefix for the output file.");
+		return EXIT_FAILURE;
 	}
 
 	VERBOSE_MSG("\t--- Calculations ---");

@@ -69,6 +69,7 @@ int doArcFile(char *ifilename,
 	hydrogens.reserve(atom.size()/2);
 	acceptors.reserve(atom.size()/2);
 
+	VERBOSE_MSG("");
 	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
 	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
@@ -76,6 +77,11 @@ int doArcFile(char *ifilename,
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}
+
+	// VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
+	VERBOSE_MSG("Max Distance (A): " << rCutoff);
+	VERBOSE_MSG("Min Angle  (deg): " << angleCutoff);
+	VERBOSE_MSG("");
 
 	struct PBC *Cell;
 	Cell = new struct PBC;
@@ -150,6 +156,17 @@ int doArcFile(char *ifilename,
 	NumFramesInTrajectory = Cell->frames;
 
 
+	if ( hb.size() == 0 )
+	{
+		BRIEF_MSG("No hydrogen bonds found.");
+
+		//Cleanup
+		delete Cell;
+		DeleteVectorPointers( atom ); atom.clear();
+		DeleteVectorPointers( hb ); hb.clear();
+
+		return(1);
+	}
 	// Reserve space for hydrogen bonds to minimize reallocations.
 	// This is just an emperical guess for reserve size.
 	// hb.reserve((atom.size()/4)*NumFramesInTrajectory);
@@ -200,7 +217,7 @@ int doArcFile(char *ifilename,
 
 		std::ofstream out;
 		out.open("Correlations.txt",std::ios::out);
-		VERBOSE_MSG("\tGenerating Correlations.");
+		VERBOSE_MSG("\tGenerating Correlations (Correlations.txt).");
 		if ( out.is_open() ) {
 			Correlations(&out, &correlationData); }
 
@@ -212,6 +229,7 @@ int doArcFile(char *ifilename,
 	{
 		std::ofstream out;
 		out.open("Lengths-Angles.txt",std::ios::out);
+		VERBOSE_MSG("\tHydrogen bond lengths and angles (Lengths-Angles.txt).");
 		if ( out.is_open() )
 		{
 			for( unsigned int i=0; i < hb.size(); i++ ) {
@@ -225,60 +243,63 @@ int doArcFile(char *ifilename,
 	}
 
 
-	if ( flags & SIZE_HIST ) {
+	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
 		// Make histograms.
 		VERBOSE_MSG("Generating size histograms.");
 		std::vector<struct Histograms_s> Histograms;
 		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
 			Histograms.push_back( makeHistograms(HBStrings, TrjIdx) ); }
 
-		// Save the histograms.
-		const char *CC1 = "#";
-		const char *CC2 = "//";
-		std::string CC;
-
-		// Povray uses a different comment string.
-		if ( flags & POVRAY )
-			CC = CC2;
-		else
-			CC = CC1;
-
-		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
+		if ( flags & SIZE_HIST )
 		{
-			std::stringstream ofilename;
-			ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
+			// Save the histograms.
+			const char *CC1 = "#";
+			const char *CC2 = "//";
+			std::string CC;
 
+			// Povray uses a different comment string.
+			if ( flags & POVRAY )
+				CC = CC2;
+			else
+				CC = CC1;
 
-			std::ofstream out;
-			out.open(ofilename.str().c_str(),std::ios::out);
-			if ( out.is_open() )
+			for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
 			{
-				if ( ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory) )
-					BRIEF_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory << " (" << ofilename.str() << ")");
-				// Header
-				out << CC
-					<< " PBC "
-					<< Cell->p.at(TrjIdx).x()      << " "
-					<< Cell->p.at(TrjIdx).y()      << " "
-					<< Cell->p.at(TrjIdx).z()      << " "
-					<< Cell->angles.at(TrjIdx).x() << " "
-					<< Cell->angles.at(TrjIdx).y() << " "
-					<< Cell->angles.at(TrjIdx).z()
-					<< "\n";
+				std::stringstream ofilename;
+				ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
 
-				out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
-				out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
-				out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
 
-				// print the histograms and chains.
-				prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, flags & POVRAY);
+				std::ofstream out;
+				out.open(ofilename.str().c_str(),std::ios::out);
+				if ( out.is_open() )
+				{
+					if ( ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory) )
+						BRIEF_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory << " (" << ofilename.str() << ")");
+					// Header
+					out << CC
+					    << " PBC "
+					    << Cell->p.at(TrjIdx).x()      << " "
+					    << Cell->p.at(TrjIdx).y()      << " "
+					    << Cell->p.at(TrjIdx).z()      << " "
+					    << Cell->angles.at(TrjIdx).x() << " "
+					    << Cell->angles.at(TrjIdx).y() << " "
+					    << Cell->angles.at(TrjIdx).z()
+					    << "\n";
 
-				out.close();
-			} else {
-				BRIEF_MSG("ERROR: Can not save " <<ofilename.str() << "!" );
+					out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
+					out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
+					out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
+
+					// print the histograms and chains.
+					prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, flags & POVRAY);
+
+					out.close();
+				} else {
+					BRIEF_MSG("ERROR: Can not save " <<ofilename.str() << "!" );
+				}
 			}
+			BRIEF_MSG("");
 		}
-		BRIEF_MSG("");
 
 		if ( flags & NEIGHBOR_HIST )
 		{

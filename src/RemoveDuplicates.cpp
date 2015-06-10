@@ -133,8 +133,13 @@ void RemoveDuplicatesThread( struct HydrogenBondIterator_s HBit )
 void RemoveDuplicates( HBVec *hb,
                        HBVecIter *TrjIdx_iter)
 {
+	unsigned int emptyFrames=0;
 
 	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
+		if ( TrjIdx_iter->at(i).begin == TrjIdx_iter->at(i).end ) {
+			// This frame is empty, skip it.
+			emptyFrames++;
+			continue; }
 #ifdef PTHREADS
 		struct worker_data_s wd;
 		wd.jobtype = THREAD_JOB_RMDUPS;
@@ -152,7 +157,7 @@ void RemoveDuplicates( HBVec *hb,
 
 #ifdef PTHREADS
 	// Get the results back from the worker threads.
-	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
+	for(unsigned int i=0; i != TrjIdx_iter->size()-emptyFrames; ++i) {
 		if (  ((i+1)%50==0) || ((i+1)==TrjIdx_iter->size())  )
 			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
 

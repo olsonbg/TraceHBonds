@@ -179,7 +179,6 @@ int doArcFile(char *ifilename,
 		HBVec(hb).swap(hb);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 
-	struct HydrogenBondIterator_s HBit;
 	HBVecIter TrjIdx_iter(NumFramesInTrajectory);
 
 	TrajectoryIndexIterator( &TrjIdx_iter, &hb );
@@ -215,13 +214,15 @@ int doArcFile(char *ifilename,
 		Lifetime(&correlationData, &TrjIdx_iter);
 		VERBOSE_MSG("\tFinished truth table.");
 
-		std::ofstream out;
-		out.open("Correlations.txt",std::ios::out);
-		VERBOSE_MSG("\tGenerating Correlations (Correlations.txt).");
-		if ( out.is_open() ) {
-			Correlations(&out, &correlationData); }
+		if ( correlationData.size() != 0) {
+			std::ofstream out;
+			out.open("Correlations.txt",std::ios::out);
+			VERBOSE_MSG("\tGenerating Correlations (Correlations.txt).");
+			if ( out.is_open() ) {
+				Correlations(&out, &correlationData); }
 
-		out.close();
+			out.close();
+		}
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
@@ -340,15 +341,22 @@ int doArcFile(char *ifilename,
 void
 TrajectoryIndexIterator( HBVecIter *TrjIdx_iter, HBVec *hb)
 {
-	// struct HydrogenBondIterator_s HBit;
-	// HBit.begin = hb->begin();
-	// HBVecIterTrjIdx_iter(N+1,HBit);
+	HBVec::iterator it_hb;
 
-	
+	// Initialize each to hb->end()
+	// If there are no hydrogen bonds in a frame, both
+	// TrjIdx_iter[].begin and TrjIdx_iter[].end will be hb->end().
+	// Can simply check if TrjIdx_iter.at(i)->begin == TrjIdx_iter.at(i)->end
+	// to determine if a frame is void of hydrogen bonds.
+	for(unsigned int i=0; i < TrjIdx_iter->size(); ++i)
+	{
+		TrjIdx_iter->at(i).begin = hb->end();
+		TrjIdx_iter->at(i).end   = hb->end();
+	}
+
 	unsigned int curIdx=(*hb->begin())->TrajIdx;
 	TrjIdx_iter->at(curIdx).begin = hb->begin();
 
-	HBVec::iterator it_hb;
 	for(it_hb = hb->begin(); it_hb != hb->end(); ++it_hb)
 	{
 		if ( (*it_hb)->TrajIdx != curIdx )

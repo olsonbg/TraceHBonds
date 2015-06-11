@@ -105,6 +105,7 @@ int doArcFile(char *ifilename,
 
 	// Get the result back from the worker threads.
 	unsigned int FramesProcessed=0;
+	time_t timer = time(NULL);
 	while ( 1 )
 	{
 		struct worker_data_s wdOut = outQueue.pop();
@@ -129,12 +130,13 @@ int doArcFile(char *ifilename,
 			FramesProcessed++;
 
 			// Only show this message if we are done reading all frames.
-			if ( (NumFramesInTrajectory != 0) &&
-				 ((FramesProcessed%10==0) || (FramesProcessed == NumFramesInTrajectory))  )
+			if ( THB_VERBOSE && (NumFramesInTrajectory != 0) &&
+				 ((difftime(time(NULL), timer) > 1.0) || (FramesProcessed == NumFramesInTrajectory))  )
 			{
 				VERBOSE_CMSG("Processing frame " << FramesProcessed );
 				VERBOSE_CMSG("/" << NumFramesInTrajectory);
 				VERBOSE_RMSG(". Hydrogen-acceptor pairs found: " << hb.size() << ".");
+				timer = time(NULL);
 			}
 
 			if ( FramesProcessed == NumFramesInTrajectory )
@@ -264,7 +266,7 @@ int doArcFile(char *ifilename,
 			else
 				CC = CC1;
 
-			for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx )
+			for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx )
 			{
 				std::stringstream ofilename;
 				ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
@@ -274,8 +276,12 @@ int doArcFile(char *ifilename,
 				out.open(ofilename.str().c_str(),std::ios::out);
 				if ( out.is_open() )
 				{
-					if ( ((TrjIdx+1)%50==0) || ((TrjIdx+1)==NumFramesInTrajectory) )
+					if ( (difftime(time(NULL), timer) > 1.0) ||
+					     (TrjIdx == NumFramesInTrajectory-1) )
+					{
 						BRIEF_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory << " (" << ofilename.str() << ")");
+						timer = time(NULL);
+					}
 					// Header
 					out << CC
 					    << " PBC "

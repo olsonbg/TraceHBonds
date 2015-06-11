@@ -217,6 +217,7 @@ void AtomNeighbors( HBVec *hb,
 	VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
 
 	unsigned int NumFramesInTrajectory = Cell->frames;
+	time_t timer = time(NULL);
 
 	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
 	{
@@ -237,8 +238,12 @@ void AtomNeighbors( HBVec *hb,
 
 		inQueue.push(wd);
 #else
-		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
+		if (  (difftime(time(NULL),timer) > 1.0) ||
+		      ((TrjIdx+1)==NumFramesInTrajectory)  )
+		{
 			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+			timer = time(NULL);
+		}
 		HBs( hb, cell, hydrogens, acceptors, TrjIdx, rCutoff, angleCutoff);
 #endif
 	}
@@ -247,8 +252,12 @@ void AtomNeighbors( HBVec *hb,
 	// Get the results back from the worker threads.
 	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
 	{
-		if (  ((TrjIdx+1)%10==0) || ((TrjIdx+1)==NumFramesInTrajectory)  )
+		if (  (difftime(time(NULL),timer) > 1.0) ||
+		      ((TrjIdx+1)==NumFramesInTrajectory)  )
+		{
 			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
+			timer = time(NULL);
+		}
 
 		struct worker_data_s wd = outQueue.pop();
 		hb->reserve( hb->size() + wd.hb->size() );

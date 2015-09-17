@@ -26,7 +26,7 @@ struct Histograms_s
 	vui ClosedLoop;
 	unsigned int MaxChainLength;
 	unsigned int MaxClosedLoop;
-	
+
 	vvui SwitchesInChain;
 	vvui MoleculesInChain;
 	vui MaxSwitchesInChain;
@@ -51,7 +51,7 @@ makeHistograms( std::vector<ListOfHBonds *> HBStrings,
 void Correlations( std::ostream *out,
                    std::vector< std::vector<bool> > *v );
 
-void CorrelationsThread(vd *C, vd *I, 
+void CorrelationsThread(vd *C, vd *I,
                         vvui *continuous, vvui *intermittent,
                         unsigned int NumThreads, unsigned int ThreadID );
 

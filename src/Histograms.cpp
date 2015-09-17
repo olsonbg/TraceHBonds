@@ -153,7 +153,7 @@ void getNeighbors( struct Histograms_s *Histograms,
 
 }
 
-void CorrelationsThread(vd *C, vd *I, 
+void CorrelationsThread(vd *C, vd *I,
                         vvui *continuous, vvui *intermittent,
                         unsigned int NumThreads=1, unsigned int ThreadID=0 )
 {
@@ -203,7 +203,6 @@ void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
 					if( v->at(h).at(f2) )
 						intermittent->at(h).at(f2-f1)++;
 				}
-
 			}
 		}
 	}
@@ -224,7 +223,7 @@ void Correlations( std::ostream *out,
 	vvui intermittent( numHBs, vui(fcutoff, 0) );
 
 #ifdef PTHREADS
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
 		struct worker_data_s wd;
 		wd.jobtype     = THREAD_JOB_CORR_TABLE;
@@ -240,7 +239,7 @@ void Correlations( std::ostream *out,
 	}
 
 	// Get the results back from the worker threads.
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
 		struct worker_data_s wd = outQueue.pop();
 
@@ -256,7 +255,7 @@ void Correlations( std::ostream *out,
 		delete wd.vvuiI;
 	}
 #else
-	CorrelationsTableThread( v, &continuous, &intermittent, 
+	CorrelationsTableThread( v, &continuous, &intermittent,
 	                         numHBs, fcutoff );
 #endif // PTHREADS
 
@@ -266,7 +265,7 @@ void Correlations( std::ostream *out,
 	vd I(fcutoff,0.0);
 
 #ifdef PTHREADS
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
 		struct worker_data_s wd;
 		wd.jobtype = THREAD_JOB_CORR;
@@ -274,14 +273,14 @@ void Correlations( std::ostream *out,
 		wd.num_threads = NumberOfCPUs();
 		wd.vvuiC = &continuous;
 		wd.vvuiI = &intermittent;
-		
+
 		wd.vdC = new vd(fcutoff,0.0); // Cthread(fcutoff,0.0);
 		wd.vdI = new vd(fcutoff,0.0); // Ithread(fcutoff,0.0);
 		inQueue.push(wd);
 	}
 
 	// Get the results back from the worker threads.
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
 		struct worker_data_s wd = outQueue.pop();
 		for ( unsigned int i=0; i < wd.vdC->size(); ++i )
@@ -427,7 +426,7 @@ prntHistograms( std::ostream *out,
 	*out << CC << "\n" << CC;
 	*out << " Atoms/HBonds |Count| (For all Chains, including Closed Loops)";
 	*out << "\n";
-	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
 	                     Histogram->ChainLength,
@@ -436,9 +435,9 @@ prntHistograms( std::ostream *out,
 	                     NumBins,CC);
 
 	// Closed Loop histogram table header
-	*out << CC <<"\n" << CC 
+	*out << CC <<"\n" << CC
 	          << " Atoms/HBonds |Count| (For Closed Loops)" << "\n";
-	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
 	                     Histogram->ClosedLoop,
@@ -448,7 +447,7 @@ prntHistograms( std::ostream *out,
 
 	// Molecules in each Chain histogram
 
-	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd
 	// number of atoms, so increase counter by 2 for each step.
 	unsigned int MaxChainL;
 	if ( NumBins > 0 )
@@ -459,7 +458,7 @@ prntHistograms( std::ostream *out,
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
 		// Number of Switches histogram table header
-		*out << CC << "\n" << CC 
+		*out << CC << "\n" << CC
 		          << " Switching |Count| (For Chain length of " << chainL << ")"
 		          << "\n";
 
@@ -474,19 +473,19 @@ prntHistograms( std::ostream *out,
 		}
 		else
 			PrintHistogramMolecules( out,
-									 Histogram->SwitchesInChain[chainL],
-									 Histogram->MaxSwitchesInChain[chainL],0,
-									 1, MaxBarLength,
-									 NumBins, CC);
+			                         Histogram->SwitchesInChain[chainL],
+			                         Histogram->MaxSwitchesInChain[chainL],0,
+			                         1, MaxBarLength,
+			                         NumBins, CC);
 	}
 
-	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd
 	// number of atoms, so increase counter by 2 for each step.
 
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
 		// Number of Molecules histogram table header
-		*out << CC << "\n" << CC 
+		*out << CC << "\n" << CC
 		          << " Molecules |Count| (For Chain length of " << chainL << ")"
 		          << "\n";
 

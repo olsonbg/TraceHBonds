@@ -10,7 +10,7 @@ inline int Round( double v)
 
 
 void PrintHistogramChain( std::ostream *out,
-                          std::vector<unsigned int>Histogram, 
+                          std::vector<unsigned int>Histogram,
                           unsigned int Stop, unsigned int Start,
                           unsigned int Step, int BarLength,
                           unsigned int NumBins, std::string CC )
@@ -28,7 +28,7 @@ void PrintHistogramChain( std::ostream *out,
 	for (unsigned int i = Start; i <= Stop; i += Step)
 		if (Histogram[i] > Max) { Max = Histogram[i]; }
 
-	// Define 'Scale' so that the maximum of the histogram will have a length 
+	// Define 'Scale' so that the maximum of the histogram will have a length
 	// of 'BarLength'
 	Scale = double(Max)/double(BarLength);
 
@@ -89,7 +89,7 @@ void PrintHistogramMolecules( std::ostream *out,
 		Max = 0;
 	}
 
-	// Define 'Scale' so the the maximum of the histogram will have a length 
+	// Define 'Scale' so the the maximum of the histogram will have a length
 	// of 'BarLength'
 	Scale = double(Max)/double(BarLength);
 
@@ -163,7 +163,7 @@ void HelpIndented(const char *text, unsigned int indent, unsigned int wrap)
 	strcpy(wrapped_text,text);
 
 	word_wrap(wrapped_text,wrap-indent);
-	
+
 	for( unsigned int i = 0; i < indent; i++)
 		std::cerr << " ";
 

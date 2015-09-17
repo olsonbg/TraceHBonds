@@ -21,7 +21,7 @@ int Thread::start()
 	return(result);
 }
 
-// run() is defined in WorkerThreads.cpp 
+// run() is defined in WorkerThreads.cpp
 static void *runThread(void *arg)
 {
 	return ((Thread*)arg)->run();

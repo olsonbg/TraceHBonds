@@ -13,7 +13,7 @@ struct PBC
 	std::vector<class Point> p;
 	std::vector<class Point> angles; // alpha, beta, gamma;
 	unsigned int frames;
-	// 
+
 	// Assign default values
 	public:
 	PBC()

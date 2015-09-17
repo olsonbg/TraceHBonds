@@ -21,7 +21,7 @@ Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 		if (NumHBsInFrame > MaxNumHBsInFrame) {
 			MaxNumHBsInFrame = NumHBsInFrame; }
 	}
-	
+
 	VERBOSE_MSG("\tMaximum number of Hydrogen bonds in a frame: " << MaxNumHBsInFrame);
 
 
@@ -38,15 +38,15 @@ Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 	b->assign(MaxNumHBsInFrame, std::vector<bool>(NumFrames,false));
 
 #ifdef PTHREADS
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
 		struct worker_data_s wd;
 		wd.jobtype = THREAD_JOB_LIFETIME;
 		wd.jobnum = jobnum;
 		wd.num_threads = NumberOfCPUs();
 		wd.TrjIdx_iter = TrjIdx_iter;
-		
-		wd.b = new std::vector< std::vector<bool> >(MaxNumHBsInFrame, 
+
+		wd.b = new std::vector< std::vector<bool> >(MaxNumHBsInFrame,
 		                                            std::vector<bool>(NumFrames,false));
 
 		inQueue.push(wd);

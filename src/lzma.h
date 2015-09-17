@@ -39,7 +39,7 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 					inbuf[i] = static_cast<uint8_t>(std::string::traits_type::to_char_type(c));
 					++i;
 				}
-				// for(i=0; (i< sizeof(inbuf)) && 
+				// for(i=0; (i< sizeof(inbuf)) &&
 				//     ( ((c=boost::iostreams::get(src)) != EOF) || ( c == boost::iostreams::WOULD_BLOCK )); ++i)
 				//     inbuf[i] = static_cast<uint8_t>(std::string::traits_type::to_char_type(c));
 

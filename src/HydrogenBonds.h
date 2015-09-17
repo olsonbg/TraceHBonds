@@ -27,7 +27,7 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
           double TrjIdx, double rCutoff, double angleCutoff);
 
 void AtomNeighbors( std::vector<struct HydrogenBond *> *hb,
-                    struct PBC *Cell, 
+                    struct PBC *Cell,
                     std::vector<struct thbAtom *>*hydrogens,
                     std::vector<struct thbAtom *>*acceptors,
                     double rCutoff, double angleCutoff );

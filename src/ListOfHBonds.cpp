@@ -46,7 +46,7 @@ unsigned int ListOfHBonds::SwitchingCount()
 	struct HydrogenBond *current = Begin();
 
 	// Donor and Hydrogen are always on the same molecule,
-	// So checking which molecule the Hydrogen and Acceptor 
+	// So checking which molecule the Hydrogen and Acceptor
 	// are on is sufficient.
 
 	while (current != NULL)
@@ -268,13 +268,13 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 	               current->donor->p.at(TrjIdx).y(),
 	               current->donor->p.at(TrjIdx).z() );
 
-	
+
 	Point r( current->donor->p.at(TrjIdx).x(),
 	         current->donor->p.at(TrjIdx).y(),
 	         current->donor->p.at(TrjIdx).z() );
 
 	if (POVRAY)
-		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount() 
+		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount()
 		          << "," << "\n";
 
 	OFmt colX(9,4);

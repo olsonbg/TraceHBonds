@@ -50,7 +50,7 @@ int doArcFile(char *ifilename,
 	unsigned int NumFramesInTrajectory = 0;
 
 	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
-	// save some memory by storing the atom coordinates only as long as we 
+	// save some memory by storing the atom coordinates only as long as we
 	// need the.
 	bool SaveMemory = true;
 	if ( flags&(NEIGHBOR_HIST|SIZE_HIST) )
@@ -172,7 +172,7 @@ int doArcFile(char *ifilename,
 	// hb.reserve((atom.size()/4)*NumFramesInTrajectory);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	// Now  determine the hydrogen bonds
-	// AtomNeighbors( &hb, Cell, &hydrogens, &acceptors, 
+	// AtomNeighbors( &hb, Cell, &hydrogens, &acceptors,
 	//                rCutoff, angleCutoff );
 	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	if ( hb.size() != hb.capacity() )

@@ -7,7 +7,7 @@
 Queue<struct worker_data_s> inQueue;
 Queue<struct worker_data_s> outQueue;
 
-void *MyThread::run() 
+void *MyThread::run()
 {
 	struct worker_data_s wd;
 	while ( 1 )
@@ -53,7 +53,7 @@ void *MyThread::run()
 				                         wd.num_threads, wd.jobnum );
 				break;
 			case THREAD_JOB_LIFETIME:
-				LifetimeThread( wd.b, wd.TrjIdx_iter, 
+				LifetimeThread( wd.b, wd.TrjIdx_iter,
 				                wd.num_threads, wd.jobnum);
 				break;
 			case THREAD_JOB_POSITIONS_CAR:

@@ -21,11 +21,11 @@ unsigned int toUInt(std::string s)
 	return result;
 };
 
-float toFloat(std::string s) 
+float toFloat(std::string s)
 {
 	std::stringstream in(s, std::ios_base::in);
 	float result;
-	
+
 	in >> result;
 
 
@@ -104,7 +104,7 @@ std::vector< std::string >connectedAtoms( const char *connected)
 		connections.push_back(atomName);
 		connections.push_back(bondOrder);
 	}
-	
+
 	return(connections);
 }
 
@@ -144,7 +144,7 @@ bool openfile( const char *filename,
 		ifp->open(filename,std::ios::in|std::ios::binary);
 	}
 #endif
-	
+
 	if ( magicNum == MAGICNUMBER_UNKNOWN )
 		ifp->open(filename,std::ios::in);
 
@@ -326,7 +326,7 @@ void doAtomConnections( std::vector<struct thbAtom *> *atom )
 bool ConnectionsMDF(const char *filename,
                     std::vector<struct thbAtom *> *atom)
 {
-	// 
+	//
 	// Read atoms from MDF files.
 	//
 
@@ -347,10 +347,10 @@ bool ConnectionsMDF(const char *filename,
     boost::iostreams::filtering_stream<boost::iostreams::input> MDFin;
 
     if ( !openfile( MDFfile.c_str(), &MDFin, &MDFifp ) ) {
-	    return(false); } 
+	    return(false); }
     else {
 		VERBOSE_MSG("Reading atom configuration from " << MDFfile);
-		ReadMdf( &MDFin, atom ); 
+		ReadMdf( &MDFin, atom );
 		MDFifp.close();
     }
 
@@ -373,7 +373,6 @@ bool PositionsCAR(const char *filename,
                   double rCutoff, double angleCutoff, bool SaveMemory)
 {
 	// Read coordinates from CAR files.
-	// 
 	std::string CARfile = filename;
 
 	std::ifstream CARifp;

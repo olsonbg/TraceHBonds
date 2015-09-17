@@ -1,5 +1,6 @@
 #include "MagicNumber.h"
 #include "ReadCarMdf.h"
+#include <time.h>
 #ifdef USE_LZMA
 #include "lzma.h"
 #endif
@@ -385,7 +386,10 @@ bool PositionsCAR(const char *filename,
 	else {
 		VERBOSE_MSG("Reading atom coordinates from " << CARfile);
 
+		time_t timer = time(NULL);
+
 		while ( 1 ) {
+
 			struct worker_data_s wd;
 			if ( SaveMemory ) {
 				wd.coordinates = new std::vector<Point>;
@@ -397,6 +401,13 @@ bool PositionsCAR(const char *filename,
 			if ( !ReadCar(&CARin, atom, Cell, wd.coordinates, SaveMemory) ) {
 				if ( SaveMemory ) { delete wd.coordinates; }
 				break;
+			}
+
+			// Update the message every second.
+			if ( difftime(time(NULL), timer) > 1.0 )
+			{
+				VERBOSE_RMSG("Frames : " << Cell->frames);
+				timer = time(NULL);
 			}
 
 			if ( SaveMemory ) {
@@ -432,6 +443,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 {
 	char line[83];
 	char CarEND[] = "end                                                                             ";
+	
 	int n; // To check number of assigned values in sscanf
 	int lineno=0; // Line number of datafile, used for error messages.
 
@@ -448,6 +460,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 		DEBUG_MSG("line[0]: <EOF>" << line);
 		return(false);
 	}
+
 	while ( ! in->eof() )
 	{
 		// VERBOSE_MSG(":" << line);
@@ -472,12 +485,6 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 		else if ( ! strncmp(line, "Configurations", 14) ) {}
 		else if ( ! strncmp(line, "PBC ", 4) )
 		{
-			if ( (Cell->frames)%50==0 )
-				VERBOSE_RMSG("Frames : " << Cell->frames);
-
-			// if (Cell->frames == 100)
-			//     break;
-
 			double CellX, CellY, CellZ;
 			double CellAlpha, CellBeta, CellGamma;
 

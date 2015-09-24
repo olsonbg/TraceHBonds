@@ -1,4 +1,10 @@
 cmake_minimum_required (VERSION 2.6)
+
+if( NOT DEFINED CMAKE_BUILD_TYPE )
+	message( "Defaulting to build type of Release." )
+	set(CMAKE_BUILD_TYPE  "RELEASE")
+endif( NOT DEFINED CMAKE_BUILD_TYPE )
+
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 
@@ -33,3 +39,4 @@ if( CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif( CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 add_subdirectory(src)
+add_subdirectory(docs)

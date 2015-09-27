@@ -1,8 +1,8 @@
 /**
  * \file
- * \author Brian G. Olson
- * \date   September 24th, 2015
- * \brief  Class for hydrogen bonds
+ * \author  Brian G. Olson
+ * \date    30 July 2009
+ * \brief   Class for hydrogen bonds
  */
 #ifndef _ListOfHBonds_h
 #define _ListOfHBonds_h

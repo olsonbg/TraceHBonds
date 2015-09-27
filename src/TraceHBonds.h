@@ -1,6 +1,8 @@
 /**
  * \file
- * \brief Trace hydrogen bonded atom to find all connections
+ * \brief   Trace hydrogen bonded atom to find all connections
+ * \author  Brian G. Olson (olsonbg@gmail.com)
+ * \date    30 July 2009
  */
 #ifndef _TraceHBonds_h
 #define _TraceHBonds_h

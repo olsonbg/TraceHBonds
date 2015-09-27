@@ -31,22 +31,27 @@ template<class T> bool alloc_vector( std::vector<T> *v,
 	return true;
 }
 
+/** \todo Check why this makes nelem*melem matrix, instead of melem's of
+ * varying nelem length. In other words, why doesn't each v[melem] have only
+ * needed number of elements, instead of nelem for all.
+ */
+
 /*
  * Make sure v is of size nelem*melem, if not, initialize the needed number of
  * elements to val. Make sure we don't adjust the values already stored in v.
  */
 template<class T> bool alloc_vector( std::vector< std::vector<T> > *v,
                                      T val,
-                                     unsigned int nelem,
-                                     unsigned int melem)
+                                     unsigned int melem,
+                                     unsigned int nelem)
 {
-	for ( unsigned int n=0; n < nelem; n++)
+	for ( unsigned int n=0; n < melem; n++)
 	{
 		if ( n == v->size() )
 		{
 			try
 			{
-				std::vector<T> Zero( melem, val);
+				std::vector<T> Zero( nelem, val);
 				v->push_back(Zero);
 			}
 			catch( std::exception const &e)
@@ -58,7 +63,7 @@ template<class T> bool alloc_vector( std::vector< std::vector<T> > *v,
 		}
 		else
 		{
-			bool ret = alloc_vector(&(v->at(n)), val, melem);
+			bool ret = alloc_vector(&(v->at(n)), val, nelem);
 
 			if ( ret == false )
 				return false;
@@ -85,7 +90,7 @@ bool Bin(vui *h, unsigned int *max, unsigned int bin)
 }
 
 /*
- * Add to the counts in the h[bini_i][bin_j] h, making sure enough space is
+ * Add to the counts in the h[bin_i][bin_j] h, making sure enough space is
  * allocated. Also record the maximum bin_j in hmax, making sure enough space
  * is allocated. hmax may already be assigned a value.
 */
@@ -98,12 +103,14 @@ bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
 		return false;
 
 	if( !alloc_vector(hmax, 0U, hb+1) )
-		return 1;
+		return false;
 
 	if (c > hmax->at(hb))
 		hmax->at(hb) = c;
 	return true;
 }
+
+/** \todo Make this use *HBStrings. */
 
 void getNeighbors( struct Histograms_s *Histograms,
                    std::vector<ListOfHBonds *> HBStrings,
@@ -123,10 +130,12 @@ void getNeighbors( struct Histograms_s *Histograms,
 		unsigned int N=HBStrings.at(i)->HydrogenBondCount();
 		if (N==0) return;
 
+		// Hydrogen Bond count to index
 		offset = N*(N-1)/2;
 
 		std::vector<Point *>pCoord = HBStrings.at(i)->nonHydrogenCoordinates();
 
+		// Initialize elements to -1.0.
 		alloc_vector(&(Histograms->NearestNeighbors), -1.0,
 		             offset+N,1);
 
@@ -207,7 +216,6 @@ void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
 		}
 	}
 }
-
 
 void Correlations( std::ostream *out,
                    std::vector< std::vector<bool> > *v )

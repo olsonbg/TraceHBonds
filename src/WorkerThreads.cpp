@@ -1,10 +1,23 @@
+/**
+ * \file
+ * \brief Defines inQueue and outQueue
+ */
 #include "queue.h"
 #include "Thread.h"
 #include "WorkerThreads.h"
 
 #ifdef PTHREADS
 
+/**
+ * \anchor inQueue
+ * Queue for starting jobs.
+ */
 Queue<struct worker_data_s> inQueue;
+
+/**
+ * \anchor outQueue
+ * Queue of completed jobs.
+ */
 Queue<struct worker_data_s> outQueue;
 
 void *MyThread::run()

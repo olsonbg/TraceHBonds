@@ -1,15 +1,5 @@
 #include "HydrogenBonds.h"
 
-extern bool THB_VERBOSE;
-
-#ifdef PTHREADS
-extern Queue<struct worker_data_s> inQueue;
-extern Queue<struct worker_data_s> outQueue;
-#endif
-
-typedef std::vector<struct HydrogenBond *> HBVec;
-typedef std::vector<struct HydrogenBondIterator_s> HBVecIter;
-
 void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
                               std::vector<struct thbAtom *> *hydrogendonors,
                               std::vector<struct thbAtom *> *acceptors,
@@ -18,7 +8,7 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 	std::vector<struct thbAtom *>::iterator it_a1;
 
 	// The user may have specified a match more than once, when an acceptor may
-	// hydrogen bond nore than once. I don't think a hydrogen can hydrogen bond
+	// hydrogen bond more than once. I don't think a hydrogen can hydrogen bond
 	// more than once, but I'll leave the option here.
 	std::map<std::string,unsigned int>H;
 	std::map<std::string,unsigned int>A;
@@ -208,67 +198,3 @@ void HBs( HBVec *hb,
 	}
 }
 
-void AtomNeighbors( HBVec *hb,
-                    struct PBC *Cell,
-                    std::vector<struct thbAtom *>*hydrogens,
-                    std::vector<struct thbAtom *>*acceptors,
-                    double rCutoff, double angleCutoff )
-{
-	VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
-
-	unsigned int NumFramesInTrajectory = Cell->frames;
-	time_t timer = time(NULL);
-
-	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
-	{
-#ifdef PTHREADS
-		struct worker_data_s wd;
-		wd.jobtype = THREAD_JOB_HBS;
-		wd.jobnum = TrjIdx;
-		wd.num_threads = NumberOfCPUs();
-		wd.cell = Cell->p.at(TrjIdx);
-		wd.hydrogens = hydrogens;
-		wd.acceptors = acceptors;
-		wd.TrjIdx = TrjIdx;
-		wd.rCutoff = rCutoff;
-		wd.angleCutoff = angleCutoff;
-
-		wd.hb = new HBVec;
-		wd.hb->reserve(acceptors->size()*2);
-
-		inQueue.push(wd);
-#else
-		if (  (difftime(time(NULL),timer) > 1.0) ||
-		      ((TrjIdx+1)==NumFramesInTrajectory)  )
-		{
-			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
-			timer = time(NULL);
-		}
-		HBs( hb, cell, hydrogens, acceptors, TrjIdx, rCutoff, angleCutoff);
-#endif
-	}
-
-#ifdef PTHREADS
-	// Get the results back from the worker threads.
-	for( unsigned int TrjIdx=0; TrjIdx < NumFramesInTrajectory; ++TrjIdx)
-	{
-		if (  (difftime(time(NULL),timer) > 1.0) ||
-		      ((TrjIdx+1)==NumFramesInTrajectory)  )
-		{
-			VERBOSE_RMSG("Processing frame " << TrjIdx+1 <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
-			timer = time(NULL);
-		}
-
-		struct worker_data_s wd = outQueue.pop();
-		hb->reserve( hb->size() + wd.hb->size() );
-		hb->insert(hb->end(),
-		           wd.hb->begin(),
-		           wd.hb->end() );
-
-		wd.hb->clear();
-		delete wd.hb;
-	}
-#endif // PTHREADS
-
-	VERBOSE_MSG("Processing frame " << Cell->frames <<"/"<< Cell->frames << ". Hydrogen-acceptor pairs found: " << hb->size() << ".");
-}

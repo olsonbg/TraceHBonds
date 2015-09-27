@@ -73,7 +73,7 @@ double Point::angle(Point a, Point b)
 	// Point u( a.x() - u1, a.y() - u2, a.z() - u3);
 	// Point v( b.x() - u1, b.y() - u2, b.z() - u3);
 
-	return acos( u.dot(v)/u.magnitude()/v.magnitude() )*180.0/PI;
+	return acos( u.dot(v)/u.magnitude()/v.magnitude() )*180.0/M_PI;
 }
 
 // Addition operator
@@ -83,6 +83,14 @@ Point Point::operator+(Point v) {
 // Subtraction operator
 Point Point::operator-(Point v) {
 	return Point(u1 - v.x(), u2 - v.y(), u3 - v.z() ); }
+
+// Divide operator
+Point Point::operator/(double v) {
+	return Point(u1/v, u2/v, u3/v ); }
+
+// Multiply operator
+Point Point::operator*(double v) {
+	return Point( u1*v, u2*v, u3*v); }
 
 // Divide operator (divide each component)
 Point Point::operator/(Point v) {

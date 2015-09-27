@@ -1,3 +1,11 @@
+/**
+ * \file
+ * \brief Input fiter for boost iostreams
+ *
+ * \todo Find the source of this file, it's not mine, but free from LZMA people
+ * I think.
+ *
+ **/
 #ifndef _tracehbonds_lzma_h
 #define _tracehbonds_lzma_h
 #include <boost/iostreams/char_traits.hpp>
@@ -8,6 +16,11 @@
 #include <iostream>
 #include <lzma.h>
 
+/**
+ *
+ * input fiter for boost iostreams
+ *
+ **/
 class lzma_input_filter : public boost::iostreams::input_filter {
 	private:
 		lzma_stream strm;
@@ -30,7 +43,7 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 				while( i < sizeof(inbuf) )
 				{
 					if ( (c = boost::iostreams::get(src)) == EOF ||
-					     c == boost::iostreams::WOULD_BLOCK)
+						 c == boost::iostreams::WOULD_BLOCK)
 					{
 						lzma_done = true;
 						break;
@@ -181,6 +194,9 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 		}
 
 	public:
+		/**
+		 * input_filter for boost iostream
+		 */
 		explicit lzma_input_filter(lzma_stream ini=LZMA_STREAM_INIT)
 			: strm(ini), out_size(0), out_curr(0), lzma_done(false) {
 			// strm = LZMA_STREAM_INIT;
@@ -231,6 +247,9 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 
 		}
 
+		/**
+		 * get function for boost iostream
+		 */
 		template<typename Source> int get(Source& src)
 		{
 			if ( out_curr == out_size )
@@ -247,7 +266,9 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 			return outbuf[out_curr++];
 		}
 
-
+		/**
+		 * close function for boost iostream
+		 */
 		template<typename Source> void close(Source &) {
 			lzma_end(&strm); }
 

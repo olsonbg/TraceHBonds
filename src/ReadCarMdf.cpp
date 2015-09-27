@@ -398,6 +398,7 @@ bool PositionsCAR(const char *filename,
 				wd.coordinates = NULL;
 			}
 
+			/** Read CAR, or next frame of ARC. */
 			if ( !ReadCar(&CARin, atom, Cell, wd.coordinates, SaveMemory) ) {
 				if ( SaveMemory ) { delete wd.coordinates; }
 				break;

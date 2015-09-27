@@ -112,7 +112,7 @@ int doArcFile(char *ifilename,
 		if ( (wdOut.jobtype == THREAD_JOB_HBS2) ||
 		     (wdOut.jobtype == THREAD_JOB_HBS ) )
 		{
-			// TODO: Use a more appropriate value than 5000.
+			/** \todo Use a more appropriate value than 5000. */
 			hb.reserve(5000*wdOut.hb->size() );
 			if ( NumFramesInTrajectory != 0 )
 				hb.reserve(NumFramesInTrajectory*wdOut.hb->size() );
@@ -338,12 +338,14 @@ int doArcFile(char *ifilename,
 	return(0);
 }
 
-// Save Iterators which point to just past the end of a Trajectory Index.
-// TrjIdx_iter.at(1).begin points to first element of TrjIdx 1.
-// TrjIdx_iter.at(1).end points to just past the last element of TrjIdx 1 The
-// hbs are grouped by trajectory index number, however the order of the groups
-// may not be in sequence.
-
+/*
+ * Generate Iterators which point to hydrogen bonds in specific frames.
+ * TrjIdx_iter.at(5).begin points to first hydrogen bond (\p hb) in frame 5
+ * (frame numbers start at 0).  TrjIdx_iter.at(5).end points to just past the
+ * last hydrogen bond in frame 5.  The hydrogen bonds in \p hb are grouped by
+ * trajectory index number, however the order of the groups may not be in
+ * sequence because they are obtained from threads.
+ */
 void
 TrajectoryIndexIterator( HBVecIter *TrjIdx_iter, HBVec *hb)
 {

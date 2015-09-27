@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief main()
+ */
 #include <cstdlib>
 #include <getopt.h>
 #include "TraceHBonds.h"
@@ -7,12 +11,18 @@
 #include "WorkerThreads.h"
 #include "cpu.h"
 
+/**
+ * Flag for being verbose
+ */
 bool THB_VERBOSE = false;
 
 #ifdef PTHREADS
 extern Queue<struct worker_data_s> inQueue;
 #endif // PTHREADS
 
+/**
+ * main function
+ */
 int main(int argc, char *argv[])
 {
 	unsigned int NumBins = 0;

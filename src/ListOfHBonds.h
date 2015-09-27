@@ -93,8 +93,9 @@ struct HydrogenBond
 	 **/
 	double acceptorDonorDistance;
 	/**
-	 * Angle between O-H...O.
-	 * \todo Document this better
+	 * Angle formed between two vectors, the first pointing from the hydrogen
+	 * to the acceptor, and the second pointing from the hydrogen to the atom
+	 * covalently bonded to it. See also Point::angle.
 	 */
 	double angle;
 

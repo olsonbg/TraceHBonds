@@ -1,5 +1,6 @@
 /**
  * \file
+ * \date  23 May 2015
  * \brief Remove hydrogen bonds which have multiple bonding
  *
  * Possible to have more than one:

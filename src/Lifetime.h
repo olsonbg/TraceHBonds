@@ -1,11 +1,11 @@
-#ifndef _Lifetime_h
-#define _Lifetime_h
 /**
  * \file
  * \author Brian G. Olson
- * \date   September 24th, 2015
+ * \date   23 May 2015
  * \brief  Track bonded and non-bonded states of each hydrogen bond
  */
+#ifndef _Lifetime_h
+#define _Lifetime_h
 #include "TraceHBonds.h"
 #include "queue.h"
 #include "WorkerThreads.h"

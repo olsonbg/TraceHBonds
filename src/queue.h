@@ -1,10 +1,8 @@
 /**
  * \file
  * \author Brian G. Olson
- * \date   September 26, 2015
+ * \date   27 April 2015
  * \brief  Setup queue of jobs for threads to work on
- *
- * Last modified: Sun 27 Sep 2015 02:26:55 AM CDT
  *
  */
 #ifndef _queue_h

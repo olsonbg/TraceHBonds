@@ -1,6 +1,7 @@
 /**
  *
  * \file
+ * \date   21 April 2015
  * \brief  Determine magic number of file
  *
  **/

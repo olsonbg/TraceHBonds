@@ -1,5 +1,6 @@
 /**
  * \file
+ * \date  30 April 2015
  * \brief Neighbor histograms
  *
  **/

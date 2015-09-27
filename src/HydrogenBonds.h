@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Brian G. Olson
- * \date   September 24th, 2015
+ * \date   23 May 2015
  * \brief Get hydrogen bonds.
  */
 #ifndef _HydrogenBonds_h

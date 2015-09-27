@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Brian G. Olson
- * \date September 24th, 2015
+ * \date   01 May 2015
  * \brief Determine number of CPUs
  **/
 #ifndef _cpu_h

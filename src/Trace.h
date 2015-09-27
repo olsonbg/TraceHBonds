@@ -1,5 +1,6 @@
 /**
  * \file
+ * \date  23 May 2015
  * \brief Trace connections between hydrogen bond atoms
  */
 #ifndef _Trace_h

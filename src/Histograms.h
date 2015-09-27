@@ -1,8 +1,9 @@
 /**
  * \file
  * \author Brian G. Olson
- * \date   September 24th, 2015
+ * \date   30 April 2015
  * \brief  Make histograms of chain length, molecules, and correlations
+ *
  **/
 #ifndef _Histograms_h
 #define _Histograms_h

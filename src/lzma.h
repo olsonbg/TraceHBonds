@@ -1,5 +1,6 @@
 /**
  * \file
+ * \date  21 May 2015
  * \brief Input fiter for boost iostreams
  *
  * \todo Find the source of this file, it's not mine, but free from LZMA people

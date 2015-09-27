@@ -1,5 +1,6 @@
 /**
  * \file
+ * \date  30 April 2015
  * \brief Simple math operations on vector of doubles
  */
 #ifndef _SimpleMath_h

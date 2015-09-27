@@ -1,5 +1,6 @@
 /**
  * \file
+ * \date  24 April 2015
  * \brief Calls worker thread for jobs in queue
  */
 #ifndef _WorkerThreads_h

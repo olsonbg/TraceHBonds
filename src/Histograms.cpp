@@ -306,12 +306,16 @@ void Correlations( std::ostream *out,
 	BRIEF_MSG("Saving autocorrelation data: " << "Correlations.txt");
 
 	// Save the continuous hydrogen bond autocorrelation data.
+	*out << "# Continuous hydrogen bond autocorrelation data,\n";
+	*out << "# averaged over all hydrogen bonds.\n";
 	for( unsigned int i=0; i < fcutoff; ++i) {
 		*out << i << "\t" << C.at(i)/C.at(0) << "\n"; }
 
-	*out << "\n";
+	*out << "\n\n"; // Gnuplot likes 2 blank lines between datasets.
 
 	// Save the intermittent hydrogen bond autocorrelation data.
+	*out << "# Intermittent hydrogen bond autocorrelation data,\n";
+	*out << "# averaged over all hydrogen bonds.\n";
 	for( unsigned int i=0; i < fcutoff; ++i) {
 		*out << i << "\t" << I.at(i)/I.at(0) << "\n"; }
 }

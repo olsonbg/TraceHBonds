@@ -171,10 +171,9 @@ void CorrelationsThread(vd *C, vd *I,
 	for( unsigned int i=ThreadID; i < fcutoff; i += NumThreads)
 	{
 		for( unsigned int h=0; h < continuous->size(); ++h) {
-			C->at(i) += continuous->at(h).at(i); }
-
-		for( unsigned int h=0; h < intermittent->size(); ++h) {
-			I->at(i) += intermittent->at(h).at(i); }
+			C->at(i) += continuous->at(h).at(i);
+			I->at(i) += intermittent->at(h).at(i);
+		}
 
 		// Normalize
 		C->at(i) = C->at(i)/continuous->size();
@@ -183,6 +182,9 @@ void CorrelationsThread(vd *C, vd *I,
 
 }
 
+/**
+ * Continuous and Intermittent lifetimes for each hydrogen bond
+ */
 void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
                               vvui *continuous, vvui *intermittent,
                               unsigned int numHBs,
@@ -226,6 +228,8 @@ void Correlations( std::ostream *out,
 	// the total.
 	unsigned int fcutoff=numFrames/2;
 
+	VERBOSE_MSG("\tCalculating autocorrelation for all hydrogen bonds.");
+	VERBOSE_MSG("\t\tUsing moving window of " << fcutoff << " frames.");
 	// Initialize the histograms to zero (0).
 	vvui continuous  ( numHBs, vui(fcutoff, 0) );
 	vvui intermittent( numHBs, vui(fcutoff, 0) );
@@ -267,8 +271,8 @@ void Correlations( std::ostream *out,
 	                         numHBs, fcutoff );
 #endif // PTHREADS
 
-	VERBOSE_MSG("\tCalculating autocorrelation.");
-	// Combine all frames.
+	VERBOSE_MSG("\tAveraging autocorrelations over all hydrogen bonds.");
+	// Combine all hydrogen bonds.
 	vd C(fcutoff,0.0);
 	vd I(fcutoff,0.0);
 
@@ -305,12 +309,14 @@ void Correlations( std::ostream *out,
 
 	BRIEF_MSG("Saving autocorrelation data: " << "Correlations.txt");
 
-	// Save the continuous hydrogen bond autocorrelation data.
-	*out << "# Continuous hydrogen bond autocorrelation data,\n";
-	*out << "# averaged over all hydrogen bonds.\n";
-	for( unsigned int i=0; i < fcutoff; ++i) {
-		*out << i << "\t" << C.at(i)/C.at(0) << "\n"; }
+	// Save the continuous and intermittent hydrogen bond autocorrelation data.
+	*out << "# Continuous Intermittent\n";
 
+	for( unsigned int i=0; i < fcutoff; ++i) {
+		*out << i << "\t" << C.at(i)/C.at(0) << "\t" << I.at(i)/I.at(0) << "\n";
+	}
+
+	/*
 	*out << "\n\n"; // Gnuplot likes 2 blank lines between datasets.
 
 	// Save the intermittent hydrogen bond autocorrelation data.
@@ -318,6 +324,7 @@ void Correlations( std::ostream *out,
 	*out << "# averaged over all hydrogen bonds.\n";
 	for( unsigned int i=0; i < fcutoff; ++i) {
 		*out << i << "\t" << I.at(i)/I.at(0) << "\n"; }
+	*/
 }
 
 /*

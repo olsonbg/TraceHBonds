@@ -210,37 +210,59 @@ int doArcFile(char *ifilename,
 		VERBOSE_MSG("\tGenerating truth table.");
 		std::vector< std::vector<bool> >correlationData;
 		Lifetime(&correlationData, &TrjIdx_iter);
-		VERBOSE_MSG("\tFinished truth table.");
 
 		if ( correlationData.size() != 0) {
+			std::stringstream ofilename;
+			ofilename << ofPrefix << "-lifetimes" << ofSuffix;
+
 			std::ofstream out;
-			out.open("Correlations.txt",std::ios::out);
-			VERBOSE_MSG("\tGenerating Correlations (Correlations.txt).");
+			out.open(ofilename.str().c_str(),std::ios::out);
+
 			if ( out.is_open() ) {
 				Correlations(&out, &correlationData); }
-
 			out.close();
+			VERBOSE_MSG("\t\tSaved " << ofilename.str() << ".");
 		}
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
 	if ( flags & LENGTHS )
 	{
-		std::ofstream out;
-		out.open("Lengths-Angles.txt",std::ios::out);
-		VERBOSE_MSG("\tHydrogen bond lengths and angles (Lengths-Angles.txt).");
+		std::stringstream ofilename;
+
+		ofilename << ofPrefix << "-lengths" << ofSuffix;
+
+		std::ofstream out(ofilename.str().c_str(),std::ios::out);
+
 		if ( out.is_open() )
 		{
+			VERBOSE_MSG("\tSaving Hydrogen bond lengths");
+
 			for( unsigned int i=0; i < hb.size(); i++ ) {
 				out << hb.at(i)->length << "\n"; }
-			out << "\n";
-			for( unsigned int i=0; i < hb.size(); i++ ) {
-				out << hb.at(i)->angle << "\n"; }
-		}
 
-		out.close();
+			VERBOSE_MSG("\t\tSaved " << ofilename.str() << ".");
+		}
 	}
 
+	if ( flags & ANGLES )
+	{
+		std::stringstream ofilename;
+
+		ofilename << ofPrefix << "-angles" << ofSuffix;
+
+		std::ofstream out(ofilename.str().c_str(),std::ios::out);
+
+		if ( out.is_open() )
+		{
+			VERBOSE_MSG("\tSaving Hydrogen bond angles");
+
+			for( unsigned int i=0; i < hb.size(); i++ ) {
+				out << hb.at(i)->angle << "\n"; }
+
+			VERBOSE_MSG("\t\tSaved " << ofilename.str() << ".");
+		}
+	}
 
 
 	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {

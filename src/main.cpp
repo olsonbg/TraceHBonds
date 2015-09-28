@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	double angleCutoff= 180.0; // Angle Cutoff for Hydrogen bonds.
 	// Matching keys for hydrogens and acceptors.
 	struct HydrogenBondMatching match;
-	int   flag[8] = {}; // Initialize all element of flag to zero (0).
+	int   flag[9] = {}; // Initialize all element of flag to zero (0).
 	int   POVRAY = 0;
 	unsigned char flags = 0;
 
@@ -49,9 +49,10 @@ int main(int argc, char *argv[])
 			{"povray"      , no_argument, &flag[1], POVRAY       },
 			{"lifetime"    , no_argument, &flag[2], LIFETIME     },
 			{"lengths"     , no_argument, &flag[3], LENGTHS      },
-			{"sizehist"    , no_argument, &flag[4], SIZE_HIST    },
-			{"neighborhist", no_argument, &flag[5], NEIGHBOR_HIST},
-			{"all"         , no_argument, &flag[6], ALL          },
+			{"angles"      , no_argument, &flag[4], ANGLES       },
+			{"sizehist"    , no_argument, &flag[5], SIZE_HIST    },
+			{"neighborhist", no_argument, &flag[6], NEIGHBOR_HIST},
+			{"all"         , no_argument, &flag[7], ALL          },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},

@@ -203,10 +203,6 @@ int doArcFile(char *ifilename,
 	std::vector<ListOfHBonds *>HBStrings;
 	HBStrings.reserve(1000*NumFramesInTrajectory);
 
-	//Find all the strings.
-	VERBOSE_RMSG("Tracing HB strings.");
-	Trace( &HBStrings, &TrjIdx_iter );
-
 	// Hydrogen bond lifetime correlations.
 	if ( flags & LIFETIME )
 	{
@@ -246,7 +242,12 @@ int doArcFile(char *ifilename,
 	}
 
 
+
 	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
+		//Find all the strings.
+		VERBOSE_RMSG("Tracing HB strings.");
+		Trace( &HBStrings, &TrjIdx_iter );
+
 		// Make histograms.
 		VERBOSE_MSG("Generating size histograms.");
 		std::vector<struct Histograms_s> Histograms;

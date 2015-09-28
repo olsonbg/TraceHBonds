@@ -262,10 +262,10 @@ void CorrelationsThread(vd *C, vd *I,
  * The average over all hydrogen bonds in the system can be obtained by
  * subsequently calling CorrelationsThread().
  *
- * \param[in]  v     Boolean indicating which hydrogen bonds are formed, and
- *                  in which frame
+ * \param[in]  v            Boolean indicating which hydrogen bonds are formed,
+ *                          and in which frame
  * \param[out] continuous   Continuous hydrogen bond autocorrelation
- * \param[out] intermittent Intemittent hydrogen bond autocorrelation
+ * \param[out] intermittent Intermittent hydrogen bond autocorrelation
  * \param[in]  numHBs       Number of hydrogen bonds.
  * \param[in]  fcutoff      Time cutoff (in number of frame units).
  * \param[in]  NumThreads   Number of jobs this calculation has been split

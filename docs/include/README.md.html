@@ -1,0 +1,971 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+</head>
+<body>
+<link rel="stylesheet" href="file:///home/bgo/tips/markdown/github-markdown.css">
+<style>
+    .markdown-body {
+        min-width: 200px;
+        max-width: 790px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+</style>
+<article class="markdown-body">
+<h1 id="tracehbonds">TraceHBonds</h1>
+<h1 id="contents">Contents</h1>
+<ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#output">Output</a>
+<ul>
+<li><a href="#sizehist">Hydrogen bond strings</a></li>
+<li><a href="#neighborhist">Neighbor distance in chains</a></li>
+<li><a href="#lengths">Hydrogen bond lengths</a></li>
+<li><a href="#angles">Hydrogen bond angles</a></li>
+<li><a href="#lifetime">Hydrogen bond lifetime correlations</a></li>
+</ul></li>
+</ul>
+<h1 id="installation">Installation</h1>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">mkdir</span> build
+$ <span class="kw">cd</span> build
+$ <span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release ..
+$ <span class="kw">make</span>
+$ <span class="kw">src/TraceHBonds</span></code></pre></div>
+<p>To generate the documentation as html, available at <code>docs/html/index.html</code>, use</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">make</span> docs</code></pre></div>
+<p>To cross-compile, use:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<span class="kw">&lt;</span>Toolchain cmake file<span class="kw">&gt;</span> ..</code></pre></div>
+<h1 id="usage">Usage</h1>
+<p>And example command line would be:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">TraceHBonds</span> --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
+<p>Below is a table of all options available from the command line. The long form options are preceded with <code>--</code>, and short form <code>-</code>. For options with both a long and short form, either one may be used on the command line.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Long form</th>
+<th align="center">Short form</th>
+<th align="left">Option Type</th>
+<th align="center">Required?</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">input</td>
+<td align="center">i</td>
+<td align="left">string</td>
+<td align="center">yes</td>
+<td align="left">The archive file generated from Discover.</td>
+</tr>
+<tr class="even">
+<td align="left">outprefix</td>
+<td align="center">p</td>
+<td align="left">string</td>
+<td align="center">yes</td>
+<td align="left">All output will have this string as a prefix to the filenames. For example, to save data as <code>HBonds1.dat</code>, use <code>-p HBonds</code> as the prefix</td>
+</tr>
+<tr class="odd">
+<td align="left">outsuffix</td>
+<td align="center">s</td>
+<td align="left">string</td>
+<td align="center">yes</td>
+<td align="left">All output will have this string as a suffix to the filenames. For example, to save data as 'HBonds1.dat', use <code>-s .dat</code> as the suffix</td>
+</tr>
+<tr class="even">
+<td align="left">rcutoff</td>
+<td align="center">r</td>
+<td align="left">real number</td>
+<td align="center">yes</td>
+<td align="left">Set the cutoff length, in angstroms, for the determination of a hydrogen bond.</td>
+</tr>
+<tr class="odd">
+<td align="left">anglecutoff</td>
+<td align="center">a</td>
+<td align="left">real number</td>
+<td align="center">yes</td>
+<td align="left">Set the cutoff angle, in degrees, for the determination of a hydrogen bond.</td>
+</tr>
+<tr class="even">
+<td align="left">hydrogen</td>
+<td align="center">H</td>
+<td align="left">string</td>
+<td align="center">yes</td>
+<td align="left">Set the force field of donor hydrogens for hydrogen bonding (e.g. -H h1o). More than one force field may be used by specifying additional -H force field parameters. <strong>NOTE</strong> the short option is a capital 'H.'</td>
+</tr>
+<tr class="odd">
+<td align="left">acceptor</td>
+<td align="center">A</td>
+<td align="left">string</td>
+<td align="center">yes</td>
+<td align="left">Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying additional -A force field parameters (e.g. -A o2h -A o1=). <strong>NOTE</strong> the short option is a capital 'A.'</td>
+</tr>
+<tr class="even">
+<td align="left">bins</td>
+<td align="center">b</td>
+<td align="left">integer</td>
+<td align="center">no</td>
+<td align="left">Minimum number of bins to show in histograms.</td>
+</tr>
+<tr class="odd">
+<td align="left">povray</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Output in povray format, relevant for --sizehist only.</td>
+</tr>
+<tr class="even">
+<td align="left">verbose</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Show verbose messages while running.</td>
+</tr>
+<tr class="odd">
+<td align="left">brief</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Show brief messages while running.</td>
+</tr>
+<tr class="even">
+<td align="left">lifetime <a name="lifetime-t"></a></td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Calculate hydrogen bond lifetime correlations.</td>
+</tr>
+<tr class="odd">
+<td align="left">lengths <a name="lengths-t"></a></td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Save length of all hydrogen bonds.</td>
+</tr>
+<tr class="even">
+<td align="left">angles <a name="angles-t"></a></td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="left">Save angle of all hydrogen bonds.</td>
+</tr>
+<tr class="odd">
+<td align="left">sizehist <a name="sizehist-t"></a></td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Save hydrogen bond strings and histograms.</td>
+</tr>
+<tr class="even">
+<td align="left">neighborhist <a name="neighborhist-t"></a></td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Save neighbor length lists.</td>
+</tr>
+<tr class="odd">
+<td align="left">all</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Do all calculations and save all data.</td>
+</tr>
+<tr class="even">
+<td align="left">help</td>
+<td align="center">h</td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="left">This help screen</td>
+</tr>
+</tbody>
+</table>
+<h1 id="output">Output</h1>
+<p>Depending upon the command line options, many data files may be generated. The description of all calculations are listed below</p>
+<ul>
+<li><a href="#sizehist">Hydrogen bond strings (--sizehist)</a>
+<ul>
+<li><a href="#sizehist-files">List of Files Created</a></li>
+</ul></li>
+<li><a href="#neighborhist">Neighbor distance in chains (--neighborhist)</a>
+<ul>
+<li><a href="#neighborhist-files">List of Files Created</a></li>
+</ul></li>
+<li><a href="#lengths">Hydrogen bond lengths (--length)</a>
+<ul>
+<li><a href="#lengths-files">List of Files Created</a></li>
+</ul></li>
+<li><a href="#angles">Hydrogen bond angles (--angles)</a>
+<ul>
+<li><a href="#angles-files">List of Files Created</a></li>
+</ul></li>
+<li><a href="#lifetime">Hydrogen bond lifetiem correlations (--lifetime)</a>
+<ul>
+<li><a href="#lifetime-files">List of Files Created</a></li>
+</ul></li>
+</ul>
+<h2 id="hydrogen-bond-strings---sizehist"><a name="sizehist"></a>Hydrogen bond strings (--sizehist)</h2>
+<p>The <a href="#sizehist-t">--sizehist</a> option calculates hydrogen bonds, traces the hydrogen bonds into connected strings, and tabulates the sizes.</p>
+<h3 id="files-created"><a name="sizehist-files"></a>Files Created</h3>
+<ul>
+<li>&lt;prefix&gt;#&lt;suffix&gt;</li>
+</ul>
+<p>Where <em>#</em> indicates the frame of the trajectory. For a trajectory containing 100 frames, 100 files will be generated.</p>
+<h3 id="description-of-files">Description of files</h3>
+<p>The files generated from the <code>sizehist</code> option consist of multiple parts, the first shows the individual chains and their atoms. The second part are histograms of chain sizes.</p>
+<h4 id="individual-chains">Individual Chains</h4>
+<p>As an example, a few lines from a data file follows, showing 3 chains.</p>
+<pre><code># Current Element : 589
+# Atoms in Chain : 3
+# Molecules : 2
+# Unique forcefields : 3
+# Times chain switched between Molecules (switching) : 1
+# Periodic boundary conditions applied.
+  21.6276   27.0261   44.9056 [O]  Molecule  O87  o2h
+  21.3585   27.9405   44.8265 [H]  Molecule  H592  h1o
+  20.1321   29.5776   43.8281 [O]  Molecule2  O1493  o1=
+# Chain end-to-end distance: 3.147660
+
+
+# Current Element : 590
+# Atoms in Chain : 9
+# Molecules : 2
+# Unique forcefields : 3
+# Times chain switched between Molecules (switching) : 1
+# Periodic boundary conditions applied.
+  24.6835   23.4992   41.1162 [O]  Molecule  O95  o2h
+  24.2312   22.9546   41.6786 [H]  Molecule  H601  h1o
+  23.0622   23.9573   43.4825 [O]  Molecule  O88  o2h
+  22.4585   23.9183   44.2600 [H]  Molecule  H593  h1o
+  21.5617   24.1262   45.5633 [O]  Molecule9  O8207  o2h
+  21.6362   24.7840   46.3132 [H]  Molecule9  H8711  h1o
+  22.6499   25.4540   47.5703 [O]  Molecule9  O8208  o2h
+  23.5335   25.7281   47.6493 [H]  Molecule9  H8712  h1o
+  25.0893   24.1132   46.6706 [O]  Molecule9  O8209  o1=
+# Chain end-to-end distance: 5.602967
+
+
+# Current Element : 591
+# Atoms in Chain : 5
+# Molecules : 2
+# Unique forcefields : 2
+# Times chain switched between Molecules (switching) : 1
+# Periodic boundary conditions applied.
+  28.8885   22.9984   40.5006 [O]  Molecule  O96  o2h
+  29.6141   22.3548   40.3725 [H]  Molecule  H602  h1o
+  30.7792   21.1779   38.8075 [O]  Molecule6  O5419  o2h
+  31.6526   21.1038   39.2359 [H]  Molecule6  H5925  h1o
+  33.3777   21.2051   38.4486 [O]  Molecule6  O5420  o2h
+# Chain end-to-end distance: 5.251614</code></pre>
+<p>If the <code>povray</code> option is used, then the same hydrogen bond chains would look like this:</p>
+<pre><code>// Current Element : 1
+// Atoms in Chain : 3
+// Molecules : 2
+// Unique forcefields : 3
+// Times chain switched between Molecules (switching) : 1
+// Periodic boundary conditions applied.
+sphere_sweep {
+    linear_spline
+    3,
+    &lt;  21.6276,   27.0261,   44.9056&gt;,ChainRadius
+    &lt;  21.3585,   27.9405,   44.8265&gt;,ChainRadius
+    &lt;  20.1321,   29.5776,   43.8281&gt;,ChainRadius
+    tolerance 0.07
+    texture{ChainLength3}
+}
+// Chain end-to-end distance: 3.147660
+
+
+// Current Element : 2
+// Atoms in Chain : 9
+// Molecules : 2
+// Unique forcefields : 3
+// Times chain switched between Molecules (switching) : 1
+// Periodic boundary conditions applied.
+sphere_sweep {
+    linear_spline
+    9,
+    &lt;  24.6835,   23.4992,   41.1162&gt;,ChainRadius
+    &lt;  24.2312,   22.9546,   41.6786&gt;,ChainRadius
+    &lt;  23.0622,   23.9573,   43.4825&gt;,ChainRadius
+    &lt;  22.4585,   23.9183,   44.2600&gt;,ChainRadius
+    &lt;  21.5617,   24.1262,   45.5633&gt;,ChainRadius
+    &lt;  21.6362,   24.7840,   46.3132&gt;,ChainRadius
+    &lt;  22.6499,   25.4540,   47.5703&gt;,ChainRadius
+    &lt;  23.5335,   25.7281,   47.6493&gt;,ChainRadius
+    &lt;  25.0893,   24.1132,   46.6706&gt;,ChainRadius
+    tolerance 0.07
+    texture{ChainLength9}
+}
+// Chain end-to-end distance: 5.602967
+
+
+// Current Element : 3
+// Atoms in Chain : 5
+// Molecules : 2
+// Unique forcefields : 2
+// Times chain switched between Molecules (switching) : 1
+// Periodic boundary conditions applied.
+sphere_sweep {
+    linear_spline
+    5,
+    &lt;  28.8885,   22.9984,   40.5006&gt;,ChainRadius
+    &lt;  29.6141,   22.3548,   40.3725&gt;,ChainRadius
+    &lt;  30.7792,   21.1779,   38.8075&gt;,ChainRadius
+    &lt;  31.6526,   21.1038,   39.2359&gt;,ChainRadius
+    &lt;  33.3777,   21.2051,   38.4486&gt;,ChainRadius
+    tolerance 0.07
+    texture{ChainLength5}
+}
+// Chain end-to-end distance: 5.251614</code></pre>
+<p>The <code>Current Element</code> numbers are different because they are assigned by threads, and depend upon the order in which they finish.</p>
+<h4 id="histograms">Histograms</h4>
+<pre><code># Atoms/HBonds |Count| (For all Chains, including Closed Loops)
+#    3 /   1   |  175|**************************************************************
+#    5 /   2   |   72|**************************
+#    7 /   3   |   19|*******
+#    9 /   4   |   16|******
+#   11 /   5   |    7|**
+#   13 /   6   |    1|
+#   15 /   7   |    1|
+#   17 /   8   |    1|
+#
+# Atoms/HBonds |Count| (For Closed Loops)
+#</code></pre>
+<pre><code># Switching |Count| (For Chain length of 3)
+#    0      |  107|**************************************************************
+#    1      |   68|***************************************
+#
+# Switching |Count| (For Chain length of 5)
+#    0      |   18|************************
+#    1      |   46|**************************************************************
+#    2      |    8|***********
+#
+# Switching |Count| (For Chain length of 7)
+#    0      |    8|**************************************************************
+#    1      |    6|***********************************************
+#    2      |    5|***************************************</code></pre>
+<pre><code># Molecules |Count| (For Chain length of 3)
+#    1      |  107|**************************************************************
+#    2      |   68|***************************************
+#
+# Molecules |Count| (For Chain length of 5)
+#    1      |   18|**********************
+#    2      |   50|**************************************************************
+#    3      |    4|*****
+#
+# Molecules |Count| (For Chain length of 7)
+#    1      |    8|**************************************************************
+#    2      |    8|**************************************************************
+#    3      |    3|***********************</code></pre>
+<h2 id="neighbor-distance-in-chains---neighborhist"><a name="neighborhist"></a>Neighbor Distance in chains (--neighborhist)</h2>
+<p>The <a href="#neighborhist-t">neighborhist</a> option calculates the distance between non-hydrogen atoms in the hydrogen bond chains. For a chain consisting of only oxygen and hydrogen atoms, this would calculate the neighbor distances between oxygen atoms in the chain.</p>
+<h3 id="files-created-1"><a name="neighborhist-files"></a>Files Created</h3>
+<ul>
+<li>&lt;prefix&gt;-NN-AllFrames&lt;suffix&gt;</li>
+<li>&lt;prefix&gt;-NN-Combined&lt;suffix&gt;</li>
+<li>&lt;prefix&gt;-NN-only&lt;suffix&gt;</li>
+</ul>
+<p>All files contain tab delimited text.</p>
+<h3 id="description-of-files-1">Description of files</h3>
+<p>The data start with statistics of each individual frame in a trajectory (NN-AllFrames), then all frames together (NN-Combined), followed by combining all chain lengths together for a list of only neighbor distances (NN-only).</p>
+<h4 id="nn-allframes">NN-AllFrames</h4>
+<p>The table in this file consists of a Count, Average, and StdDev column for each frame of the trajectory, so the table can have many columns if a trajectory with many frames is used. It's not uncommon to read 100, 1000, or more frames. Sample output is shown below, in table format for easy viewing. <strong>Note</strong>: Only the first 2 off 1000 frames of a large trajectory file are shown, and the first 13 of 27 atoms in chain for this particular sample trajectory file.</p>
+<p>n.n. = Nearest neighbor, and f is the frame number.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Atoms in chain</th>
+<th align="center">Nth n.n.</th>
+<th align="center">Count(f=0)</th>
+<th align="right">Average(f=0)</th>
+<th align="right">StdDev(f=0)</th>
+<th align="center">Count(f=1)</th>
+<th align="right">Average(f=1)</th>
+<th align="right">StdDev(f=1)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">3</td>
+<td align="center">1</td>
+<td align="center">175</td>
+<td align="right">2.76054</td>
+<td align="right">0.193364</td>
+<td align="center">181</td>
+<td align="right">2.74879</td>
+<td align="right">0.189819</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="center">1</td>
+<td align="center">144</td>
+<td align="right">2.75077</td>
+<td align="right">0.197673</td>
+<td align="center">154</td>
+<td align="right">2.76424</td>
+<td align="right">0.204004</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">72</td>
+<td align="right">4.75806</td>
+<td align="right">0.635903</td>
+<td align="center">77</td>
+<td align="right">4.64895</td>
+<td align="right">0.732237</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">7</td>
+<td align="center">1</td>
+<td align="center">57</td>
+<td align="right">2.7841</td>
+<td align="right">0.201227</td>
+<td align="center">60</td>
+<td align="right">2.75164</td>
+<td align="right">0.22737</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">38</td>
+<td align="right">5.01798</td>
+<td align="right">0.581104</td>
+<td align="center">40</td>
+<td align="right">4.78955</td>
+<td align="right">0.619429</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">19</td>
+<td align="right">6.88486</td>
+<td align="right">0.948441</td>
+<td align="center">20</td>
+<td align="right">6.28423</td>
+<td align="right">1.4411</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">9</td>
+<td align="center">1</td>
+<td align="center">64</td>
+<td align="right">2.7419</td>
+<td align="right">0.195794</td>
+<td align="center">52</td>
+<td align="right">2.75299</td>
+<td align="right">0.217351</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">48</td>
+<td align="right">4.70959</td>
+<td align="right">0.743358</td>
+<td align="center">39</td>
+<td align="right">4.64655</td>
+<td align="right">0.670621</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">32</td>
+<td align="right">6.49354</td>
+<td align="right">1.32184</td>
+<td align="center">26</td>
+<td align="right">6.21771</td>
+<td align="right">1.27282</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">4</td>
+<td align="center">16</td>
+<td align="right">8.07276</td>
+<td align="right">1.88673</td>
+<td align="center">13</td>
+<td align="right">7.66016</td>
+<td align="right">2.06277</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">11</td>
+<td align="center">1</td>
+<td align="center">35</td>
+<td align="right">2.69268</td>
+<td align="right">0.130133</td>
+<td align="center">25</td>
+<td align="right">2.69679</td>
+<td align="right">0.159238</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">28</td>
+<td align="right">4.6182</td>
+<td align="right">0.587221</td>
+<td align="center">20</td>
+<td align="right">4.7146</td>
+<td align="right">0.696855</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">21</td>
+<td align="right">6.43492</td>
+<td align="right">0.672441</td>
+<td align="center">15</td>
+<td align="right">6.60273</td>
+<td align="right">1.07617</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">4</td>
+<td align="center">14</td>
+<td align="right">8.2164</td>
+<td align="right">1.09446</td>
+<td align="center">10</td>
+<td align="right">8.3314</td>
+<td align="right">1.70064</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">5</td>
+<td align="center">7</td>
+<td align="right">9.65632</td>
+<td align="right">1.52155</td>
+<td align="center">5</td>
+<td align="right">9.95754</td>
+<td align="right">2.07065</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">13</td>
+<td align="center">1</td>
+<td align="center">6</td>
+<td align="right">2.76977</td>
+<td align="right">0.150354</td>
+<td align="center">12</td>
+<td align="right">2.78778</td>
+<td align="right">0.272727</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">5</td>
+<td align="right">4.82386</td>
+<td align="right">0.386727</td>
+<td align="center">10</td>
+<td align="right">4.65379</td>
+<td align="right">0.546978</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">4</td>
+<td align="right">6.49485</td>
+<td align="right">0.499925</td>
+<td align="center">8</td>
+<td align="right">6.08429</td>
+<td align="right">0.413477</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">4</td>
+<td align="center">3</td>
+<td align="right">8.00401</td>
+<td align="right">0.466091</td>
+<td align="center">6</td>
+<td align="right">7.38176</td>
+<td align="right">1.13275</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">5</td>
+<td align="center">2</td>
+<td align="right">9.38291</td>
+<td align="right">0</td>
+<td align="center">4</td>
+<td align="right">8.29956</td>
+<td align="right">2.52054</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">6</td>
+<td align="center">1</td>
+<td align="right">9.95807</td>
+<td align="right">0</td>
+<td align="center">2</td>
+<td align="right">9.34289</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nn-combined">NN-Combined</h4>
+<p>The table in this file combines data from all the frames into single Count, Average, and StdDev columns. Sample data is shown below, in table format for easy viewing. <strong>Note</strong>: Only the first 13 of 27 atoms in a chain are shown for this particular sample trajectory file.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Atoms in chain</th>
+<th align="center">Nth n.n.</th>
+<th align="center">Count</th>
+<th align="right">Average</th>
+<th align="right">StdDev</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">3</td>
+<td align="center">1</td>
+<td align="center">22655</td>
+<td align="right">2.86888</td>
+<td align="right">0.159418</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="center">1</td>
+<td align="center">22230</td>
+<td align="right">2.86208</td>
+<td align="right">0.159733</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">11115</td>
+<td align="right">4.68886</td>
+<td align="right">0.70739</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">7</td>
+<td align="center">1</td>
+<td align="center">19182</td>
+<td align="right">2.85872</td>
+<td align="right">0.159745</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">12788</td>
+<td align="right">4.67906</td>
+<td align="right">0.703396</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">6394</td>
+<td align="right">6.07321</td>
+<td align="right">1.31757</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">9</td>
+<td align="center">1</td>
+<td align="center">15888</td>
+<td align="right">2.85741</td>
+<td align="right">0.158921</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">11916</td>
+<td align="right">4.68648</td>
+<td align="right">0.702248</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">7944</td>
+<td align="right">6.08516</td>
+<td align="right">1.26822</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">4</td>
+<td align="center">3972</td>
+<td align="right">7.19271</td>
+<td align="right">1.89908</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">11</td>
+<td align="center">1</td>
+<td align="center">12900</td>
+<td align="right">2.85904</td>
+<td align="right">0.159156</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">10320</td>
+<td align="right">4.68125</td>
+<td align="right">0.705725</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">7740</td>
+<td align="right">6.08836</td>
+<td align="right">1.27751</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">4</td>
+<td align="center">5160</td>
+<td align="right">7.21112</td>
+<td align="right">1.88283</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">5</td>
+<td align="center">2580</td>
+<td align="right">8.16827</td>
+<td align="right">2.45298</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">13</td>
+<td align="center">1</td>
+<td align="center">10452</td>
+<td align="right">2.85698</td>
+<td align="right">0.15854</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">2</td>
+<td align="center">8710</td>
+<td align="right">4.67941</td>
+<td align="right">0.690471</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">3</td>
+<td align="center">6968</td>
+<td align="right">6.06397</td>
+<td align="right">1.27943</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">4</td>
+<td align="center">5226</td>
+<td align="right">7.13685</td>
+<td align="right">1.88829</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center">5</td>
+<td align="center">3484</td>
+<td align="right">8.06878</td>
+<td align="right">2.4206</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">6</td>
+<td align="center">1742</td>
+<td align="right">8.9083</td>
+<td align="right">2.88292</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nn-only">NN-only</h4>
+<p>This file combines all frames as in <a href="#nn-combined">NN-Combined</a>, and also all the 'Atoms in chain' column for a complete nearest neighbor table. Sample output is shown below, in table format for easy viewing. Only first 6 of 13 shown for this particular sample trajectory file.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Nth n.n.</th>
+<th align="center">Count</th>
+<th align="right">Average</th>
+<th align="right">StdDev</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="center">145342</td>
+<td align="right">2.85969</td>
+<td align="right">0.159263</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="center">92595</td>
+<td align="right">4.68331</td>
+<td align="right">0.700193</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="center">62503</td>
+<td align="right">6.08867</td>
+<td align="right">1.27689</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="center">43526</td>
+<td align="right">7.22511</td>
+<td align="right">1.85633</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="center">30943</td>
+<td align="right">8.2102</td>
+<td align="right">2.36345</td>
+</tr>
+<tr class="even">
+<td align="left">6</td>
+<td align="center">22332</td>
+<td align="right">9.11149</td>
+<td align="right">2.79441</td>
+</tr>
+</tbody>
+</table>
+<h2 id="hydrogen-bond-lengths---lengths"><a name="lengths"></a>Hydrogen bond lengths (--lengths)</h2>
+<p>The <a href="#lengths-t">--lengths</a> option calculate the length of all hydrogen bonds (hydrogen-acceptor distance), in every frame.</p>
+<h3 id="file-created"><a name="lengths-files"></a>File Created</h3>
+<ul>
+<li>&lt;prefix&gt;-lengths&lt;suffix&gt;</li>
+</ul>
+<h3 id="description-of-file">Description of file</h3>
+<p>Single column of data listing the hydrogen bond lengths in angstroms.</p>
+<h2 id="hydrogen-bond-angles---angles"><a name="angles"></a>Hydrogen bond angles (--angles)</h2>
+<p>The <a href="#angles-t">--angles</a> option calculates the angle of all hydrogen bonds, in every frame.</p>
+<h3 id="file-created-1"><a name="angles-files"></a>File Created</h3>
+<ul>
+<li>&lt;prefix&gt;-angles&lt;suffix&gt;</li>
+</ul>
+<h3 id="description-of-file-1">Description of file</h3>
+<p>Single column of data listing the hydrogen bond angles in degrees.</p>
+<h2 id="hydrogen-bond-lifetime-correlations---lifetime"><a name="lifetime"></a> Hydrogen bond lifetime correlations (--lifetime)</h2>
+<p>The <a href="#lifetime-t">--lifetime</a> option calculates the hydrogen bond lifetime autocorrelation.</p>
+<h3 id="file-created-2"><a name="lifetime-files"></a>File Created</h3>
+<ul>
+<li>&lt;prefix&gt;-lifetimes&lt;suffix&gt;</li>
+</ul>
+<h3 id="description-of-file-2">Description of file</h3>
+<p>Three column data, in tab delimited format. The columns are:</p>
+<ol style="list-style-type: decimal">
+<li>Frame number, starting with 0.</li>
+<li>Continuous hydrogen bond lifetime correlation</li>
+<li>Intermittent hydrogen bond lifetime correlation</li>
+</ol>
+</article>
+</body>
+</html>

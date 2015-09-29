@@ -4,7 +4,9 @@ src/TraceHBonds Version 1.9
 USAGE: 
         src/TraceHBonds -i <arc file> -p <prefix> -s <suffix> -r <distance
         cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor
-        forcefield> [-b <number>] [--povray]
+        forcefield> [-b <number>] [--verbose] [--brief] [--povray]
+        [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist]
+        [--all]
 
 OPTIONS:
         --input <arc file>
@@ -52,14 +54,35 @@ OPTIONS:
                 Minimum <number> of bins to show in histograms.
 
         --povray
-                Output in povray format.
+                Output in povray format, relevant for --sizehist only.
 
         --verbose
-                Show some extra information while running.
+                Show verbose messages while running.
+
+        --brief
+                Show brief messages while running.
+
+        --lifetime
+                Calculate hydrogen bond lifetime correlations.
+
+        --lengths
+                Save length of all hydrogen bonds.
+
+        --angles
+                Save angle of all hydrogen bonds.
+
+        --sizehist
+                Save hydrogen bond strings and histograms.
+
+        --neighborhist
+                Save neighbor length lists.
+
+        --all
+                Do all calculations and save all data.
 
         -h
                 This help screen
 
 
-Compiled on Sep 27 2015 at 13:13:56.
+Compiled on Sep 28 2015 at 19:08:32.
 Author: Brian G. Olson (olsonbg@gmail.com)

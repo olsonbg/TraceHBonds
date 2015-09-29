@@ -200,7 +200,7 @@ void Help(char *name)
 	std::cerr << "\n";
 
 	std::cerr << "USAGE: " << "\n";
-	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--povray]";
+	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--all]";
 	std::string USAGE = name;
 	USAGE += " ";
 	USAGE += usage;
@@ -234,10 +234,31 @@ void Help(char *name)
 	           "Minimum <number> of bins to show in histograms.");
 	HelpOption("--povray",
 	           NULL,
-	           "Output in povray format.");
+	           "Output in povray format, relevant for --sizehist only.");
 	HelpOption("--verbose",
 	           NULL,
-	           "Show some extra information while running.");
+	           "Show verbose messages while running.");
+	HelpOption("--brief",
+	           NULL,
+	           "Show brief messages while running.");
+	HelpOption("--lifetime",
+	           NULL,
+	           "Calculate hydrogen bond lifetime correlations.");
+	HelpOption("--lengths",
+	           NULL,
+	           "Save length of all hydrogen bonds.");
+	HelpOption("--angles",
+	           NULL,
+	           "Save angle of all hydrogen bonds.");
+	HelpOption("--sizehist",
+	           NULL,
+	           "Save hydrogen bond strings and histograms.");
+	HelpOption("--neighborhist",
+	           NULL,
+	           "Save neighbor length lists.");
+	HelpOption("--all",
+	           NULL,
+	           "Do all calculations and save all data.");
 	HelpOption("-h",
 	           NULL,
 	           "This help screen");

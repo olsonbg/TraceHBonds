@@ -44,7 +44,7 @@ void Print_CombineFrames(std::ostream *out,
  *                   from getNeighbors()
  *
  **/
-void Print_CombineNeighbors(std::ostream *out,
+void Print_CombineChains(std::ostream *out,
                             std::vector<struct Histograms_s> *frame);
 #endif // NeighborPrint
 // vim:tw=76:ts=4:sw=4

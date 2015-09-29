@@ -151,7 +151,7 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
 <td align="left">Minimum number of bins to show in histograms.</td>
 </tr>
 <tr class="odd">
-<td align="left">povray</td>
+<td align="left">povray <a name="povray-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
@@ -254,7 +254,7 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
 </ul>
 <p>Where <em>#</em> indicates the frame of the trajectory. For a trajectory containing 100 frames, 100 files will be generated.</p>
 <h3 id="description-of-files">Description of files</h3>
-<p>The files generated from the <code>sizehist</code> option consist of multiple parts, the first shows the individual chains and their atoms. The second part are histograms of chain sizes.</p>
+<p>The files generated from the <a href="#sizehist-t">--sizehist</a> option consist of two parts: the <a href="#individual-chains">individual chains</a> and their atoms, and <a href="#chain-histograms">histograms of chain sizes</a>.</p>
 <h4 id="individual-chains">Individual Chains</h4>
 <p>As an example, a few lines from a data file follows, showing 3 chains.</p>
 <pre><code># Current Element : 589
@@ -299,7 +299,7 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
   31.6526   21.1038   39.2359 [H]  Molecule6  H5925  h1o
   33.3777   21.2051   38.4486 [O]  Molecule6  O5420  o2h
 # Chain end-to-end distance: 5.251614</code></pre>
-<p>If the <code>povray</code> option is used, then the same hydrogen bond chains would look like this:</p>
+<p>If the <a href="#povray-t">--povray</a> option is used, then the same hydrogen bond chains would look like this:</p>
 <pre><code>// Current Element : 1
 // Atoms in Chain : 3
 // Molecules : 2
@@ -361,7 +361,8 @@ sphere_sweep {
 }
 // Chain end-to-end distance: 5.251614</code></pre>
 <p>The <code>Current Element</code> numbers are different because they are assigned by threads, and depend upon the order in which they finish.</p>
-<h4 id="histograms">Histograms</h4>
+<h4 id="chain-histograms">Chain Histograms</h4>
+<p>This histogram shows how many chains of a specific length there are in this frame. It also shows how many loops are closed, the begin and end at the same hydrogen bond. This particular data had no closed loops.</p>
 <pre><code># Atoms/HBonds |Count| (For all Chains, including Closed Loops)
 #    3 /   1   |  175|**************************************************************
 #    5 /   2   |   72|**************************
@@ -374,6 +375,7 @@ sphere_sweep {
 #
 # Atoms/HBonds |Count| (For Closed Loops)
 #</code></pre>
+<p>The next series of histograms show how many times a hydrogen bond chain switches to another molecule, for each chain length. Switching of 0 means the chain was on a single molecule. Switching of 1 means it started on a molecule and ended on another. The switching number does not indicate how many molecules a chain is composed of, since it may switch back and forth between two molecules multiple times.</p>
 <pre><code># Switching |Count| (For Chain length of 3)
 #    0      |  107|**************************************************************
 #    1      |   68|***************************************
@@ -387,6 +389,7 @@ sphere_sweep {
 #    0      |    8|**************************************************************
 #    1      |    6|***********************************************
 #    2      |    5|***************************************</code></pre>
+<p>The following histograms shows how many molecules a chain is composed of, for each chain length.</p>
 <pre><code># Molecules |Count| (For Chain length of 3)
 #    1      |  107|**************************************************************
 #    2      |   68|***************************************

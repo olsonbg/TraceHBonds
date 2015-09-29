@@ -58,7 +58,7 @@ short form, either one may be used on the command line.
 |hydrogen  |H           | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. -H h1o). More than one force field may be used by specifying additional -H force field parameters.  **NOTE** the short option is a capital 'H.'|
 |acceptor  |A           | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying additional -A force field parameters (e.g. -A o2h -A o1=). **NOTE** the short option is a capital 'A.'|
 |bins      |b           | integer       | no        | Minimum number of bins to show in histograms.|
-|povray    |            |               | no        | Output in povray format, relevant for --sizehist only.|
+|povray        <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for --sizehist only.|
 |verbose   |            |               | no        | Show verbose messages while running. |
 |brief     |            |               | no        | Show brief messages while running. |
 |lifetime      <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
@@ -99,9 +99,9 @@ Where _#_ indicates the frame of the trajectory. For a trajectory containing
 
 ### Description of files
 
-The files generated from the `sizehist` option consist of multiple parts, the
-first shows the individual chains and their atoms. The second part are
-histograms of chain sizes.
+The files generated from the [--sizehist](#sizehist-t) option consist of two parts:
+the [individual chains](#individual-chains) and their atoms, and [histograms
+of chain sizes](#chain-histograms).
 
 #### Individual Chains
 
@@ -152,7 +152,7 @@ As an example, a few lines from a data file follows, showing 3 chains.
 # Chain end-to-end distance: 5.251614
 ~~~~~~~~~~~~~
 
-If the `povray` option is used, then the same hydrogen bond chains would
+If the [--povray](#povray-t) option is used, then the same hydrogen bond chains would
 look like this:
 
 ```
@@ -221,7 +221,11 @@ sphere_sweep {
 The `Current Element` numbers are different because they are assigned by
 threads, and depend upon the order in which they finish.
 
-#### Histograms
+#### Chain Histograms
+
+This histogram shows how many chains of a specific length there are in this
+frame. It also shows how many loops are closed, the begin and end at the
+same hydrogen bond. This particular data had no closed loops.
 
 ```
 # Atoms/HBonds |Count| (For all Chains, including Closed Loops)
@@ -238,6 +242,13 @@ threads, and depend upon the order in which they finish.
 #
 ```
 
+The next series of histograms show how many times a hydrogen bond chain switches to
+another molecule, for each chain length. Switching of 0 means the chain was
+on a single molecule. Switching of 1 means it started on a molecule and
+ended on another. The switching number does not indicate how many molecules
+a chain is composed of, since it may switch back and forth between two
+molecules multiple times.
+
 ```
 # Switching |Count| (For Chain length of 3)
 #    0      |  107|**************************************************************
@@ -253,6 +264,9 @@ threads, and depend upon the order in which they finish.
 #    1      |    6|***********************************************
 #    2      |    5|***************************************
 ```
+
+The following histograms shows how many molecules a chain is composed of,
+for each chain length.
 
 ```
 # Molecules |Count| (For Chain length of 3)

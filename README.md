@@ -404,7 +404,7 @@ Single column of data listing the hydrogen bond lengths in angstroms.
 The [--angles](#angles-t) option calculates the angle of all hydrogen bonds,
 in every frame.
 
-### File Created <a name="angles-files"></a>
+### <a name="angles-files"></a>File Created
 
   - \<prefix\>-angles\<suffix\>
 

@@ -32,6 +32,20 @@ template<class T> void DeleteVectorPointers( std::vector<T *> v )
 	//     delete v[i];
 }
 
+// Use the same stream but write to different file
+template <typename Stream>
+void reopen(Stream& pStream, const char * pFile, const char *mFile, const char *sFile,
+            std::ios_base::openmode pMode = std::ios::out)
+{
+	std::stringstream ofilename;
+	ofilename << pFile << mFile << sFile;
+
+	pStream.close();
+	pStream.clear();
+	pStream.open(ofilename.str().c_str(), pMode);
+	BRIEF_MSG("\tSaving " << ofilename.str() << ".");
+}
+
 // Used with remove_if()
 bool deleteAtom( struct thbAtom *atom ) {
 	// delete atom->Molecule;
@@ -337,18 +351,28 @@ int doArcFile(char *ifilename,
 			for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
 				getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
 
-			std::ofstream out;
-			out.open("Neighbors.txt",std::ios::out);
+			std::stringstream ofilename;
+			ofilename << ofPrefix << "-NN-AllFrames" << ofSuffix;
+
+			std::ofstream out(ofilename.str().c_str(),std::ios::out);
 			if ( out.is_open() )
 			{
-				BRIEF_MSG("Saving neighbor histograms: " << "Neighbors.txt" << ".");
+				BRIEF_MSG("\tSaving " << ofilename.str() << ".");
 				Print_AllFrames(&out, &Histograms);
-				Print_CombineFrames(&out, &Histograms);
-				Print_CombineNeighbors(&out, &Histograms);
 			} else {
-				BRIEF_MSG("ERROR: Can not save to " << "Neighbors.txt" << "!"); }
+				BRIEF_MSG("ERROR: Can not save file!"); }
 
-			out.close();
+			reopen(out, ofPrefix, "-NN-Combined", ofSuffix, std::ios::out);
+			if ( out.is_open() ) {
+				Print_CombineFrames(&out, &Histograms);
+			} else {
+				BRIEF_MSG("ERROR: Can not save file!"); }
+
+			reopen(out, ofPrefix, "-NN-only", ofSuffix, std::ios::out);
+			if ( out.is_open() ) {
+				Print_CombineChains(&out, &Histograms);
+			} else {
+				BRIEF_MSG("ERROR: Can not save file!"); }
 		}
 	}
 

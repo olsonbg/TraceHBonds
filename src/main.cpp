@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
 	// Matching keys for hydrogens and acceptors.
 	struct HydrogenBondMatching match;
 	int   flag[9] = {}; // Initialize all element of flag to zero (0).
-	int   POVRAY = 0;
 	unsigned char flags = 0;
 
 	// Read command line arguments.
@@ -150,10 +149,10 @@ int main(int argc, char *argv[])
 	}
 
 	VERBOSE_MSG("\t--- Calculations ---");
-	if ( flags & LIFETIME ) VERBOSE_MSG("\tHydrogen bond lifetime correlations.");
-	if ( flags & SIZE_HIST) VERBOSE_MSG("\tChain lengths in each frame.");
-	if ( flags & NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths.");
-	if ( flags & LENGTHS) VERBOSE_MSG("\tHydrogen - Acceptor distances.");
+	if ( flags & LIFETIME )     VERBOSE_MSG("\tHydrogen bond lifetime correlations");
+	if ( flags & SIZE_HIST)     VERBOSE_MSG("\tChain lengths in each frame");
+	if ( flags & NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths");
+	if ( flags & LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS

@@ -85,12 +85,12 @@ The description of all calculations are listed below
   - [Hydrogen bond lifetiem correlations (--lifetime)](#lifetime)
     - [List of Files Created](#lifetime-files)
 
-## Hydrogen bond strings (--sizehist) {#sizehist}
+## <a name="sizehist"></a>Hydrogen bond strings (--sizehist)
 
 The [--sizehist](#sizehist-t) option calculates hydrogen bonds, traces the
 hydrogen bonds into connected strings, and tabulates the sizes.
 
-### Files Created {#sizehist-files}
+### <a name="sizehist-files"></a>Files Created
 
  - \<prefix\>#\<suffix\>
 
@@ -271,14 +271,14 @@ threads, and depend upon the order in which they finish.
 ```
 
 
-## Neighbor Distance in chains (--neighborhist) {#neighborhist}
+## <a name="neighborhist"></a>Neighbor Distance in chains (--neighborhist)
 
 The [neighborhist](#neighborhist-t) option calculates the distance between non-hydrogen atoms
 in the hydrogen bond chains. For a chain consisting of only oxygen and
 hydrogen atoms, this would calculate the neighbor distances between oxygen
 atoms in the chain.
 
-### Files Created {#neighborhist-files}
+### <a name="neighborhist-files"></a>Files Created
 
   - \<prefix\>-NN-AllFrames\<suffix\>
   - \<prefix\>-NN-Combined\<suffix\>
@@ -386,12 +386,12 @@ of 13 shown for this particular sample trajectory file.
 |5          |30943  |8.2102   |2.36345 |
 |6          |22332  |9.11149  |2.79441 |
 
-## Hydrogen bond lengths (--lengths) {#lengths}
+## <a name="lengths"></a>Hydrogen bond lengths (--lengths)
 
 The [--lengths](#lengths-t) option calculate the length of all hydrogen
 bonds (hydrogen-acceptor distance), in every frame.
 
-### File Created {#lengths-files}
+### <a name="lengths-files"></a>File Created
 
   - \<prefix\>-lengths\<suffix\>
 
@@ -399,12 +399,12 @@ bonds (hydrogen-acceptor distance), in every frame.
 
 Single column of data listing the hydrogen bond lengths in angstroms.
 
-## Hydrogen bond angles (--angles) {#angles}
+## <a name="angles"></a>Hydrogen bond angles (--angles)
 
 The [--angles](#angles-t) option calculates the angle of all hydrogen bonds,
 in every frame.
 
-### File Created {#angles-files}
+### File Created <a name="angles-files"></a>
 
   - \<prefix\>-angles\<suffix\>
 
@@ -412,12 +412,12 @@ in every frame.
 
 Single column of data listing the hydrogen bond angles in degrees.
 
-## Hydrogen bond lifetime correlations (--lifetime) {#lifetime}
+## <a name="lifetime"></a> Hydrogen bond lifetime correlations (--lifetime)
 
 The [--lifetime](#lifetime-t) option calculates the hydrogen bond lifetime
 autocorrelation.
 
-### File Created {#lifetime-files}
+### <a name="lifetime-files"></a>File Created
 
   - \<prefix\>-lifetimes\<suffix\>
 

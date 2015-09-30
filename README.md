@@ -3,14 +3,15 @@ TraceHBonds
 
 # Contents
 
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Output](#output)
-    - [Hydrogen bond strings](#sizehist)
-    - [Neighbor distance in chains](#neighborhist)
-    - [Hydrogen bond lengths](#lengths)
-    - [Hydrogen bond angles](#angles)
-    - [Hydrogen bond lifetime correlations](#lifetime)
+  * [Installation](#installation)
+  * [Usage](#usage)
+  * [Output](#output)
+      * [Hydrogen bond strings](#sizehist)
+          * [Generating Images](#generating-image)
+      * [Neighbor distance in chains](#neighborhist)
+      * [Hydrogen bond lengths](#lengths)
+      * [Hydrogen bond angles](#angles)
+      * [Hydrogen bond lifetime correlations](#lifetime)
 
 # Installation
 
@@ -220,6 +221,17 @@ sphere_sweep {
 
 The `Current Element` numbers are different because they are assigned by
 threads, and depend upon the order in which they finish.
+
+##### Generating Image
+
+The program [POV-Ray](http://www.povray.org) can be used to convert the
+output of [--sizehist](#sizehist-t) [--povray](#povray-t) to an image or
+even a movie of the image rotating. Here is an example image using the
+[prettybox.pov](povray/prettybox.pov) script in the [povray](povray/) directory for colorings and shapes:
+
+<div style="text-align:center" markdown="1">
+![Hydrogen bond strings, colored by chain length](images/HydrogenBondStrings.png "Hydrogen Bond strings")
+</div>
 
 #### Chain Histograms
 

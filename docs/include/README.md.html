@@ -62,7 +62,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><a href="#usage">Usage</a></li>
 <li><a href="#output">Output</a>
 <ul>
-<li><a href="#sizehist">Hydrogen bond strings</a></li>
+<li><a href="#sizehist">Hydrogen bond strings</a>
+<ul>
+<li><a href="#generating-image">Generating Images</a></li>
+</ul></li>
 <li><a href="#neighborhist">Neighbor distance in chains</a></li>
 <li><a href="#lengths">Hydrogen bond lengths</a></li>
 <li><a href="#angles">Hydrogen bond angles</a></li>
@@ -361,6 +364,14 @@ sphere_sweep {
 }
 // Chain end-to-end distance: 5.251614</code></pre>
 <p>The <code>Current Element</code> numbers are different because they are assigned by threads, and depend upon the order in which they finish.</p>
+<h5 id="generating-image">Generating Image</h5>
+<p>The program <a href="http://www.povray.org">POV-Ray</a> can be used to convert the output of <a href="#sizehist-t">--sizehist</a> <a href="#povray-t">--povray</a> to an image or even a movie of the image rotating. Here is an example image using the <a href="povray/prettybox.pov">prettybox.pov</a> script in the <a href="povray/">povray</a> directory for colorings and shapes:</p>
+<div style="text-align:center" markdown="1">
+<div class="figure">
+<img src="https://raw.githubusercontent.com/olsonbg/TraceHBonds/savememDocs/images/HydrogenBondStrings.png" title="Hydrogen Bond strings" alt="Hydrogen bond strings, colored by chain length" />
+<p class="caption">Hydrogen bond strings, colored by chain length</p>
+</div>
+</div>
 <h4 id="chain-histograms">Chain Histograms</h4>
 <p>This histogram shows how many chains of a specific length there are in this frame. It also shows how many loops are closed, the begin and end at the same hydrogen bond. This particular data had no closed loops.</p>
 <pre><code># Atoms/HBonds |Count| (For all Chains, including Closed Loops)

@@ -230,7 +230,7 @@ even a movie of the image rotating. Here is an example image using the
 [prettybox.pov](povray/prettybox.pov) script in the [povray](povray/) directory for colorings and shapes:
 
 <div style="text-align:center" markdown="1">
-![Hydrogen bond strings, colored by chain length](images/HydrogenBondStrings.png "Hydrogen Bond strings")
+![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
 </div>
 
 #### Chain Histograms

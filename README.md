@@ -4,6 +4,8 @@ TraceHBonds
 A program for finding strings of hydrogen bonded atoms in a trajectory file
 generated from the _Discover_ molecular dynamics program.
 
+![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
+
 # Contents
 
   * [Installation](#installation)
@@ -235,9 +237,11 @@ The program [POV-Ray](http://www.povray.org) can be used to convert the
 output of [--sizehist](#sizehist-t) [--povray](#povray-t) to an image or
 even a movie of the image rotating. Here is an example image using the
 [prettybox.pov](povray/prettybox.pov) script in the [povray](povray/)
-directory for colorings and shapes:
+directory:
 
 ![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
+
+The legend text was added with [GIMP](http://www.gimp.org).
 
 #### Chain Histograms
 

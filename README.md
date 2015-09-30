@@ -1,6 +1,9 @@
 TraceHBonds
 =====
 
+A program for finding strings of hydrogen bonded atoms in a trajectory file
+generated from the _Discover_ molecular dynamics program.
+
 # Contents
 
   * [Installation](#installation)
@@ -15,60 +18,64 @@ TraceHBonds
 
 # Installation
 
+To compile the program
+
 ```bash
-$ mkdir build
-$ cd build
-$ cmake -DCMAKE_BUILD_TYPE=release ..
-$ make
-$ src/TraceHBonds
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=release ..
+make
+src/TraceHBonds
 ```
 
-To generate the documentation as html, available at `docs/html/index.html`, use
+To generate the documentation as html, which will be available at
+`docs/html/index.html`, use
 
 ```bash
-$ make docs
+make docs
 ```
 
-To cross-compile, use:
+To cross-compile, use your toolchain cmake file as:
 
 ```bash
-$ cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<Toolchain cmake file> ..
+cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<Toolchain cmake file> ..
 ```
 
 # Usage
 
-And example command line would be:
+A typical command line would look like this:
 
 ```bash
 TraceHBonds --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all
 ```
 
-Below is a table of all options available from the command line. The long form options
-are preceded with `--`, and short form `-`. For options with both a long and
-short form, either one may be used on the command line.
+Below is a table of all options available from the command line. The long
+form options are preceded with `--`, and short form a single `-`. For
+options with both a long and short form, either one may be used on the
+command line.
 
 
 
-|Long form | Short form |Option Type    | Required? | Description |
-|:---------|:----------:|:--------------|:---------:|:------------|
-|input     | i          | string        | yes       |The archive file generated from Discover. |
-|outprefix | p          | string        | yes       |All output will have this string as a prefix to the filenames. For example, to save data as `HBonds1.dat`, use `-p HBonds` as the prefix|
-|outsuffix | s          | string        | yes       |All output will have this string as a suffix to the filenames. For example, to save data as 'HBonds1.dat', use `-s .dat` as the suffix|
-|rcutoff   | r          | real number   | yes       | Set the cutoff length, in angstroms, for the determination of a hydrogen bond. |
-|anglecutoff| a         | real number   | yes       | Set the cutoff angle, in degrees, for the determination of a hydrogen bond.|
-|hydrogen  |H           | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. -H h1o). More than one force field may be used by specifying additional -H force field parameters.  **NOTE** the short option is a capital 'H.'|
-|acceptor  |A           | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying additional -A force field parameters (e.g. -A o2h -A o1=). **NOTE** the short option is a capital 'A.'|
-|bins      |b           | integer       | no        | Minimum number of bins to show in histograms.|
-|povray        <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for --sizehist only.|
-|verbose   |            |               | no        | Show verbose messages while running. |
-|brief     |            |               | no        | Show brief messages while running. |
-|lifetime      <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
-|lengths       <a name="lengths-t"></a>     |            |               | no        | Save length of all hydrogen bonds.|
-|angles        <a name="angles-t"></a>      |            |               |           | Save angle of all hydrogen bonds. |
-|sizehist      <a name="sizehist-t"></a>    |            |               | no        | Save hydrogen bond strings and histograms. |
-|neighborhist  <a name="neighborhist-t"></a>|         |               | no        | Save neighbor length lists. |
-|all       |            |               | no        | Do all calculations and save all data. |
-|help      | h          |               |           | This help screen |
+|Long form                                                   | Short form |Option Type    | Required? | Description |
+|:-----------------------------------------------------------|:----------:|:--------------|:---------:|:------------|
+|input                                                       |   i        | string        | yes       | The archive file generated from Discover. |
+|outprefix                                                   |   p        | string        | yes       | All output will have this string as a prefix to the filenames. For example, to save data as `HBonds1.dat`, use `-p HBonds` as the prefix|
+|outsuffix                                                   |   s        | string        | yes       | All output will have this string as a suffix to the filenames. For example, to save data as 'HBonds1.dat', use `-s .dat` as the suffix|
+|rcutoff                                                     |   r        | real number   | yes       | Set the cutoff length, in angstroms, for the determination of a hydrogen bond (e.g. `-r 2.5`). |
+|anglecutoff                                                 |   a        | real number   | yes       | Set the cutoff angle, in degrees, for the determination of a hydrogen bond (e.g. `-a 90.0`).|
+|hydrogen                                                    |   H        | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. `-H h1o`). More than one force field may be used by specifying this option multiple times.  **NOTE** the short option is a capital 'H.'|
+|acceptor                                                    |   A        | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. `-A o2h -A o1=`). **NOTE** the short option is a capital 'A.'|
+|bins                                                        |   b        | integer       | no        | Minimum number of bins to show in histograms (e.g. `-b 20`).|
+|povray                         <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
+|verbose                                                     |            |               | no        | Show verbose messages while running. |
+|brief                                                       |            |               | no        | Show brief messages while running. |
+|[lifetime](#lifetime)          <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
+|[lengths](#lengths)            <a name="lengths-t"></a>     |            |               | no        | Save length of all hydrogen bonds.|
+|[angles](#angles)              <a name="angles-t"></a>      |            |               |           | Save angle of all hydrogen bonds. |
+|[sizehist](#sizehist)          <a name="sizehist-t"></a>    |            |               | no        | Save hydrogen bond strings and histograms. |
+|[neighborhist](#neighborhist)  <a name="neighborhist-t"></a>|            |               | no        | Save neighbor length lists. |
+|all                                                         |            |               | no        | Do all calculations and save all data. |
+|help                                                        |   h        |               |           | This help screen |
 
 # Output
 
@@ -100,9 +107,9 @@ Where _#_ indicates the frame of the trajectory. For a trajectory containing
 
 ### Description of files
 
-The files generated from the [--sizehist](#sizehist-t) option consist of two parts:
-the [individual chains](#individual-chains) and their atoms, and [histograms
-of chain sizes](#chain-histograms).
+The files generated from the [--sizehist](#sizehist-t) option consist of two
+parts: the [individual chains](#individual-chains) and their atoms, and
+[histograms of chain sizes](#chain-histograms).
 
 #### Individual Chains
 
@@ -153,8 +160,8 @@ As an example, a few lines from a data file follows, showing 3 chains.
 # Chain end-to-end distance: 5.251614
 ~~~~~~~~~~~~~
 
-If the [--povray](#povray-t) option is used, then the same hydrogen bond chains would
-look like this:
+If the [--povray](#povray-t) option is used, then the same hydrogen bond
+chains would look like this:
 
 ```
 // Current Element : 1
@@ -227,15 +234,16 @@ threads, and depend upon the order in which they finish.
 The program [POV-Ray](http://www.povray.org) can be used to convert the
 output of [--sizehist](#sizehist-t) [--povray](#povray-t) to an image or
 even a movie of the image rotating. Here is an example image using the
-[prettybox.pov](povray/prettybox.pov) script in the [povray](povray/) directory for colorings and shapes:
+[prettybox.pov](povray/prettybox.pov) script in the [povray](povray/)
+directory for colorings and shapes:
 
 ![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
 
 #### Chain Histograms
 
 This histogram shows how many chains of a specific length there are in this
-frame. It also shows how many loops are closed, the begin and end at the
-same hydrogen bond. This particular data had no closed loops.
+frame. It also shows how many chains form closed loops (begin and end at the
+same hydrogen bond). This particular data had no closed loops.
 
 ```
 # Atoms/HBonds |Count| (For all Chains, including Closed Loops)
@@ -252,12 +260,12 @@ same hydrogen bond. This particular data had no closed loops.
 #
 ```
 
-The next series of histograms show how many times a hydrogen bond chain switches to
-another molecule, for each chain length. Switching of 0 means the chain was
-on a single molecule. Switching of 1 means it started on a molecule and
-ended on another. The switching number does not indicate how many molecules
-a chain is composed of, since it may switch back and forth between two
-molecules multiple times.
+The next series of histograms show how many times a hydrogen bond chain
+switches to another molecule, for each chain length. Switching of 0 means
+the chain was on a single molecule. Switching of 1 means it started on a
+molecule and ended on another. The switching number does not indicate how
+many molecules a chain is composed of, since it may switch back and forth
+between two molecules multiple times.
 
 ```
 # Switching |Count| (For Chain length of 3)
@@ -297,10 +305,10 @@ for each chain length.
 
 ## <a name="neighborhist"></a>Neighbor Distance in chains (--neighborhist)
 
-The [neighborhist](#neighborhist-t) option calculates the distance between non-hydrogen atoms
-in the hydrogen bond chains. For a chain consisting of only oxygen and
-hydrogen atoms, this would calculate the neighbor distances between oxygen
-atoms in the chain.
+The [--neighborhist](#neighborhist-t) option calculates the distance between
+non-hydrogen atoms in the hydrogen bond chains. For a chain consisting of
+only oxygen and hydrogen atoms, this would calculate the neighbor distances
+between oxygen atoms in the chain.
 
 ### <a name="neighborhist-files"></a>Files Created
 
@@ -312,10 +320,10 @@ All files contain tab delimited text.
 
 ### Description of files
 
-The data start with statistics of each individual frame in a
-trajectory (NN-AllFrames), then all frames together (NN-Combined), followed
-by combining all chain lengths together for a list of only neighbor
-distances (NN-only).
+The data start with statistics of each individual frame in a trajectory
+[NN-AllFrames](#nn-allframes), then all frames together
+[NN-Combined](#nn-combined), followed by combining all chain lengths
+together for a list of only neighbor distances [NN-only](#nn-only).
 
 #### NN-AllFrames
 
@@ -412,7 +420,7 @@ of 13 shown for this particular sample trajectory file.
 
 ## <a name="lengths"></a>Hydrogen bond lengths (--lengths)
 
-The [--lengths](#lengths-t) option calculate the length of all hydrogen
+The [--lengths](#lengths-t) option calculates the length of all hydrogen
 bonds (hydrogen-acceptor distance), in every frame.
 
 ### <a name="lengths-files"></a>File Created
@@ -438,8 +446,8 @@ Single column of data listing the hydrogen bond angles in degrees.
 
 ## <a name="lifetime"></a> Hydrogen bond lifetime correlations (--lifetime)
 
-The [--lifetime](#lifetime-t) option calculates the hydrogen bond lifetime
-autocorrelation.
+The [--lifetime](#lifetime-t) option calculates the continuous and
+intermittent hydrogen bond lifetime autocorrelation.
 
 ### <a name="lifetime-files"></a>File Created
 

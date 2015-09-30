@@ -46,7 +46,7 @@ unsigned int ListOfHBonds::SwitchingCount()
 	struct HydrogenBond *current = Begin();
 
 	// Donor and Hydrogen are always on the same molecule,
-	// So checking which molecule the Hydrogen and Acceptor 
+	// So checking which molecule the Hydrogen and Acceptor
 	// are on is sufficient.
 
 	while (current != NULL)
@@ -167,79 +167,6 @@ int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 	return (size);
 }
 
-#ifdef DEBUG
-void ListOfHBonds::PrintAll(unsigned int TrjIdx)
-{
-	struct HydrogenBond *current;
-
-	current = Begin();
-
-	while (current != NULL )
-	{
-		OFmt col(9,4);
-		std::cout << col << current->donor->p.at(TrjIdx).x() << " ";
-		std::cout << col << current->donor->p.at(TrjIdx).y() << " ";
-		std::cout << col << current->donor->p.at(TrjIdx).z();
-		std::cout << " [" << current->donor->Type << "]";
-		std::cout << "  " << current->donor->Molecule;
-		std::cout << "  " << current->donor->ForceField << "\n";
-
-		std::cout << col << current->hydrogen->p.at(TrjIdx).x() << " ";
-		std::cout << col << current->hydrogen->p.at(TrjIdx).y() << " ";
-		std::cout << col << current->hydrogen->p.at(TrjIdx).z();
-		std::cout << " [" << current->hydrogen->Type << "]";
-		std::cout << "  " << current->hydrogen->Molecule;
-		std::cout << "  " << current->hydrogen->ForceField << "\n";
-
-		if ( current == End() )
-		{
-			std::cout << col << current->acceptor->p.at(TrjIdx).x() << " ";
-			std::cout << col << current->acceptor->p.at(TrjIdx).y() << " ";
-			std::cout << col << current->acceptor->p.at(TrjIdx).z();
-			std::cout << " [" << current->acceptor->Type << "]";
-			std::cout << "  " << current->acceptor->Molecule;
-			std::cout << "  " << current->acceptor->ForceField << "\n";
-		}
-		current = current->Next;
-	}
-	return;
-}
-
-void ListOfHBonds::PrintAllPovRay(unsigned int TrjIdx)
-{
-	struct HydrogenBond *current;
-
-	current = Begin();
-
-	std::cout << "sphere_sweep {\n\tlinear_spline\n\t11\n" << "\n";
-	while (current != NULL )
-	{
-		OFmt col(9,4);
-		std::cout << "\t<";
-		std::cout << col << current->donor->p.at(TrjIdx).x() << ", ";
-		std::cout << col << current->donor->p.at(TrjIdx).y() << ",  ";
-		std::cout << col << current->donor->p.at(TrjIdx).z() << ">,ChainRadius" << "\n";
-
-		std::cout << "\t<";
-		std::cout << col << current->hydrogen->p.at(TrjIdx).x() << ", ";
-		std::cout << col << current->hydrogen->p.at(TrjIdx).y() << ",  ";
-		std::cout << col << current->hydrogen->p.at(TrjIdx).z() << ">,ChainRadius" << "\n";
-
-		if ( current == End() )
-		{
-			std::cout << "\t<";
-			std::cout << col << current->acceptor->p.at(TrjIdx).x() << ", ";
-			std::cout << col << current->acceptor->p.at(TrjIdx).y() << ",  ";
-			std::cout << col << current->acceptor->p.at(TrjIdx).z() << ">,ChainRadius" << "\n";
-		}
-
-		current = current->Next;
-	}
-	std::cout << "\ttolerance 0.07\n\ttexture{ChainLength11}" << "\n";
-	return;
-}
-#endif
-
 double ListOfHBonds::Round (double r,double f=1.0)
 {
 	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
@@ -268,13 +195,13 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 	               current->donor->p.at(TrjIdx).y(),
 	               current->donor->p.at(TrjIdx).z() );
 
-	
+
 	Point r( current->donor->p.at(TrjIdx).x(),
 	         current->donor->p.at(TrjIdx).y(),
 	         current->donor->p.at(TrjIdx).z() );
 
 	if (POVRAY)
-		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount() 
+		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount()
 		          << "," << "\n";
 
 	OFmt colX(9,4);

@@ -57,8 +57,8 @@ namespace SimpleMath
 		unsigned int E = 1.0; // 1.0 == Corrected Sample standard deviation.
 		                      // 0.0 == Uncorrected sample standard deviation
 		                      //        (Standard deviation of the sample)
-
-		if ( N < (E+1) ) return(0.0);
+		// Return 0.0 if not enough data point to calculate standard deviation
+		if ( N <= (E+1) ) return(0.0);
 
 		return( sqrt(sumSq/double(N-E)) );
 	}

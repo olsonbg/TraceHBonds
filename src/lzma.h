@@ -1,3 +1,12 @@
+/**
+ * \file
+ * \date  21 May 2015
+ * \brief Input fiter for boost iostreams
+ *
+ * \todo Find the source of this file, it's not mine, but free from LZMA people
+ * I think.
+ *
+ **/
 #ifndef _tracehbonds_lzma_h
 #define _tracehbonds_lzma_h
 #include <boost/iostreams/char_traits.hpp>
@@ -8,12 +17,17 @@
 #include <iostream>
 #include <lzma.h>
 
+/**
+ *
+ * input fiter for boost iostreams
+ *
+ **/
 class lzma_input_filter : public boost::iostreams::input_filter {
 	private:
 		lzma_stream strm;
 		uint8_t inbuf[BUFSIZ];
 		uint8_t outbuf[BUFSIZ];
-		lzma_ret retcode;
+		// lzma_ret retcode;
 		size_t out_size;
 		size_t out_curr;
 		bool lzma_done;
@@ -30,7 +44,7 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 				while( i < sizeof(inbuf) )
 				{
 					if ( (c = boost::iostreams::get(src)) == EOF ||
-					     c == boost::iostreams::WOULD_BLOCK)
+						 c == boost::iostreams::WOULD_BLOCK)
 					{
 						lzma_done = true;
 						break;
@@ -39,7 +53,7 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 					inbuf[i] = static_cast<uint8_t>(std::string::traits_type::to_char_type(c));
 					++i;
 				}
-				// for(i=0; (i< sizeof(inbuf)) && 
+				// for(i=0; (i< sizeof(inbuf)) &&
 				//     ( ((c=boost::iostreams::get(src)) != EOF) || ( c == boost::iostreams::WOULD_BLOCK )); ++i)
 				//     inbuf[i] = static_cast<uint8_t>(std::string::traits_type::to_char_type(c));
 
@@ -181,6 +195,9 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 		}
 
 	public:
+		/**
+		 * input_filter for boost iostream
+		 */
 		explicit lzma_input_filter(lzma_stream ini=LZMA_STREAM_INIT)
 			: strm(ini), out_size(0), out_curr(0), lzma_done(false) {
 			// strm = LZMA_STREAM_INIT;
@@ -231,6 +248,9 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 
 		}
 
+		/**
+		 * get function for boost iostream
+		 */
 		template<typename Source> int get(Source& src)
 		{
 			if ( out_curr == out_size )
@@ -247,7 +267,9 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 			return outbuf[out_curr++];
 		}
 
-
+		/**
+		 * close function for boost iostream
+		 */
 		template<typename Source> void close(Source &) {
 			lzma_end(&strm); }
 

@@ -19,7 +19,7 @@ void MutexCondition::unlock()    { pthread_mutex_unlock  (&m);     }
 void MutexCondition::wait()      { pthread_cond_wait     (&c, &m); }
 void MutexCondition::broadcast() { pthread_cond_broadcast(&c);     }
 
-lock::lock(MutexCondition &mc) : mc(mc) { mc.lock(); }
+lock::lock(MutexCondition &MC) : mc(MC) { mc.lock(); }
 lock::~lock() { mc.unlock(); }
 
 template <typename T>

@@ -34,7 +34,6 @@ void removeMarked( HBVec *hb )
 
 	pos = remove_if(hb->begin(), hb->end(), deleteMarked);
 
-	std::cout << "Distance:" <<std::distance(pos, hb->end()) << "\n";
 	if ( pos != hb->end() )
 	{
 		// HBVec::iterator toDelete;
@@ -134,8 +133,14 @@ void RemoveDuplicatesThread( struct HydrogenBondIterator_s HBit )
 void RemoveDuplicates( HBVec *hb,
                        HBVecIter *TrjIdx_iter)
 {
+	unsigned int emptyFrames=0;
+	time_t timer = time(NULL);
 
 	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
+		if ( TrjIdx_iter->at(i).begin == TrjIdx_iter->at(i).end ) {
+			// This frame is empty, skip it.
+			emptyFrames++;
+			continue; }
 #ifdef PTHREADS
 		struct worker_data_s wd;
 		wd.jobtype = THREAD_JOB_RMDUPS;
@@ -144,8 +149,12 @@ void RemoveDuplicates( HBVec *hb,
 		wd.HBit = &(TrjIdx_iter->at(i));
 		inQueue.push(wd);
 #else
-		if (  ((i+1)%50==0) || ((i+1)==TrjIdx_iter->size())  )
+		if (  (difftime(time(NULL),timer) > 1.0) ||
+		      ((i+1)==TrjIdx_iter->size())  )
+		{
 			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
+			timer = time(NULL);
+		}
 
 		RemoveDuplicatesThread(TrjIdx_iter->at(i));
 #endif
@@ -153,9 +162,13 @@ void RemoveDuplicates( HBVec *hb,
 
 #ifdef PTHREADS
 	// Get the results back from the worker threads.
-	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
-		if (  ((i+1)%50==0) || ((i+1)==TrjIdx_iter->size())  )
+	for(unsigned int i=0; i != TrjIdx_iter->size()-emptyFrames; ++i) {
+		if (  (difftime(time(NULL),timer) > 1.0) ||
+		      ((i+1)==TrjIdx_iter->size())  )
+		{
 			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
+			timer = time(NULL);
+		}
 
 		// Do not need to do anything with result of outQueue.pop,
 		// just have to wait for it to complete.
@@ -166,7 +179,6 @@ void RemoveDuplicates( HBVec *hb,
 
 	VERBOSE_MSG("Removing Marked");
 	removeMarked(hb);
-	VERBOSE_MSG("Removed");
 	return;
 
 }

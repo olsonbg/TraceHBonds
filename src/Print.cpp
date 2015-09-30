@@ -10,7 +10,7 @@ inline int Round( double v)
 
 
 void PrintHistogramChain( std::ostream *out,
-                          std::vector<unsigned int>Histogram, 
+                          std::vector<unsigned int>Histogram,
                           unsigned int Stop, unsigned int Start,
                           unsigned int Step, int BarLength,
                           unsigned int NumBins, std::string CC )
@@ -28,7 +28,7 @@ void PrintHistogramChain( std::ostream *out,
 	for (unsigned int i = Start; i <= Stop; i += Step)
 		if (Histogram[i] > Max) { Max = Histogram[i]; }
 
-	// Define 'Scale' so that the maximum of the histogram will have a length 
+	// Define 'Scale' so that the maximum of the histogram will have a length
 	// of 'BarLength'
 	Scale = double(Max)/double(BarLength);
 
@@ -89,7 +89,7 @@ void PrintHistogramMolecules( std::ostream *out,
 		Max = 0;
 	}
 
-	// Define 'Scale' so the the maximum of the histogram will have a length 
+	// Define 'Scale' so the the maximum of the histogram will have a length
 	// of 'BarLength'
 	Scale = double(Max)/double(BarLength);
 
@@ -163,7 +163,7 @@ void HelpIndented(const char *text, unsigned int indent, unsigned int wrap)
 	strcpy(wrapped_text,text);
 
 	word_wrap(wrapped_text,wrap-indent);
-	
+
 	for( unsigned int i = 0; i < indent; i++)
 		std::cerr << " ";
 
@@ -172,7 +172,7 @@ void HelpIndented(const char *text, unsigned int indent, unsigned int wrap)
 		std::cerr << wrapped_text[i];
 		if ( wrapped_text[i] == '\n')
 		{
-			for( unsigned int i = 0; i < indent; i++)
+			for( unsigned int ii = 0; ii < indent; ii++)
 				std::cerr << " ";
 		}
 	}
@@ -200,7 +200,7 @@ void Help(char *name)
 	std::cerr << "\n";
 
 	std::cerr << "USAGE: " << "\n";
-	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--povray]";
+	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--all]";
 	std::string USAGE = name;
 	USAGE += " ";
 	USAGE += usage;
@@ -210,36 +210,57 @@ void Help(char *name)
 	std::cerr << "OPTIONS:" << "\n";
 	HelpOption("--input <arc file>",
 	           "-i <arc file>",
-	           "<Arc file> is the archive file generated from Discover.");
+	           "The archive file generated from Discover. ");
 	HelpOption("--outprefix <prefix>",
 	           "-p <prefix>",
-	           "<Prefix> of the output filename. The text before the integer in the filename. For a filename of 'HBonds1.dat' the <prefix> would be HBonds'");
+	           "All output will have this string as a prefix to the filenames. For example, to save data as `HBonds1.dat`, use `-p HBonds` as the prefix");
 	HelpOption("--outsuffix <suffix>",
 	           "-s <suffix>",
-	           "<Suffix> of the output filename. The text after the integer in the filename. For a filename of 'HBonds1.dat' the <suffix> would be '.dat'");
+	           "All output will have this string as a suffix to the filenames. For example, to save data as 'HBonds1.dat', use `-s .dat` as the suffix");
 	HelpOption("--rcutoff <Rc>",
 	           "-r <Rc>",
-	           "Set the cutoff length to <Rc> for the determination of a hydrogen bond.");
+	           "Set the cutoff length, in angstroms, for the determination of a hydrogen bond. ");
 	HelpOption("--anglecutoff <Ac>",
 	           "-a <Ac>",
-	           "Set the cutoff angle to <Ac> for the determination of a hydrogen bond.");
+	           "Set the cutoff angle, in degrees, for the determination of a hydrogen bond.");
 	HelpOption("--hydrogen <force field>",
 	           "-H <force field>",
-	           "Set the <force field> of donor hydrogens for hydrogen bonding (e.g. -H h1o). More than one <force field> may be used by specifying additional -H <force field> parameters. NOTE: the short option is a capital 'H.'");
+	           "Set the force field of donor hydrogens for hydrogen bonding (e.g. -H h1o). More than one force field may be used by specifying additional -H force field parameters.  **NOTE** the short option is a capital 'H.'");
 	HelpOption("--acceptor <force field>",
 	           "-A <force field>",
-	           "Set the <force field> of acceptor atoms for hydrogen bonding. More than one <force field> may be used by specifying additional -A <force field> parameters (e.g. -A o2h -A o1=). NOTE: the short option is a capital 'A.'");
+	           "Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying additional -A force field parameters (e.g. -A o2h -A o1=). **NOTE** the short option is a capital 'A.'");
 	HelpOption("--bins <number>",
 	           "-b <number>",
-	           "Minimum <number> of bins to show in histograms.");
+	           "Minimum number of bins to show in histograms.");
 	HelpOption("--povray",
 	           NULL,
-	           "Output in povray format.");
+	           "Output in povray format, relevant for --sizehist only.");
 	HelpOption("--verbose",
 	           NULL,
-	           "Show some extra information while running.");
-	HelpOption("-h",
+	           "Show verbose messages while running.");
+	HelpOption("--brief",
 	           NULL,
+	           "Show brief messages while running.");
+	HelpOption("--lifetime",
+	           NULL,
+	           "Calculate hydrogen bond lifetime correlations.");
+	HelpOption("--lengths",
+	           NULL,
+	           "Save length of all hydrogen bonds.");
+	HelpOption("--angles",
+	           NULL,
+	           "Save angle of all hydrogen bonds.");
+	HelpOption("--sizehist",
+	           NULL,
+	           "Save hydrogen bond strings and histograms.");
+	HelpOption("--neighborhist",
+	           NULL,
+	           "Save neighbor length lists.");
+	HelpOption("--all",
+	           NULL,
+	           "Do all calculations and save all data.");
+	HelpOption("--help",
+	           "-h",
 	           "This help screen");
 	std::cerr << "\n";
 	std::cerr << "Compiled on " << __DATE__;

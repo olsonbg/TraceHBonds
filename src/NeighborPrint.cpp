@@ -121,7 +121,7 @@ void Print_CombineFrames(std::ostream *out,
 	return;
 }
 
-void Print_CombineNeighbors(std::ostream *out,
+void Print_CombineChains(std::ostream *out,
                             std::vector<struct Histograms_s> *frame)
 {
 	// Combine all frames and all Nth nearest ChainLengths.

@@ -31,22 +31,27 @@ template<class T> bool alloc_vector( std::vector<T> *v,
 	return true;
 }
 
+/** \todo Check why this makes nelem*melem matrix, instead of melem's of
+ * varying nelem length. In other words, why doesn't each v[melem] have only
+ * needed number of elements, instead of nelem for all.
+ */
+
 /*
  * Make sure v is of size nelem*melem, if not, initialize the needed number of
  * elements to val. Make sure we don't adjust the values already stored in v.
  */
 template<class T> bool alloc_vector( std::vector< std::vector<T> > *v,
                                      T val,
-                                     unsigned int nelem,
-                                     unsigned int melem)
+                                     unsigned int melem,
+                                     unsigned int nelem)
 {
-	for ( unsigned int n=0; n < nelem; n++)
+	for ( unsigned int n=0; n < melem; n++)
 	{
 		if ( n == v->size() )
 		{
 			try
 			{
-				std::vector<T> Zero( melem, val);
+				std::vector<T> Zero( nelem, val);
 				v->push_back(Zero);
 			}
 			catch( std::exception const &e)
@@ -58,7 +63,7 @@ template<class T> bool alloc_vector( std::vector< std::vector<T> > *v,
 		}
 		else
 		{
-			bool ret = alloc_vector(&(v->at(n)), val, melem);
+			bool ret = alloc_vector(&(v->at(n)), val, nelem);
 
 			if ( ret == false )
 				return false;
@@ -85,7 +90,7 @@ bool Bin(vui *h, unsigned int *max, unsigned int bin)
 }
 
 /*
- * Add to the counts in the h[bini_i][bin_j] h, making sure enough space is
+ * Add to the counts in the h[bin_i][bin_j] h, making sure enough space is
  * allocated. Also record the maximum bin_j in hmax, making sure enough space
  * is allocated. hmax may already be assigned a value.
 */
@@ -98,12 +103,14 @@ bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
 		return false;
 
 	if( !alloc_vector(hmax, 0U, hb+1) )
-		return 1;
+		return false;
 
 	if (c > hmax->at(hb))
 		hmax->at(hb) = c;
 	return true;
 }
+
+/** \todo Make this use *HBStrings. */
 
 void getNeighbors( struct Histograms_s *Histograms,
                    std::vector<ListOfHBonds *> HBStrings,
@@ -123,10 +130,12 @@ void getNeighbors( struct Histograms_s *Histograms,
 		unsigned int N=HBStrings.at(i)->HydrogenBondCount();
 		if (N==0) return;
 
+		// Hydrogen Bond count to index
 		offset = N*(N-1)/2;
 
 		std::vector<Point *>pCoord = HBStrings.at(i)->nonHydrogenCoordinates();
 
+		// Initialize elements to -1.0.
 		alloc_vector(&(Histograms->NearestNeighbors), -1.0,
 		             offset+N,1);
 
@@ -153,7 +162,7 @@ void getNeighbors( struct Histograms_s *Histograms,
 
 }
 
-void CorrelationsThread(vd *C, vd *I, 
+void CorrelationsThread(vd *C, vd *I,
                         vvui *continuous, vvui *intermittent,
                         unsigned int NumThreads=1, unsigned int ThreadID=0 )
 {
@@ -162,16 +171,52 @@ void CorrelationsThread(vd *C, vd *I,
 	for( unsigned int i=ThreadID; i < fcutoff; i += NumThreads)
 	{
 		for( unsigned int h=0; h < continuous->size(); ++h) {
-			C->at(i) += continuous->at(h).at(i); }
-
-		for( unsigned int h=0; h < intermittent->size(); ++h) {
-			I->at(i) += intermittent->at(h).at(i); }
+			C->at(i) += continuous->at(h).at(i);
+			I->at(i) += intermittent->at(h).at(i);
+		}
 
 		// Normalize
 		C->at(i) = C->at(i)/continuous->size();
 		I->at(i) = I->at(i)/intermittent->size();
 	}
 
+}
+
+/**
+ * Continuous and Intermittent lifetimes for each hydrogen bond
+ */
+void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
+                              vvui *continuous, vvui *intermittent,
+                              unsigned int numHBs,
+                              unsigned int fcutoff,
+                              unsigned int NumThreads=1,
+                              unsigned int ThreadID=0)
+{
+	for( unsigned int h=ThreadID; h < numHBs; h += NumThreads)
+	{
+		for( unsigned int f1=0; f1 < fcutoff; ++f1)
+		{
+			unsigned int f2=f1+1;
+			if ( v->at(h).at(f1) ) {
+				continuous->at(h).at(0)++;
+				intermittent->at(h).at(0)++;
+				for( ; f2 < f1+fcutoff; ++f2)
+				{
+					if( ! v->at(h).at(f2) ) break;
+
+					continuous->at(h).at(f2-f1)++;
+					intermittent->at(h).at(f2-f1)++;
+				}
+				// Continue until fcutoff to calculate the intermittent
+				// hydrogen bond autocorrelation.
+				for(f2 = f2+1; f2 < f1+fcutoff; ++f2)
+				{
+					if( v->at(h).at(f2) )
+						intermittent->at(h).at(f2-f1)++;
+				}
+			}
+		}
+	}
 }
 
 void Correlations( std::ostream *out,
@@ -183,43 +228,56 @@ void Correlations( std::ostream *out,
 	// the total.
 	unsigned int fcutoff=numFrames/2;
 
+	VERBOSE_MSG("\tCalculating autocorrelation for all hydrogen bonds.");
+	VERBOSE_MSG("\t\tUsing moving window of " << fcutoff << " frames.");
 	// Initialize the histograms to zero (0).
 	vvui continuous  ( numHBs, vui(fcutoff, 0) );
 	vvui intermittent( numHBs, vui(fcutoff, 0) );
 
-	for( unsigned int h=0; h < numHBs; ++h)
+#ifdef PTHREADS
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
-		for( unsigned int f1=0; f1 < fcutoff; ++f1)
-		{
-			unsigned int f2=f1+1;
-			if ( v->at(h).at(f1) ) {
-				continuous.at(h).at(0)++;
-				intermittent.at(h).at(0)++;
-				for( ; f2 < f1+fcutoff; ++f2)
-				{
-					if( ! v->at(h).at(f2) ) break;
+		struct worker_data_s wd;
+		wd.jobtype     = THREAD_JOB_CORR_TABLE;
+		wd.jobnum      = jobnum;
+		wd.num_threads = NumberOfCPUs();
+		wd.b           = v;
+		wd.numHBs      = numHBs;
+		wd.fcutoff     = fcutoff;
+		wd.vvuiC       = new vvui(numHBs, vui(fcutoff, 0) );
+		wd.vvuiI       = new vvui(numHBs, vui(fcutoff, 0) );
 
-					continuous.at(h).at(f2-f1)++;
-					intermittent.at(h).at(f2-f1)++;
-				}
-				// Continue until fcutoff to calculate the intermittent
-				// hydrogen bond autocorrelation.
-				for(f2 = f2+1; f2 < f1+fcutoff; ++f2)
-				{
-					if( v->at(h).at(f2) )
-						intermittent.at(h).at(f2-f1)++;
-				}
-
-			}
-		}
+		inQueue.push(wd);
 	}
 
-	// Combine all frames.
+	// Get the results back from the worker threads.
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
+	{
+		struct worker_data_s wd = outQueue.pop();
+
+		for( unsigned int h=0; h < numHBs; ++h)
+		{
+			for( unsigned int f = 0; f < fcutoff; ++f)
+			{
+				continuous.at(h).at(f)   += wd.vvuiC->at(h).at(f);
+				intermittent.at(h).at(f) += wd.vvuiI->at(h).at(f);
+			}
+		}
+		delete wd.vvuiC;
+		delete wd.vvuiI;
+	}
+#else
+	CorrelationsTableThread( v, &continuous, &intermittent,
+	                         numHBs, fcutoff );
+#endif // PTHREADS
+
+	VERBOSE_MSG("\tAveraging autocorrelations over all hydrogen bonds.");
+	// Combine all hydrogen bonds.
 	vd C(fcutoff,0.0);
 	vd I(fcutoff,0.0);
 
 #ifdef PTHREADS
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
 		struct worker_data_s wd;
 		wd.jobtype = THREAD_JOB_CORR;
@@ -227,16 +285,15 @@ void Correlations( std::ostream *out,
 		wd.num_threads = NumberOfCPUs();
 		wd.vvuiC = &continuous;
 		wd.vvuiI = &intermittent;
-		
+
 		wd.vdC = new vd(fcutoff,0.0); // Cthread(fcutoff,0.0);
 		wd.vdI = new vd(fcutoff,0.0); // Ithread(fcutoff,0.0);
 		inQueue.push(wd);
 	}
 
 	// Get the results back from the worker threads.
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum) 
+	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
 	{
-
 		struct worker_data_s wd = outQueue.pop();
 		for ( unsigned int i=0; i < wd.vdC->size(); ++i )
 		{
@@ -250,17 +307,14 @@ void Correlations( std::ostream *out,
 	CorrelationsThread( &C, &I, &continuous, &intermittent );
 #endif // PTHREADS
 
-	std::cout << "Saving autocorrelation data.\n";
+	BRIEF_MSG("\tSaving autocorrelation data.");
 
-	// Save the continuous hydrogen bond autocorrelation data.
+	// Save the continuous and intermittent hydrogen bond autocorrelation data.
+	*out << "# Continuous Intermittent\n";
+
 	for( unsigned int i=0; i < fcutoff; ++i) {
-		*out << i << "\t" << C.at(i)/C.at(0) << "\n"; }
-
-	*out << "\n";
-
-	// Save the intermittent hydrogen bond autocorrelation data.
-	for( unsigned int i=0; i < fcutoff; ++i) {
-		*out << i << "\t" << I.at(i)/I.at(0) << "\n"; }
+		*out << i << "\t" << C.at(i)/C.at(0) << "\t" << I.at(i)/I.at(0) << "\n";
+	}
 }
 
 /*
@@ -381,7 +435,7 @@ prntHistograms( std::ostream *out,
 	*out << CC << "\n" << CC;
 	*out << " Atoms/HBonds |Count| (For all Chains, including Closed Loops)";
 	*out << "\n";
-	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
 	                     Histogram->ChainLength,
@@ -390,9 +444,9 @@ prntHistograms( std::ostream *out,
 	                     NumBins,CC);
 
 	// Closed Loop histogram table header
-	*out << CC <<"\n" << CC 
+	*out << CC <<"\n" << CC
 	          << " Atoms/HBonds |Count| (For Closed Loops)" << "\n";
-	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H...O). Chain length is always an odd
 	// number of atoms, so use a step length of 2.
 	PrintHistogramChain( out,
 	                     Histogram->ClosedLoop,
@@ -402,7 +456,7 @@ prntHistograms( std::ostream *out,
 
 	// Molecules in each Chain histogram
 
-	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd
 	// number of atoms, so increase counter by 2 for each step.
 	unsigned int MaxChainL;
 	if ( NumBins > 0 )
@@ -413,7 +467,7 @@ prntHistograms( std::ostream *out,
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
 		// Number of Switches histogram table header
-		*out << CC << "\n" << CC 
+		*out << CC << "\n" << CC
 		          << " Switching |Count| (For Chain length of " << chainL << ")"
 		          << "\n";
 
@@ -428,19 +482,19 @@ prntHistograms( std::ostream *out,
 		}
 		else
 			PrintHistogramMolecules( out,
-									 Histogram->SwitchesInChain[chainL],
-									 Histogram->MaxSwitchesInChain[chainL],0,
-									 1, MaxBarLength,
-									 NumBins, CC);
+			                         Histogram->SwitchesInChain[chainL],
+			                         Histogram->MaxSwitchesInChain[chainL],0,
+			                         1, MaxBarLength,
+			                         NumBins, CC);
 	}
 
-	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd 
+	// Minimum Chain length is 3 atoms (O-H..O). Chain length is always an odd
 	// number of atoms, so increase counter by 2 for each step.
 
 	for(unsigned int chainL=3; chainL <= MaxChainL; chainL += 2)
 	{
 		// Number of Molecules histogram table header
-		*out << CC << "\n" << CC 
+		*out << CC << "\n" << CC
 		          << " Molecules |Count| (For Chain length of " << chainL << ")"
 		          << "\n";
 

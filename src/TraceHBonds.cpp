@@ -1,13 +1,14 @@
-#include "Print.h"
+#include "help.h"
 #include "OutputFormat.h"
 #include "TraceHBonds.h"
 #include "queue.h"
 #include "WorkerThreads.h"
-#include "Histograms.h"
-#include "NeighborPrint.h"
 #include "cpu.h"
 #include "Trace.h"
 #include "RemoveDuplicates.h"
+#include "sizehist.h"
+#include "neighborhist.h"
+#include "deleteVectorPointers.h"
 
 extern bool THB_VERBOSE;
 
@@ -18,33 +19,6 @@ extern Queue<struct worker_data_s> outQueue;
 
 typedef std::vector<struct HydrogenBond *> HBVec;
 typedef std::vector<struct HydrogenBondIterator_s> HBVecIter;
-
-// Used with remove_if()
-template <typename T> bool deleteVectorPointers( T* v ) {
-	delete v;
-	return true;
-}
-
-template<class T> void DeleteVectorPointers( std::vector<T *> v )
-{
-	remove_if(v.begin(),v.end(),deleteVectorPointers<T>);
-	// for(unsigned int i =0; i < v.size(); ++i)
-	//     delete v[i];
-}
-
-// Use the same stream but write to different file
-template <typename Stream>
-void reopen(Stream& pStream, const char * pFile, const char *mFile, const char *sFile,
-            std::ios_base::openmode pMode = std::ios::out)
-{
-	std::stringstream ofilename;
-	ofilename << pFile << mFile << sFile;
-
-	pStream.close();
-	pStream.clear();
-	pStream.open(ofilename.str().c_str(), pMode);
-	BRIEF_MSG("\tSaving " << ofilename.str() << ".");
-}
 
 // Used with remove_if()
 bool deleteAtom( struct thbAtom *atom ) {
@@ -210,12 +184,6 @@ int doArcFile(char *ifilename,
 	// Update TrjIdx_iter after removing elements.
 	TrajectoryIndexIterator( &TrjIdx_iter, &hb );
 
-	unsigned int TrjIdx;
-
-	// Each element of the vector points to a string of hbonds.
-	// ListOfHBonds is a strings of hbonds.
-	std::vector<ListOfHBonds *>HBStrings;
-	HBStrings.reserve(1000*NumFramesInTrajectory);
 
 	// Hydrogen bond lifetime correlations.
 	if ( flags & LIFETIME )
@@ -280,107 +248,40 @@ int doArcFile(char *ifilename,
 
 
 	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
+
+		// Each element of the vector points to a string of hbonds.
+		// ListOfHBonds is a strings of hbonds.
+		std::vector<ListOfHBonds *>HBStrings;
+		HBStrings.reserve(1000*NumFramesInTrajectory);
+
 		//Find all the strings.
 		VERBOSE_RMSG("Tracing HB strings.");
 		Trace( &HBStrings, &TrjIdx_iter );
 
-		// Make histograms.
-		VERBOSE_MSG("Generating size histograms.");
-		std::vector<struct Histograms_s> Histograms;
-		for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-			Histograms.push_back( makeHistograms(HBStrings, TrjIdx) ); }
-
-		if ( flags & SIZE_HIST )
-		{
-			// Save the histograms.
-			const char *CC1 = "#";
-			const char *CC2 = "//";
-			std::string CC;
-
-			// Povray uses a different comment string.
-			if ( flags & POVRAY )
-				CC = CC2;
-			else
-				CC = CC1;
-
-			for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx )
-			{
-				std::stringstream ofilename;
-				ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
-
-
-				std::ofstream out;
-				out.open(ofilename.str().c_str(),std::ios::out);
-				if ( out.is_open() )
-				{
-					if ( (difftime(time(NULL), timer) > 1.0) ||
-					     (TrjIdx == NumFramesInTrajectory-1) )
-					{
-						BRIEF_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory << " (" << ofilename.str() << ")");
-						timer = time(NULL);
-					}
-					// Header
-					out << CC
-					    << " PBC "
-					    << Cell->p.at(TrjIdx).x()      << " "
-					    << Cell->p.at(TrjIdx).y()      << " "
-					    << Cell->p.at(TrjIdx).z()      << " "
-					    << Cell->angles.at(TrjIdx).x() << " "
-					    << Cell->angles.at(TrjIdx).y() << " "
-					    << Cell->angles.at(TrjIdx).z()
-					    << "\n";
-
-					out <<CC<< " Donor Oxygen atoms    : " << hb.size() << "\n";
-					out <<CC<< " Hydrogen atoms        : " << hb.size() << "\n";
-					out <<CC<< " Acceptor Oxygen atoms : " << hb.size() << "\n";
-
-					// print the histograms and chains.
-					prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, flags & POVRAY);
-
-					out.close();
-				} else {
-					BRIEF_MSG("ERROR: Can not save " <<ofilename.str() << "!" );
-				}
-			}
-			BRIEF_MSG("");
+		if ( flags & SIZE_HIST ) {
+			sizehist(NumFramesInTrajectory,
+			         ofPrefix, ofSuffix,
+			         &hb,
+			         Cell,
+			         NumBins,
+			         flags & POVRAY,
+			         &HBStrings);
 		}
 
-		if ( flags & NEIGHBOR_HIST )
-		{
-			VERBOSE_MSG("Generating neighbor histograms.");
-			for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-				getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
-
-			std::stringstream ofilename;
-			ofilename << ofPrefix << "-NN-AllFrames" << ofSuffix;
-
-			std::ofstream out(ofilename.str().c_str(),std::ios::out);
-			if ( out.is_open() )
-			{
-				BRIEF_MSG("\tSaving " << ofilename.str() << ".");
-				Print_AllFrames(&out, &Histograms);
-			} else {
-				BRIEF_MSG("ERROR: Can not save file!"); }
-
-			reopen(out, ofPrefix, "-NN-Combined", ofSuffix, std::ios::out);
-			if ( out.is_open() ) {
-				Print_CombineFrames(&out, &Histograms);
-			} else {
-				BRIEF_MSG("ERROR: Can not save file!"); }
-
-			reopen(out, ofPrefix, "-NN-only", ofSuffix, std::ios::out);
-			if ( out.is_open() ) {
-				Print_CombineChains(&out, &Histograms);
-			} else {
-				BRIEF_MSG("ERROR: Can not save file!"); }
+		if ( flags & NEIGHBOR_HIST ) {
+			neighborhist(NumFramesInTrajectory,
+			             ofPrefix, ofSuffix,
+			             Cell,
+			             &HBStrings);
 		}
+		//Cleanup
+		DeleteVectorPointers( HBStrings ); HBStrings.clear();
 	}
 
 	//Cleanup
 	delete Cell;
 	DeleteVectorPointers( atom ); atom.clear();
 	DeleteVectorPointers( hb ); hb.clear();
-	DeleteVectorPointers( HBStrings ); HBStrings.clear();
 
 	return(0);
 }

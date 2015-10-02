@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <getopt.h>
 #include "TraceHBonds.h"
-#include "Print.h"
+#include "help.h"
 #include "Thread.h"
 #include "queue.h"
 #include "WorkerThreads.h"

@@ -126,7 +126,7 @@ struct Histograms_s
  * \return Histograms as #Histograms_s struct.
  */
 struct Histograms_s
-makeHistograms( std::vector<ListOfHBonds *> HBStrings,
+makeHistograms( std::vector<ListOfHBonds *>* HBStrings,
                 unsigned int TrjIdx);
 
 /**
@@ -142,7 +142,7 @@ makeHistograms( std::vector<ListOfHBonds *> HBStrings,
  * \param[in]     Cell        Dimension of periodic cell
  */
 void getNeighbors( struct Histograms_s *Histograms,
-                   std::vector<ListOfHBonds *> HBStrings,
+                   std::vector<ListOfHBonds *> *HBStrings,
                    struct PBC *Cell);
 /**
  * Print out histograms in various formats.
@@ -178,7 +178,7 @@ void getNeighbors( struct Histograms_s *Histograms,
  */
 void
 prntHistograms( std::ostream *out,
-                std::vector<ListOfHBonds *> HBStrings,
+                std::vector<ListOfHBonds *> *HBStrings,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,

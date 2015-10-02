@@ -3,7 +3,7 @@
 #include <vector>
 #include <string.h>
 #include "SimpleMath.h"
-#include "NeighborPrint.h"
+#include "neighborhistPrint.h"
 
 
 void Print_AllFrames(std::ostream *out,

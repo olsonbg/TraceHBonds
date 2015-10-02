@@ -1,5 +1,5 @@
 #include "Histograms.h"
-#include "Print.h"
+#include "sizehistPrint.h"
 
 #ifdef PTHREADS
 extern Queue<struct worker_data_s> inQueue;
@@ -110,10 +110,8 @@ bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
 	return true;
 }
 
-/** \todo Make this use *HBStrings. */
-
 void getNeighbors( struct Histograms_s *Histograms,
-                   std::vector<ListOfHBonds *> HBStrings,
+                   std::vector<ListOfHBonds *> *HBStrings,
                    struct PBC *Cell )
 {
 	unsigned int TrjIdx = Histograms->TrjIdx;
@@ -121,19 +119,18 @@ void getNeighbors( struct Histograms_s *Histograms,
 	// Starting index of NearestNeighbor index for a specific chain length.
 	unsigned int offset=0;
 
-	for( unsigned int i = 0; i < HBStrings.size(); ++i )
+	for( unsigned int i = 0; i < HBStrings->size(); ++i )
 	{
-		if ( HBStrings.at(i)->TrajectoryIndex() != TrjIdx )
+		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
 			continue;
 
-
-		unsigned int N=HBStrings.at(i)->HydrogenBondCount();
+		unsigned int N=HBStrings->at(i)->HydrogenBondCount();
 		if (N==0) return;
 
 		// Hydrogen Bond count to index
 		offset = N*(N-1)/2;
 
-		std::vector<Point *>pCoord = HBStrings.at(i)->nonHydrogenCoordinates();
+		std::vector<Point *>pCoord = HBStrings->at(i)->nonHydrogenCoordinates();
 
 		// Initialize elements to -1.0.
 		alloc_vector(&(Histograms->NearestNeighbors), -1.0,
@@ -159,7 +156,6 @@ void getNeighbors( struct Histograms_s *Histograms,
 			}
 		}
 	}
-
 }
 
 void CorrelationsThread(vd *C, vd *I,
@@ -325,7 +321,7 @@ void Correlations( std::ostream *out,
  *  Bin Molecules in Chain, for each Chain Length (2D)
  */
 struct Histograms_s
-makeHistograms( std::vector<ListOfHBonds *> HBStrings,
+makeHistograms( std::vector<ListOfHBonds *> *HBStrings,
                 unsigned int TrjIdx)
 {
 	// Zero all histogram bins. Set 20 elements initially.
@@ -336,21 +332,21 @@ makeHistograms( std::vector<ListOfHBonds *> HBStrings,
 	                                  vui(20,0), vui(20,0),
 	                                  vvd(1,vd(1,-1.0)) };
 
-	for( unsigned int i=0; i < HBStrings.size(); i++ )
+	for( unsigned int i=0; i < HBStrings->size(); i++ )
 	{
-		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
+		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
 			continue;
 
-		unsigned int HBCount        = HBStrings[i]->AtomCount();
-		unsigned int SwitchingCount = HBStrings[i]->SwitchingCount();
-		unsigned int MoleculeCount  = HBStrings[i]->MoleculeCount();
+		unsigned int HBCount        = HBStrings->at(i)->AtomCount();
+		unsigned int SwitchingCount = HBStrings->at(i)->SwitchingCount();
+		unsigned int MoleculeCount  = HBStrings->at(i)->MoleculeCount();
 
 		// Bin the chain lengths.
 		if( !Bin(&Histogram.ChainLength, &Histogram.MaxChainLength, HBCount) )
 			return Histogram;
 
 		// Bin the chain lengths for only closed loops.
-		if ( HBStrings[i]->ClosedLoop() )
+		if ( HBStrings->at(i)->ClosedLoop() )
 		{
 			if( !Bin(&Histogram.ClosedLoop, &Histogram.MaxClosedLoop, HBCount) )
 				return Histogram;
@@ -372,7 +368,7 @@ makeHistograms( std::vector<ListOfHBonds *> HBStrings,
 
 void
 prntHistograms( std::ostream *out,
-                std::vector<ListOfHBonds *> HBStrings,
+                std::vector<ListOfHBonds *> *HBStrings,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,
@@ -396,34 +392,34 @@ prntHistograms( std::ostream *out,
 	}
 
 	// Printout information about each hbond string.
-	for( unsigned int i=0; i < HBStrings.size(); i++ )
+	for( unsigned int i=0; i < HBStrings->size(); i++ )
 	{
-		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
+		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
 			continue;
 
 		*out << "\n\n";
 		*out << CC << " Current Element : " << i << "\n";
-		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
+		*out << CC << " Atoms in Chain : " << HBStrings->at(i)->AtomCount();
 		*out << "\n";
 
 		// Note if this is a closed loop.
-		if ( HBStrings[i]->ClosedLoop() )
+		if ( HBStrings->at(i)->ClosedLoop() )
 			*out << CC << " Closed Loop" << "\n";
 
 		*out << CC << " Molecules : "
-		          << HBStrings[i]->MoleculeCount() << "\n";
+		          << HBStrings->at(i)->MoleculeCount() << "\n";
 
 		*out << CC << " Unique forcefields : "
-		          << HBStrings[i]->ForcefieldCount() << "\n";
+		          << HBStrings->at(i)->ForcefieldCount() << "\n";
 
 		*out << CC
 		          << " Times chain switched between Molecules (switching) : "
-		          << HBStrings[i]->SwitchingCount() << "\n";
+		          << HBStrings->at(i)->SwitchingCount() << "\n";
 
 		*out << CC << " Periodic boundary conditions applied."
 		          << "\n";
 		// Show the Chain atoms, molecules and coordinates
-		EndToEndLength = HBStrings[i]->PrintAll(out, *Cell, TrjIdx, POVRAY);
+		EndToEndLength = HBStrings->at(i)->PrintAll(out, *Cell, TrjIdx, POVRAY);
 		*out << CC << " Chain end-to-end distance: ";
 		*out << colE2E << EndToEndLength << "\n";
 	}

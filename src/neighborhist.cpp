@@ -33,13 +33,30 @@ void neighborhist(unsigned int NumFramesInTrajectory,
 	VERBOSE_MSG("Generating size histograms.");
 	std::vector<struct Histograms_s> Histograms(NumFramesInTrajectory);
 
-	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-		Histograms.at(TrjIdx).TrjIdx = TrjIdx;
-	}
-
 	VERBOSE_MSG("Generating neighbor histograms.");
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-		getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );}
+		Histograms.at(TrjIdx).TrjIdx = TrjIdx;
+
+#ifdef PTHREADS
+		struct worker_data_s wd;
+		wd.jobtype     = THREAD_JOB_NEIGHBORHIST;
+		wd.jobnum      = TrjIdx;
+		wd.HBStrings   = HBStrings;
+		wd.Cell        = Cell;
+		wd.Histogram   = &( Histograms.at(TrjIdx) );
+
+		inQueue.push(wd);
+#else
+		getNeighbors( &(Histograms.at(TrjIdx)), HBStrings, Cell );
+#endif
+	}
+
+#ifdef PTHREADS
+	// Wait for all the worker threads to finish.
+	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
+		outQueue.pop();
+	}
+#endif
 
 	std::stringstream ofilename;
 	ofilename << ofPrefix << "-NN-AllFrames" << ofSuffix;

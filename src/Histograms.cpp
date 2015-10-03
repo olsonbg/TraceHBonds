@@ -1,5 +1,5 @@
 #include "Histograms.h"
-#include "Print.h"
+#include "sizehistPrint.h"
 
 #ifdef PTHREADS
 extern Queue<struct worker_data_s> inQueue;
@@ -110,10 +110,8 @@ bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c)
 	return true;
 }
 
-/** \todo Make this use *HBStrings. */
-
 void getNeighbors( struct Histograms_s *Histograms,
-                   std::vector<ListOfHBonds *> HBStrings,
+                   std::vector<ListOfHBonds *> *HBStrings,
                    struct PBC *Cell )
 {
 	unsigned int TrjIdx = Histograms->TrjIdx;
@@ -121,19 +119,18 @@ void getNeighbors( struct Histograms_s *Histograms,
 	// Starting index of NearestNeighbor index for a specific chain length.
 	unsigned int offset=0;
 
-	for( unsigned int i = 0; i < HBStrings.size(); ++i )
+	for( unsigned int i = 0; i < HBStrings->size(); ++i )
 	{
-		if ( HBStrings.at(i)->TrajectoryIndex() != TrjIdx )
+		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
 			continue;
 
-
-		unsigned int N=HBStrings.at(i)->HydrogenBondCount();
+		unsigned int N=HBStrings->at(i)->HydrogenBondCount();
 		if (N==0) return;
 
 		// Hydrogen Bond count to index
 		offset = N*(N-1)/2;
 
-		std::vector<Point *>pCoord = HBStrings.at(i)->nonHydrogenCoordinates();
+		std::vector<Point *>pCoord = HBStrings->at(i)->nonHydrogenCoordinates();
 
 		// Initialize elements to -1.0.
 		alloc_vector(&(Histograms->NearestNeighbors), -1.0,
@@ -159,163 +156,8 @@ void getNeighbors( struct Histograms_s *Histograms,
 			}
 		}
 	}
-
 }
 
-void CorrelationsThread(vd *C, vd *I,
-                        vvui *continuous, vvui *intermittent,
-                        unsigned int NumThreads=1, unsigned int ThreadID=0 )
-{
-	unsigned int fcutoff = continuous->at(0).size();
-
-	for( unsigned int i=ThreadID; i < fcutoff; i += NumThreads)
-	{
-		for( unsigned int h=0; h < continuous->size(); ++h) {
-			C->at(i) += continuous->at(h).at(i);
-			I->at(i) += intermittent->at(h).at(i);
-		}
-
-		// Normalize
-		C->at(i) = C->at(i)/continuous->size();
-		I->at(i) = I->at(i)/intermittent->size();
-	}
-
-}
-
-/**
- * Continuous and Intermittent lifetimes for each hydrogen bond
- */
-void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
-                              vvui *continuous, vvui *intermittent,
-                              unsigned int numHBs,
-                              unsigned int fcutoff,
-                              unsigned int NumThreads=1,
-                              unsigned int ThreadID=0)
-{
-	for( unsigned int h=ThreadID; h < numHBs; h += NumThreads)
-	{
-		for( unsigned int f1=0; f1 < fcutoff; ++f1)
-		{
-			unsigned int f2=f1+1;
-			if ( v->at(h).at(f1) ) {
-				continuous->at(h).at(0)++;
-				intermittent->at(h).at(0)++;
-				for( ; f2 < f1+fcutoff; ++f2)
-				{
-					if( ! v->at(h).at(f2) ) break;
-
-					continuous->at(h).at(f2-f1)++;
-					intermittent->at(h).at(f2-f1)++;
-				}
-				// Continue until fcutoff to calculate the intermittent
-				// hydrogen bond autocorrelation.
-				for(f2 = f2+1; f2 < f1+fcutoff; ++f2)
-				{
-					if( v->at(h).at(f2) )
-						intermittent->at(h).at(f2-f1)++;
-				}
-			}
-		}
-	}
-}
-
-void Correlations( std::ostream *out,
-                   std::vector< std::vector<bool> > *v )
-{
-	unsigned int numHBs = v->size();
-	unsigned int numFrames = v->at(0).size();
-	// Using a sliding window, therefore cutoff should be half
-	// the total.
-	unsigned int fcutoff=numFrames/2;
-
-	VERBOSE_MSG("\tCalculating autocorrelation for all hydrogen bonds.");
-	VERBOSE_MSG("\t\tUsing moving window of " << fcutoff << " frames.");
-	// Initialize the histograms to zero (0).
-	vvui continuous  ( numHBs, vui(fcutoff, 0) );
-	vvui intermittent( numHBs, vui(fcutoff, 0) );
-
-#ifdef PTHREADS
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
-	{
-		struct worker_data_s wd;
-		wd.jobtype     = THREAD_JOB_CORR_TABLE;
-		wd.jobnum      = jobnum;
-		wd.num_threads = NumberOfCPUs();
-		wd.b           = v;
-		wd.numHBs      = numHBs;
-		wd.fcutoff     = fcutoff;
-		wd.vvuiC       = new vvui(numHBs, vui(fcutoff, 0) );
-		wd.vvuiI       = new vvui(numHBs, vui(fcutoff, 0) );
-
-		inQueue.push(wd);
-	}
-
-	// Get the results back from the worker threads.
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
-	{
-		struct worker_data_s wd = outQueue.pop();
-
-		for( unsigned int h=0; h < numHBs; ++h)
-		{
-			for( unsigned int f = 0; f < fcutoff; ++f)
-			{
-				continuous.at(h).at(f)   += wd.vvuiC->at(h).at(f);
-				intermittent.at(h).at(f) += wd.vvuiI->at(h).at(f);
-			}
-		}
-		delete wd.vvuiC;
-		delete wd.vvuiI;
-	}
-#else
-	CorrelationsTableThread( v, &continuous, &intermittent,
-	                         numHBs, fcutoff );
-#endif // PTHREADS
-
-	VERBOSE_MSG("\tAveraging autocorrelations over all hydrogen bonds.");
-	// Combine all hydrogen bonds.
-	vd C(fcutoff,0.0);
-	vd I(fcutoff,0.0);
-
-#ifdef PTHREADS
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
-	{
-		struct worker_data_s wd;
-		wd.jobtype = THREAD_JOB_CORR;
-		wd.jobnum = jobnum;
-		wd.num_threads = NumberOfCPUs();
-		wd.vvuiC = &continuous;
-		wd.vvuiI = &intermittent;
-
-		wd.vdC = new vd(fcutoff,0.0); // Cthread(fcutoff,0.0);
-		wd.vdI = new vd(fcutoff,0.0); // Ithread(fcutoff,0.0);
-		inQueue.push(wd);
-	}
-
-	// Get the results back from the worker threads.
-	for( unsigned int jobnum=0; jobnum < NumberOfCPUs(); ++jobnum)
-	{
-		struct worker_data_s wd = outQueue.pop();
-		for ( unsigned int i=0; i < wd.vdC->size(); ++i )
-		{
-			C.at(i) += wd.vdC->at(i);
-			I.at(i) += wd.vdI->at(i);
-		}
-		delete wd.vdC;
-		delete wd.vdI;
-	}
-#else
-	CorrelationsThread( &C, &I, &continuous, &intermittent );
-#endif // PTHREADS
-
-	BRIEF_MSG("\tSaving autocorrelation data.");
-
-	// Save the continuous and intermittent hydrogen bond autocorrelation data.
-	*out << "# Continuous Intermittent\n";
-
-	for( unsigned int i=0; i < fcutoff; ++i) {
-		*out << i << "\t" << C.at(i)/C.at(0) << "\t" << I.at(i)/I.at(0) << "\n";
-	}
-}
 
 /*
  * Go through the vector of HBond strings and:
@@ -324,55 +166,46 @@ void Correlations( std::ostream *out,
  *  Bin Molecule Switches for each Chain Length   (2D)
  *  Bin Molecules in Chain, for each Chain Length (2D)
  */
-struct Histograms_s
-makeHistograms( std::vector<ListOfHBonds *> HBStrings,
+void
+makeHistograms( struct Histograms_s *Histogram,
+                std::vector<ListOfHBonds *> *HBStrings,
                 unsigned int TrjIdx)
 {
-	// Zero all histogram bins. Set 20 elements initially.
-	struct Histograms_s Histogram = { TrjIdx,
-	                                  vui(20,0), vui(20,0), 0, 0,
-	                                  vvui(20,vui(20,0)),
-	                                  vvui(20,vui(20,0)),
-	                                  vui(20,0), vui(20,0),
-	                                  vvd(1,vd(1,-1.0)) };
-
-	for( unsigned int i=0; i < HBStrings.size(); i++ )
+	for( unsigned int i=0; i < HBStrings->size(); i++ )
 	{
-		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
+		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
 			continue;
 
-		unsigned int HBCount        = HBStrings[i]->AtomCount();
-		unsigned int SwitchingCount = HBStrings[i]->SwitchingCount();
-		unsigned int MoleculeCount  = HBStrings[i]->MoleculeCount();
+		unsigned int HBCount        = HBStrings->at(i)->AtomCount();
+		unsigned int SwitchingCount = HBStrings->at(i)->SwitchingCount();
+		unsigned int MoleculeCount  = HBStrings->at(i)->MoleculeCount();
 
 		// Bin the chain lengths.
-		if( !Bin(&Histogram.ChainLength, &Histogram.MaxChainLength, HBCount) )
-			return Histogram;
+		if( !Bin(&Histogram->ChainLength, &Histogram->MaxChainLength, HBCount) )
+			return;
 
 		// Bin the chain lengths for only closed loops.
-		if ( HBStrings[i]->ClosedLoop() )
+		if ( HBStrings->at(i)->ClosedLoop() )
 		{
-			if( !Bin(&Histogram.ClosedLoop, &Histogram.MaxClosedLoop, HBCount) )
-				return Histogram;
+			if( !Bin(&Histogram->ClosedLoop, &Histogram->MaxClosedLoop, HBCount) )
+				return;
 		}
 
 		// Bin the number of molecule switches for each chain length.
-		if( !Bin(&Histogram.SwitchesInChain, &Histogram.MaxSwitchesInChain,
+		if( !Bin(&Histogram->SwitchesInChain, &Histogram->MaxSwitchesInChain,
 		         HBCount, SwitchingCount) )
-			return Histogram;
+			return;
 
 		// Tabulate the number of molecules in each chain length.
-		if ( !Bin(&Histogram.MoleculesInChain,&Histogram.MaxMoleculesInChain,
+		if ( !Bin(&Histogram->MoleculesInChain,&Histogram->MaxMoleculesInChain,
 		          HBCount,MoleculeCount) )
-			return Histogram;
+			return;
 	}
-
-	return(Histogram);
 }
 
 void
 prntHistograms( std::ostream *out,
-                std::vector<ListOfHBonds *> HBStrings,
+                std::vector<ListOfHBonds *> *HBStrings,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,
@@ -396,34 +229,34 @@ prntHistograms( std::ostream *out,
 	}
 
 	// Printout information about each hbond string.
-	for( unsigned int i=0; i < HBStrings.size(); i++ )
+	for( unsigned int i=0; i < HBStrings->size(); i++ )
 	{
-		if ( HBStrings[i]->TrajectoryIndex() != TrjIdx )
+		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
 			continue;
 
 		*out << "\n\n";
 		*out << CC << " Current Element : " << i << "\n";
-		*out << CC << " Atoms in Chain : " << HBStrings[i]->AtomCount();
+		*out << CC << " Atoms in Chain : " << HBStrings->at(i)->AtomCount();
 		*out << "\n";
 
 		// Note if this is a closed loop.
-		if ( HBStrings[i]->ClosedLoop() )
+		if ( HBStrings->at(i)->ClosedLoop() )
 			*out << CC << " Closed Loop" << "\n";
 
 		*out << CC << " Molecules : "
-		          << HBStrings[i]->MoleculeCount() << "\n";
+		          << HBStrings->at(i)->MoleculeCount() << "\n";
 
 		*out << CC << " Unique forcefields : "
-		          << HBStrings[i]->ForcefieldCount() << "\n";
+		          << HBStrings->at(i)->ForcefieldCount() << "\n";
 
 		*out << CC
 		          << " Times chain switched between Molecules (switching) : "
-		          << HBStrings[i]->SwitchingCount() << "\n";
+		          << HBStrings->at(i)->SwitchingCount() << "\n";
 
 		*out << CC << " Periodic boundary conditions applied."
 		          << "\n";
 		// Show the Chain atoms, molecules and coordinates
-		EndToEndLength = HBStrings[i]->PrintAll(out, *Cell, TrjIdx, POVRAY);
+		EndToEndLength = HBStrings->at(i)->PrintAll(out, *Cell, TrjIdx, POVRAY);
 		*out << CC << " Chain end-to-end distance: ";
 		*out << colE2E << EndToEndLength << "\n";
 	}

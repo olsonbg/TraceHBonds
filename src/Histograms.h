@@ -9,20 +9,10 @@
 #define _Histograms_h
 
 #include "ListOfHBonds.h"
+#include "VectorTypes.h"
 #include "queue.h"
 #include "WorkerThreads.h"
 #include "cpu.h"
-// Macros
-
-/** Vector of unsigned integers */
-typedef std::vector<unsigned int> vui;
-/** Vector of vector of unsigned integers */
-typedef std::vector< vui > vvui;
-/** Vector of doubles */
-typedef std::vector< double > vd;
-/** Vector of vector of doubles */
-typedef std::vector< vd > vvd;
-
 
 /**
  * metafunction to allocate a vector
@@ -125,8 +115,9 @@ struct Histograms_s
  *
  * \return Histograms as #Histograms_s struct.
  */
-struct Histograms_s
-makeHistograms( std::vector<ListOfHBonds *> HBStrings,
+void
+makeHistograms( struct Histograms_s *Histogram,
+                std::vector<ListOfHBonds *>* HBStrings,
                 unsigned int TrjIdx);
 
 /**
@@ -142,7 +133,7 @@ makeHistograms( std::vector<ListOfHBonds *> HBStrings,
  * \param[in]     Cell        Dimension of periodic cell
  */
 void getNeighbors( struct Histograms_s *Histograms,
-                   std::vector<ListOfHBonds *> HBStrings,
+                   std::vector<ListOfHBonds *> *HBStrings,
                    struct PBC *Cell);
 /**
  * Print out histograms in various formats.
@@ -178,7 +169,7 @@ void getNeighbors( struct Histograms_s *Histograms,
  */
 void
 prntHistograms( std::ostream *out,
-                std::vector<ListOfHBonds *> HBStrings,
+                std::vector<ListOfHBonds *> *HBStrings,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,
@@ -212,72 +203,5 @@ bool Bin(vui *h, unsigned int *max, unsigned int bin);
  *
  */
 bool Bin(vvui *h, vui *hmax, unsigned int hb, unsigned int c);
-
-/** \todo Correlations(), CorrelationsThread(), and CorrelationsTableThread()
- * should be moves to their own file.
- */
-
-/**
- * Calculate autocorrelation.
- *
- * Puts jobs for both CorrelationsTableThread() and CorrelationsThread() in the Queue, and
- * combines results from all jobs.
- *
- * \param[in] out   Stream to send results to.
- * \param[in] v     Boolean indicating which hydrogen bonds are formed, and
- *                  in which frame
- */
-void Correlations( std::ostream *out,
-                   std::vector< std::vector<bool> > *v );
-
-/**
- * Combine autocorrelation results for all hydrogen bonds.
- *
- * For both continuous and intermittent hydrogen bond autocorrelations, sum
- * results for all hydrogen bonds in a frame (time slice), then divide by
- * number total number.
- *
- * \param[out] C            Average continuous hydrogen bond autocorrelation
- * \param[out] I            Average intermittent hydrogen bond autocorrelation
- * \param[in]  continuous   Continuous autocorrelation of each hydrogen bond,
- *                          from CorrelationsTableThread()
- * \param[in]  intermittent Intemittent autocorrelation of each hydrogen bond,
- *                          from CorrelationsTableThread()
- * \param[in]  NumThreads   Number of jobs this calculation has been split
- *                          into, determined by NumberOfCPUs().
- * \param[in]  ThreadID     Job ID of this call 0 <=\p ThreadID <\p NumThreads.
- *
- */
-void CorrelationsThread(vd *C, vd *I,
-                        vvui *continuous, vvui *intermittent,
-                        unsigned int NumThreads, unsigned int ThreadID );
-
-/**
- * Calculate autocorrelation of hydrogen bonds.
- *
- * Calculate both the continuous and intermittent hydrogen bond
- * autocorrelations for each hydrogen bond in the system. Uses a sliding
- * window, therefore \p fcutoff should be half the total number of frames.
- *
- * The average over all hydrogen bonds in the system can be obtained by
- * subsequently calling CorrelationsThread().
- *
- * \param[in]  v            Boolean indicating which hydrogen bonds are formed,
- *                          and in which frame
- * \param[out] continuous   Continuous hydrogen bond autocorrelation
- * \param[out] intermittent Intermittent hydrogen bond autocorrelation
- * \param[in]  numHBs       Number of hydrogen bonds.
- * \param[in]  fcutoff      Time cutoff (in number of frame units).
- * \param[in]  NumThreads   Number of jobs this calculation has been split
- *                          into, determined by NumberOfCPUs().
- * \param[in]  ThreadID     Job ID of this call 0 <=\p ThreadID <\p NumThreads.
- *
- */
-void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
-                              vvui *continuous, vvui *intermittent,
-                              unsigned int numHBs,
-                              unsigned int fcutoff,
-                              unsigned int NumThreads,
-                              unsigned int ThreadID);
 
 #endif // _Histograms_h

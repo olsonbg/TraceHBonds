@@ -55,6 +55,12 @@ void *MyThread::run()
 			case THREAD_JOB_TRACE:
 				TraceThread( wd.HBStrings, wd.HBit );
 				break;
+			case THREAD_JOB_SIZEHIST:
+				makeHistograms( wd.Histogram, wd.HBStrings, wd.TrjIdx );
+				break;
+			case THREAD_JOB_NEIGHBORHIST:
+				getNeighbors( wd.Histogram, wd.HBStrings, wd.Cell );
+				break;
 			case THREAD_JOB_CORR:
 				CorrelationsThread( wd.vdC,wd.vdI,
 				                    wd.vvuiC, wd.vvuiI,

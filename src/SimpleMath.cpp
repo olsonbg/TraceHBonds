@@ -10,9 +10,9 @@ namespace SimpleMath
 		return(sqrt( pow(x2-x1,2) + pow(y2-y1,2) + pow(z2-z1,2)));
 	}
 
-	double Sum( std::vector<double> v)
+	double Sum( vd v)
 	{
-		std::vector<double>::iterator it;
+		vd::iterator it;
 		double sum = 0.0;
 
 		for(it = v.begin(); it < v.end(); ++it)
@@ -21,9 +21,9 @@ namespace SimpleMath
 		return(sum);
 	}
 
-	double SumSquaredDifferences( std::vector<double> v, double avg)
+	double SumSquaredDifferences( vd v, double avg)
 	{
-		std::vector<double>::iterator it;
+		vd::iterator it;
 		double sumSq = 0.0;
 
 		for(it = v.begin(); it < v.end(); ++it)
@@ -32,16 +32,16 @@ namespace SimpleMath
 		return( sumSq );
 	}
 
-	double SumSquaredDifferences( std::vector<double> v )
+	double SumSquaredDifferences( vd v )
 	{
 		double avg = average(v);
 
 		return(SumSquaredDifferences(v, avg));
 	}
 
-	double average( std::vector<double> v)
+	double average( vd v)
 	{
-		std::vector<double>::iterator it;
+		vd::iterator it;
 		double sum = 0.0;
 
 		if ( v.size() == 0) return(0.0);
@@ -63,15 +63,15 @@ namespace SimpleMath
 		return( sqrt(sumSq/double(N-E)) );
 	}
 
-	double stddev( std::vector<double> v, double avg)
+	double stddev( vd v, double avg)
 	{
-		std::vector<double>::iterator it;
+		vd::iterator it;
 		double sumSq = SumSquaredDifferences(v, avg);
 
 		return( stddev(sumSq,v.size()) );
 	}
 
-	double stddev( std::vector<double> v)
+	double stddev( vd v)
 	{
 		double avg = average(v);
 

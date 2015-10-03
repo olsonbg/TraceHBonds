@@ -11,6 +11,7 @@
 #include <list>
 #include <queue>
 #include <pthread.h>
+#include "VectorTypes.h"
 #include "Point.h"
 #include "TraceHBonds.h"
 #include "ListOfHBonds.h"
@@ -18,6 +19,7 @@
 #include "HydrogenBonds.h"
 #include "RemoveDuplicates.h"
 #include "Histograms.h"
+#include "correlation.h"
 
 
 /**
@@ -35,6 +37,8 @@ const unsigned int THREAD_JOB_LIFETIME      =  5; /**< LifetimeThread().        
 const unsigned int THREAD_JOB_POSITIONS_CAR =  6; /**< PositionsCAR().            */
 const unsigned int THREAD_JOB_HBS2          =  7; /**< HBs().                     */
 const unsigned int THREAD_JOB_CORR_TABLE    =  8; /**< CorrelationsTableThread(). */
+const unsigned int THREAD_JOB_SIZEHIST      =  9; /**< makeHistograms().          */
+const unsigned int THREAD_JOB_NEIGHBORHIST  = 10; /**< getNeighbors().            */
 const unsigned int THREAD_JOB_PAUSE         = 90; /**< Pause thread.              */
 const unsigned int THREAD_JOB_EXIT          = 99; /**< Exit thread.               */
 //**@}*/
@@ -100,12 +104,15 @@ struct worker_data_s
 
 	/** \name
 	 *
-	 * Used for calls to TraceThread() and RemoveDuplicatesThread(). See their
-	 * respective functions for a description of these variables.
+	 * Used for calls to TraceThread(), makeHistograms(), and
+	 * RemoveDuplicatesThread(). See their respective functions for a
+	 * description of these variables.
 	 */
 	//**@{*/
 	struct HydrogenBondIterator_s *HBit;
 	std::vector<ListOfHBonds *> *HBStrings;
+	struct Histograms_s *Histogram;
+
 	//**@}*/
 
 	/** \name
@@ -115,10 +122,10 @@ struct worker_data_s
 	 * these variables.
 	 */
 	//**@{*/
-	std::vector< std::vector<unsigned int> > *vvuiC;
-	std::vector< std::vector<unsigned int> > *vvuiI;
-	std::vector< double > *vdC;
-	std::vector< double > *vdI;
+	vvui *vvuiC;
+	vvui *vvuiI;
+	vd *vdC;
+	vd *vdI;
 	std::vector< std::vector<bool> > *b;
 	std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter;
 	unsigned int numHBs;

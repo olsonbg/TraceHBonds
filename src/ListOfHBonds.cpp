@@ -70,10 +70,9 @@ unsigned int ListOfHBonds::CountUniqStr( std::vector< std::string >s )
 	return(word_count.size());
 }
 
-std::vector< double >
-ListOfHBonds::donorAcceptorDistances()
+vd ListOfHBonds::donorAcceptorDistances()
 {
-	std::vector< double >distances;
+	vd distances;
 	struct HydrogenBond *current = Begin();
 
 	while (current != NULL)

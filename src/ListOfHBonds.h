@@ -10,6 +10,7 @@
 #include <vector>
 #include <math.h>
 #include <string.h>
+#include "VectorTypes.h"
 #include "OutputFormat.h"
 #include "Point.h"
 
@@ -255,7 +256,7 @@ class ListOfHBonds
 		 * hydrogen bonds.
 		 *
 		 **/
-		std::vector< double >donorAcceptorDistances();
+		vd donorAcceptorDistances();
 		/**
 		 *
 		 * \return Coordinates of all atoms in this list of hydrogen bonds,

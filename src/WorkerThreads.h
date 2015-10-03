@@ -111,6 +111,7 @@ struct worker_data_s
 	struct HydrogenBondIterator_s *HBit;
 	std::vector<ListOfHBonds *> *HBStrings;
 	struct Histograms_s *Histogram;
+
 	//**@}*/
 
 	/** \name

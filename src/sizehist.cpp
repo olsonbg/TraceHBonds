@@ -18,25 +18,42 @@ void sizehist(unsigned int NumFramesInTrajectory,
 
 	// Make histograms.
 
+	// Zero all histogram bins. Set 20 elements initially.
+	struct Histograms_s Histogram =  { 0,
+	                                  vui(20,0), vui(20,0), 0, 0,
+	                                  vvui(20,vui(20,0)),
+	                                  vvui(20,vui(20,0)),
+	                                  vui(20,0), vui(20,0),
+	                                  vvd(1,vd(1,-1.0)) };
+	// Fill Histograms
+	std::vector<struct Histograms_s> Histograms(NumFramesInTrajectory,
+	                                            Histogram);
+
 	VERBOSE_MSG("Generating size histograms.");
-	std::vector<struct Histograms_s> Histograms;
-	Histograms.reserve(NumFramesInTrajectory);
-
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
-		// Zero all histogram bins. Set 20 elements initially.
-		struct Histograms_s Histogram = { TrjIdx,
-		                                  vui(20,0), vui(20,0), 0, 0,
-		                                  vvui(20,vui(20,0)),
-		                                  vvui(20,vui(20,0)),
-		                                  vui(20,0), vui(20,0),
-		                                  vvd(1,vd(1,-1.0)) };
+		Histograms.at(TrjIdx).TrjIdx = TrjIdx;
 
-		makeHistograms(&Histogram, HBStrings, TrjIdx );
-		// Histograms are not guaranteed to be in the same order as the frames;
-		// check Histograms.at(i).TrjIdx to know which frame Histograms.at(i)
-		// corresponds to.
-		Histograms.push_back( Histogram );
+#ifdef PTHREADS
+		struct worker_data_s wd;
+		wd.jobtype     = THREAD_JOB_SIZEHIST;
+		wd.jobnum      = TrjIdx;
+		wd.HBStrings   = HBStrings;
+		wd.TrjIdx      = TrjIdx;
+		wd.Histogram   = &Histograms.at(TrjIdx);
+
+		inQueue.push(wd);
+#else
+		makeHistograms(&Histograms.at(TrjIdx), HBStrings, TrjIdx );
+#endif
+
 	}
+
+#ifdef PTHREADS
+	// Wait for all the worker threads to finish.
+	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
+		outQueue.pop();
+	}
+#endif
 
 	// Save the histograms.
 	const char *CC1 = "#";
@@ -80,18 +97,9 @@ void sizehist(unsigned int NumFramesInTrajectory,
 			out <<CC<< " Hydrogen atoms        : " << hb->size() << "\n";
 			out <<CC<< " Acceptor Oxygen atoms : " << hb->size() << "\n";
 
-			// print the histograms and chains, need to find the histogram that corresponds to
-			// TrjIdx first.
-			for( unsigned int i = 0 ; i != NumFramesInTrajectory; ++i )
-			{
-				if ( Histograms.at(i).TrjIdx == TrjIdx )
-				{
-					prntHistograms( &out, HBStrings, &Histograms.at(i),
-					                CC, NumBins, Cell, TrjIdx, povray );
-					break;
-				}
-			}
-
+			// print the histograms and chains
+			prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx),
+			                CC, NumBins, Cell, TrjIdx, povray );
 			out.close();
 		} else {
 			BRIEF_MSG("ERROR: Can not save " <<ofilename.str() << "!" );

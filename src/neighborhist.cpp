@@ -24,7 +24,7 @@ void neighborhist(unsigned int NumFramesInTrajectory,
                   struct PBC *Cell,
                   std::vector<ListOfHBonds *>*HBStrings)
 {
-//	time_t timer = time(NULL);
+	time_t timer = time(NULL);
 	unsigned int TrjIdx;
 
 
@@ -55,8 +55,20 @@ void neighborhist(unsigned int NumFramesInTrajectory,
 	// Wait for all the worker threads to finish.
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
 		outQueue.pop();
+
+		if (  (difftime(time(NULL),timer) > 1.0) ||
+		      ((TrjIdx+1)==NumFramesInTrajectory)  )
+		{
+			VERBOSE_RMSG("\tFrame "
+			             << TrjIdx+1
+			             <<"/"
+			             << NumFramesInTrajectory
+			             << ".");
+			timer = time(NULL);
+		}
 	}
 #endif
+	VERBOSE_MSG("");
 
 	std::stringstream ofilename;
 	ofilename << ofPrefix << "-NN-AllFrames" << ofSuffix;

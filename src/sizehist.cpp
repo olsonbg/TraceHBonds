@@ -45,15 +45,26 @@ void sizehist(unsigned int NumFramesInTrajectory,
 #else
 		makeHistograms(&Histograms.at(TrjIdx), HBStrings, TrjIdx );
 #endif
-
 	}
 
 #ifdef PTHREADS
 	// Wait for all the worker threads to finish.
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
 		outQueue.pop();
+
+		if (  (difftime(time(NULL),timer) > 1.0) ||
+		      ((TrjIdx+1)==NumFramesInTrajectory)  )
+		{
+			VERBOSE_RMSG("\tFrame "
+			             << TrjIdx+1
+			             <<"/"
+			             << NumFramesInTrajectory
+			             << ".");
+			timer = time(NULL);
+		}
 	}
 #endif
+	VERBOSE_MSG("");
 
 	// Save the histograms.
 	const char *CC1 = "#";

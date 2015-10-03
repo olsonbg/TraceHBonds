@@ -166,18 +166,11 @@ void getNeighbors( struct Histograms_s *Histograms,
  *  Bin Molecule Switches for each Chain Length   (2D)
  *  Bin Molecules in Chain, for each Chain Length (2D)
  */
-struct Histograms_s
-makeHistograms( std::vector<ListOfHBonds *> *HBStrings,
+void
+makeHistograms( struct Histograms_s *Histogram,
+                std::vector<ListOfHBonds *> *HBStrings,
                 unsigned int TrjIdx)
 {
-	// Zero all histogram bins. Set 20 elements initially.
-	struct Histograms_s Histogram = { TrjIdx,
-	                                  vui(20,0), vui(20,0), 0, 0,
-	                                  vvui(20,vui(20,0)),
-	                                  vvui(20,vui(20,0)),
-	                                  vui(20,0), vui(20,0),
-	                                  vvd(1,vd(1,-1.0)) };
-
 	for( unsigned int i=0; i < HBStrings->size(); i++ )
 	{
 		if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
@@ -188,28 +181,26 @@ makeHistograms( std::vector<ListOfHBonds *> *HBStrings,
 		unsigned int MoleculeCount  = HBStrings->at(i)->MoleculeCount();
 
 		// Bin the chain lengths.
-		if( !Bin(&Histogram.ChainLength, &Histogram.MaxChainLength, HBCount) )
-			return Histogram;
+		if( !Bin(&Histogram->ChainLength, &Histogram->MaxChainLength, HBCount) )
+			return;
 
 		// Bin the chain lengths for only closed loops.
 		if ( HBStrings->at(i)->ClosedLoop() )
 		{
-			if( !Bin(&Histogram.ClosedLoop, &Histogram.MaxClosedLoop, HBCount) )
-				return Histogram;
+			if( !Bin(&Histogram->ClosedLoop, &Histogram->MaxClosedLoop, HBCount) )
+				return;
 		}
 
 		// Bin the number of molecule switches for each chain length.
-		if( !Bin(&Histogram.SwitchesInChain, &Histogram.MaxSwitchesInChain,
+		if( !Bin(&Histogram->SwitchesInChain, &Histogram->MaxSwitchesInChain,
 		         HBCount, SwitchingCount) )
-			return Histogram;
+			return;
 
 		// Tabulate the number of molecules in each chain length.
-		if ( !Bin(&Histogram.MoleculesInChain,&Histogram.MaxMoleculesInChain,
+		if ( !Bin(&Histogram->MoleculesInChain,&Histogram->MaxMoleculesInChain,
 		          HBCount,MoleculeCount) )
-			return Histogram;
+			return;
 	}
-
-	return(Histogram);
 }
 
 void

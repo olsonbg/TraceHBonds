@@ -115,8 +115,9 @@ struct Histograms_s
  *
  * \return Histograms as #Histograms_s struct.
  */
-struct Histograms_s
-makeHistograms( std::vector<ListOfHBonds *>* HBStrings,
+void
+makeHistograms( struct Histograms_s *Histogram,
+                std::vector<ListOfHBonds *>* HBStrings,
                 unsigned int TrjIdx);
 
 /**

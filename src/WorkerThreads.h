@@ -37,6 +37,7 @@ const unsigned int THREAD_JOB_LIFETIME      =  5; /**< LifetimeThread().        
 const unsigned int THREAD_JOB_POSITIONS_CAR =  6; /**< PositionsCAR().            */
 const unsigned int THREAD_JOB_HBS2          =  7; /**< HBs().                     */
 const unsigned int THREAD_JOB_CORR_TABLE    =  8; /**< CorrelationsTableThread(). */
+const unsigned int THREAD_JOB_SIZEHIST      =  9; /**< makeHistogramsThread().    */
 const unsigned int THREAD_JOB_PAUSE         = 90; /**< Pause thread.              */
 const unsigned int THREAD_JOB_EXIT          = 99; /**< Exit thread.               */
 //**@}*/
@@ -102,12 +103,14 @@ struct worker_data_s
 
 	/** \name
 	 *
-	 * Used for calls to TraceThread() and RemoveDuplicatesThread(). See their
-	 * respective functions for a description of these variables.
+	 * Used for calls to TraceThread(), makeHistograms(), and
+	 * RemoveDuplicatesThread(). See their respective functions for a
+	 * description of these variables.
 	 */
 	//**@{*/
 	struct HydrogenBondIterator_s *HBit;
 	std::vector<ListOfHBonds *> *HBStrings;
+	struct Histograms_s *Histogram;
 	//**@}*/
 
 	/** \name

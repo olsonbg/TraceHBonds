@@ -20,8 +20,23 @@ void sizehist(unsigned int NumFramesInTrajectory,
 
 	VERBOSE_MSG("Generating size histograms.");
 	std::vector<struct Histograms_s> Histograms;
-	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
-		Histograms.push_back( makeHistograms(HBStrings, TrjIdx) ); }
+	Histograms.reserve(NumFramesInTrajectory);
+
+	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
+		// Zero all histogram bins. Set 20 elements initially.
+		struct Histograms_s Histogram = { TrjIdx,
+		                                  vui(20,0), vui(20,0), 0, 0,
+		                                  vvui(20,vui(20,0)),
+		                                  vvui(20,vui(20,0)),
+		                                  vui(20,0), vui(20,0),
+		                                  vvd(1,vd(1,-1.0)) };
+
+		makeHistograms(&Histogram, HBStrings, TrjIdx );
+		// Histograms are not guaranteed to be in the same order as the frames;
+		// check Histograms.at(i).TrjIdx to know which frame Histograms.at(i)
+		// corresponds to.
+		Histograms.push_back( Histogram );
+	}
 
 	// Save the histograms.
 	const char *CC1 = "#";
@@ -65,8 +80,17 @@ void sizehist(unsigned int NumFramesInTrajectory,
 			out <<CC<< " Hydrogen atoms        : " << hb->size() << "\n";
 			out <<CC<< " Acceptor Oxygen atoms : " << hb->size() << "\n";
 
-			// print the histograms and chains.
-			prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx), CC, NumBins, Cell, TrjIdx, povray );
+			// print the histograms and chains, need to find the histogram that corresponds to
+			// TrjIdx first.
+			for( unsigned int i = 0 ; i != NumFramesInTrajectory; ++i )
+			{
+				if ( Histograms.at(i).TrjIdx == TrjIdx )
+				{
+					prntHistograms( &out, HBStrings, &Histograms.at(i),
+					                CC, NumBins, Cell, TrjIdx, povray );
+					break;
+				}
+			}
 
 			out.close();
 		} else {

@@ -11,6 +11,7 @@
 #include <list>
 #include <queue>
 #include <pthread.h>
+#include "VectorTypes.h"
 #include "Point.h"
 #include "TraceHBonds.h"
 #include "ListOfHBonds.h"
@@ -18,6 +19,7 @@
 #include "HydrogenBonds.h"
 #include "RemoveDuplicates.h"
 #include "Histograms.h"
+#include "correlation.h"
 
 
 /**
@@ -115,10 +117,10 @@ struct worker_data_s
 	 * these variables.
 	 */
 	//**@{*/
-	std::vector< std::vector<unsigned int> > *vvuiC;
-	std::vector< std::vector<unsigned int> > *vvuiI;
-	std::vector< double > *vdC;
-	std::vector< double > *vdI;
+	vvui *vvuiC;
+	vvui *vvuiI;
+	vd *vdC;
+	vd *vdI;
 	std::vector< std::vector<bool> > *b;
 	std::vector<struct HydrogenBondIterator_s> *TrjIdx_iter;
 	unsigned int numHBs;

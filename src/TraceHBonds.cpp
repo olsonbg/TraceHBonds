@@ -7,6 +7,7 @@
 #include "Trace.h"
 #include "RemoveDuplicates.h"
 #include "sizehist.h"
+#include "correlation.h"
 #include "neighborhist.h"
 #include "deleteVectorPointers.h"
 

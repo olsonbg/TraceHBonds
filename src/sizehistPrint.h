@@ -5,8 +5,8 @@
 #ifndef _sizehistPrint_h
 #define sizehistPrint_h
 #include <iomanip>
-#include "TraceHBondsConfig.h"
 #include "TraceHBonds.h"
+#include "VectorTypes.h"
 
 /**
  * Round to the nearest integer, 0.5 gets rounded up.
@@ -33,7 +33,7 @@ inline int Round( double v);
  *
  */
 void PrintHistogramChain( std::ostream *out,
-                          std::vector<unsigned int>Histogram,
+                          vui Histogram,
                           unsigned int Stop, unsigned int Start,
                           unsigned int Step, int BarLength,
                           unsigned int NumBins,
@@ -55,7 +55,7 @@ void PrintHistogramChain( std::ostream *out,
  *
  */
 void PrintHistogramMolecules( std::ostream *out,
-                              std::vector<unsigned int>Histogram,
+                              vui Histogram,
                               unsigned int Max, unsigned int Min,
                               unsigned int Step, int BarLength,
                               unsigned int NumBins,

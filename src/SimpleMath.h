@@ -6,7 +6,8 @@
 #ifndef _SimpleMath_h
 #define _SimpleMath_h
 
-#include<vector>
+#include <vector>
+#include "VectorTypes.h"
 
 /**
  * Simple Math namespace
@@ -34,7 +35,7 @@ namespace SimpleMath {
 	 *
 	 * \return Sum of all doubles.
 	 */
-	double Sum( std::vector<double> v);
+	double Sum( vd v);
 
 	/**
 	 * Sum of the squared differences
@@ -48,7 +49,7 @@ namespace SimpleMath {
 	 *
 	 * \return Sum of squared differences
 	 */
-	double SumSquaredDifferences( std::vector<double> v,double avg);
+	double SumSquaredDifferences( vd v,double avg);
 	/**
 	 * Sum of the squared differences
 	 *
@@ -60,7 +61,7 @@ namespace SimpleMath {
 	 *
 	 * \return Sum of squared differences
 	 */
-	double SumSquaredDifferences( std::vector<double> v);
+	double SumSquaredDifferences( vd v);
 
 	/**
 	 * Average
@@ -69,7 +70,7 @@ namespace SimpleMath {
 	 *
 	 * \return Average of all values in \p v
 	 */
-	double average( std::vector<double> v);
+	double average( vd v);
 
 	/**
 	 * Corrected Sample standard deviation
@@ -84,7 +85,7 @@ namespace SimpleMath {
 	 * \return Corrected Sample standard deviation
 	 */
 
-	double stddev( std::vector<double> v, double avg);
+	double stddev( vd v, double avg);
 	/**
 	 * Corrected Sample standard deviation
 	 *
@@ -96,7 +97,7 @@ namespace SimpleMath {
 	 *
 	 * \return Corrected Sample standard deviation
 	 */
-	double stddev( std::vector<double> v);
+	double stddev( vd v);
 
 	/**
 	 * Corrected Sample standard deviation

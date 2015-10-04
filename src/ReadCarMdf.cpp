@@ -407,12 +407,12 @@ bool PositionsCAR(const char *filename,
 				break;
 			}
 
-			if ( (Cell->framesInFile-1) % everyNth ) {
-				// Skip this frame (--every)
-				if ( SaveMemory ) {
-					delete wd.coordinates; }
-				continue;
-			}
+			// if ( (Cell->framesInFile-1) % everyNth ) {
+				// // Skip this frame (--every)
+				// if ( SaveMemory ) {
+					// delete wd.coordinates; }
+				// continue;
+			// }
 
 			// Update the message every second.
 			if ( difftime(time(NULL), timer) > 1.0 )
@@ -473,23 +473,23 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 		return(false);
 	}
 
-	// User requested to skip this frame, so read to end of this frame
-	// then return.
-	// TODO: Fix this every line!
-	if ( Cell->framesInFile % everyNth ) {
-		while ( ! in->eof() ) {
-			if ( *line == *CarEND) {
-				in->getline(line,82);
-				if ( *line == *CarEND ) {
-					Cell->framesInFile++;
-					return(true); // at end of this frame
-				}
-			}
-			else
-				in->getline(line,82);
+	// If user requested to skip frames, read until the next requested frame
+	while ( (Cell->framesInFile % everyNth) && (! in->eof()) ) {
+
+		// Check first characters initially, if they match check full string,
+		// this should offer a slight speedup.
+		while ( (line[0] != CarEND[0]) && (*line != *CarEND) && (!in->eof()) ) {
+			in->getline(line,82); }
+
+		if ( in->eof() ) {
+			return(false); }
+
+		in->getline(line,82);
+
+		if ( (!in->eof()) && (*line == *CarEND) ) {
+			Cell->framesInFile++;
+			in->getline(line,82);
 		}
-		Cell->framesInFile++;
-		return(false); // End of file.
 	}
 
 	while ( ! in->eof() )

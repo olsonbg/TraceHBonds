@@ -367,6 +367,7 @@ bool ConnectionsMDF(const char *filename,
 }
 
 bool PositionsCAR(const char *filename,
+                  unsigned int everyNth,
                   std::vector<struct thbAtom *> *atom,
                   struct PBC *Cell,
                   std::vector<struct thbAtom *> *hydrogens,
@@ -399,9 +400,18 @@ bool PositionsCAR(const char *filename,
 			}
 
 			/** Read CAR, or next frame of ARC. */
-			if ( !ReadCar(&CARin, atom, Cell, wd.coordinates, SaveMemory) ) {
-				if ( SaveMemory ) { delete wd.coordinates; }
+			if ( !ReadCar(&CARin, everyNth,
+			              atom, Cell, wd.coordinates, SaveMemory) ) {
+				if ( SaveMemory ) {
+					delete wd.coordinates; }
 				break;
+			}
+
+			if ( (Cell->framesInFile-1) % everyNth ) {
+				// Skip this frame (--every)
+				if ( SaveMemory ) {
+					delete wd.coordinates; }
+				continue;
 			}
 
 			// Update the message every second.
@@ -437,6 +447,7 @@ bool PositionsCAR(const char *filename,
 }
 
 bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+             unsigned int everyNth,
              std::vector<struct thbAtom *> *atom,
              struct PBC *Cell,
              std::vector<Point> *Coordinates,
@@ -444,7 +455,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 {
 	char line[83];
 	char CarEND[] = "end                                                                             ";
-	
+
 	int n; // To check number of assigned values in sscanf
 	int lineno=0; // Line number of datafile, used for error messages.
 
@@ -460,6 +471,25 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 	if ( in->eof() ) {
 		DEBUG_MSG("line[0]: <EOF>" << line);
 		return(false);
+	}
+
+	// User requested to skip this frame, so read to end of this frame
+	// then return.
+	// TODO: Fix this every line!
+	if ( Cell->framesInFile % everyNth ) {
+		while ( ! in->eof() ) {
+			if ( *line == *CarEND) {
+				in->getline(line,82);
+				if ( *line == *CarEND ) {
+					Cell->framesInFile++;
+					return(true); // at end of this frame
+				}
+			}
+			else
+				in->getline(line,82);
+		}
+		Cell->framesInFile++;
+		return(false); // End of file.
 	}
 
 	while ( ! in->eof() )
@@ -507,6 +537,7 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 
 			Cell->angles.push_back( Point(CellAlpha, CellBeta, CellGamma) );
 			Cell->frames++;
+			Cell->framesInFile++;
 		}
 		else // Must be a new atom.
 		{

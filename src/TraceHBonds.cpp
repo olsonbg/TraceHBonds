@@ -32,7 +32,8 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, unsigned char flags)
+              unsigned int NumBins, unsigned int EveryNth,
+              unsigned char flags)
 {
 	HBVec hb;
 	std::vector<struct thbAtom *> atom;
@@ -82,6 +83,7 @@ int doArcFile(char *ifilename,
 	wd.jobnum      = 1;
 	wd.num_threads = NumberOfCPUs();
 	wd.filename    = ifilename;
+	wd.everyNth    = EveryNth;
 	wd.atom        = &atom;
 	wd.hydrogens   = &hydrogens;
 	wd.acceptors   = &acceptors;
@@ -261,6 +263,7 @@ int doArcFile(char *ifilename,
 
 		if ( flags & SIZE_HIST ) {
 			sizehist(NumFramesInTrajectory,
+			         EveryNth,
 			         ofPrefix, ofSuffix,
 			         &hb,
 			         Cell,
@@ -271,6 +274,7 @@ int doArcFile(char *ifilename,
 
 		if ( flags & NEIGHBOR_HIST ) {
 			neighborhist(NumFramesInTrajectory,
+			             EveryNth,
 			             ofPrefix, ofSuffix,
 			             Cell,
 			             &HBStrings);

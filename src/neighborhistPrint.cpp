@@ -7,12 +7,13 @@
 
 
 void Print_AllFrames(std::ostream *out,
+                     unsigned int everyNth,
                      std::vector<struct Histograms_s> *frame)
 {
 	for(unsigned int f=0; f< frame->size();++f)
 	{
 		if (f!=0) *out << "\t";
-		*out << "\t\tFrame " << frame->at(f).TrjIdx + 1;
+		*out << "\t\tFrame " << everyNth*(frame->at(f).TrjIdx) + 1;
 	}
 	*out << "\n";
 

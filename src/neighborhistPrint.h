@@ -21,6 +21,7 @@
  *
  **/
 void Print_AllFrames(std::ostream *out,
+                     unsigned int everyNth,
                      std::vector<struct Histograms_s> *frame);
 
 /**

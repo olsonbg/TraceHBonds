@@ -68,6 +68,7 @@ command line.
 |hydrogen                                                    |   H        | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. `-H h1o`). More than one force field may be used by specifying this option multiple times.  **NOTE** the short option is a capital 'H.'|
 |acceptor                                                    |   A        | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. `-A o2h -A o1=`). **NOTE** the short option is a capital 'A.'|
 |bins                                                        |   b        | integer       | no        | Minimum number of bins to show in histograms (e.g. `-b 20`).|
+|every                          <a name="every-t"></a>       |   e        | integer       | no        | A value of 10 means load _every_ 10th frame (`-e 10`). Default is 1. |
 |povray                         <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
 |verbose                                                     |            |               | no        | Show verbose messages while running. |
 |brief                                                       |            |               | no        | Show brief messages while running. |

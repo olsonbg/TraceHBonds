@@ -26,6 +26,7 @@ extern Queue<struct worker_data_s> inQueue;
 int main(int argc, char *argv[])
 {
 	unsigned int NumBins = 0;
+	unsigned int EveryNth = 1; // Load every frame by default
 	char *fArc        =  NULL; // arc filename (without the .arc extension).
 	char *ofPrefix    =  NULL; // Prefix for output filename.
 	char *ofSuffix    =  NULL; // Suffix for output filename.
@@ -58,6 +59,7 @@ int main(int argc, char *argv[])
 			{"outprefix",   required_argument, 0, 'p'},
 			{"outsuffix",   required_argument, 0, 's'},
 			{"bins",        required_argument, 0, 'b'},
+			{"every",       required_argument, 0, 'e'},
 			{"rcutoff",     required_argument, 0, 'r'},
 			{"anglecutoff", required_argument, 0, 'a'},
 			{"hydrogen",    required_argument, 0, 'H'},
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
 
-		c = getopt_long (argc, argv, "i:p:s:f:l:b:r:a:H:A:h",
+		c = getopt_long (argc, argv, "i:p:s:f:l:b:e:r:a:H:A:h",
 		                 long_options, &option_index);
 
 		/* Detect the end of the options. */
@@ -97,6 +99,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'b':
 				NumBins = atoi(optarg);
+				break;
+			case 'e':
+				EveryNth = atoi(optarg);
 				break;
 			case 'r':
 				rCutoff = atof(optarg);
@@ -170,7 +175,7 @@ int main(int argc, char *argv[])
 	doArcFile(fArc, ofPrefix, ofSuffix,
 	          &match,
 	          rCutoff, angleCutoff,
-	          NumBins, flags);
+	          NumBins, EveryNth, flags);
 
 #ifdef PTHREADS
 	// Tell the threads to exit.

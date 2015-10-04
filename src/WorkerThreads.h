@@ -137,6 +137,7 @@ struct worker_data_s
 	 */
 	//**@{*/
 	const char *filename;
+	unsigned int everyNth;
 	std::vector<struct thbAtom *> *atom;
 	struct PBC *Cell;
 	std::vector<Point> *coordinates;

@@ -112,6 +112,9 @@ void Help(char *name)
 	HelpOption("--bins <number>",
 	           "-b <number>",
 	           "Minimum number of bins to show in histograms.");
+	HelpOption("--every <number>",
+	           "-e <number",
+	           "Load every <number> frames from trajectory (e.g. -e 10)");
 	HelpOption("--povray",
 	           NULL,
 	           "Output in povray format, relevant for --sizehist only.");

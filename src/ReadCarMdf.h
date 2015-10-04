@@ -42,6 +42,7 @@ bool openfile(const char *filename,
  * read next frame.
  *
  * \param[in]  in          boost filtering_stream previously setup for file
+ * \param[in]  everyNth    read everyNth frame from trajectory file
  * \param[out] atom        atom vector containing description of all atoms
  * \param[out] Cell        periodic boundary conditions read from file
  * \param[out] Coordinates Coordinates of atoms in a frame.
@@ -50,6 +51,7 @@ bool openfile(const char *filename,
  * \return \c TRUE on success, \c FALSE otherwise
  */
 bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
+             unsigned int everyNth,
              std::vector<struct thbAtom *> *atom,
              struct PBC *Cell, std::vector<Point> *Coordinates,
              bool SaveMemory);
@@ -88,6 +90,7 @@ bool ConnectionsMDF(const char *filename,
  *        otherwise the \ref standard HBs function is queued.
  *
  * \param[in] filename        Name of CAR/ARC file
+ * \param[in] everyNth        Load 'everyNth' frame from trajectory
  * \param[out] atom           atom vector containing description of all atoms
  * \param[out] Cell           periodic boundary conditions read from file
  * \param[in]  hydrogens      Vector containing all hydrogens that may hydrogen
@@ -99,6 +102,7 @@ bool ConnectionsMDF(const char *filename,
  * \param[in]  SaveMemory     Bool stating memory saving routines can be used
  */
 bool PositionsCAR(const char *filename,
+                  unsigned int everyNth,
                   std::vector<struct thbAtom *> *atom,
                   struct PBC *Cell,
                   std::vector<struct thbAtom *> *hydrogens,

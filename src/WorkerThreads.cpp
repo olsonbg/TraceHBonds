@@ -77,7 +77,8 @@ void *MyThread::run()
 				                wd.num_threads, wd.jobnum);
 				break;
 			case THREAD_JOB_POSITIONS_CAR:
-				PositionsCAR( wd.filename, wd.atom, wd.Cell,
+				PositionsCAR( wd.filename, wd.everyNth,
+				              wd.atom, wd.Cell,
 				              wd.hydrogens, wd.acceptors,
 				              wd.rCutoff, wd.angleCutoff,
 				              wd.saveMemory);

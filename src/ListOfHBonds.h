@@ -25,14 +25,18 @@
  **/
 struct PBC
 {
-	std::vector<class Point> p;      /**< x,y, and z dimensions          */
-	std::vector<class Point> angles; /**< alpha, beta, and gamma angles  */
+	std::vector<class Point> p;      /**< x,y, and z dimensions              */
+	std::vector<class Point> angles; /**< alpha, beta, and gamma angles      */
 
-	unsigned int frames;             /**< Number of frames in trajectory */
+	unsigned int frames;             /**< Number of frames read              */
+	unsigned int framesInFile;       /**< Number of frames in trajectory file*/
 
 	// Assign default values
 	public:
-	PBC() { frames = 0; }
+	PBC() {
+		frames = 0;
+		framesInFile = 0;
+	}
 };
 
 /**

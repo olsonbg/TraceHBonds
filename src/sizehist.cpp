@@ -5,6 +5,7 @@
 #include "sizehist.h"
 
 void sizehist(unsigned int NumFramesInTrajectory,
+              unsigned int everyNth,
               char *ofPrefix, char *ofSuffix,
               HBVec *hb,
               struct PBC *Cell,
@@ -80,7 +81,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx )
 	{
 		std::stringstream ofilename;
-		ofilename << ofPrefix << TrjIdx+1 << ofSuffix;
+		ofilename << ofPrefix << everyNth*TrjIdx + 1 << ofSuffix;
 
 
 		std::ofstream out;

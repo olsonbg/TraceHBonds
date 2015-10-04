@@ -20,6 +20,7 @@ void reopen(Stream& pStream,
 }
 
 void neighborhist(unsigned int NumFramesInTrajectory,
+                  unsigned int everyNth,
                   char *ofPrefix, char *ofSuffix,
                   struct PBC *Cell,
                   std::vector<ListOfHBonds *>*HBStrings)
@@ -77,7 +78,7 @@ void neighborhist(unsigned int NumFramesInTrajectory,
 	if ( out.is_open() )
 	{
 		BRIEF_MSG("\tSaving " << ofilename.str() << ".");
-		Print_AllFrames(&out, &Histograms);
+		Print_AllFrames(&out, everyNth, &Histograms);
 	} else {
 		BRIEF_MSG("ERROR: Can not save file!"); }
 

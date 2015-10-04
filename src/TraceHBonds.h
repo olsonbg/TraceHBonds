@@ -80,6 +80,7 @@ struct HydrogenBondIterator_s
  * \param[in] rCutoff      Maximum distance to consider for hydrogen bonding
  * \param[in] angleCutoff  Minimum angle to consider for hydrogen bonding
  * \param[in] NumBins      Number of bins to output
+ * \param[in] EveryNth     Load 'EveryN' frame from trajectory
  * \param[in] flags        User specified flags from command line
  *
  * \return integer \c 0 on success, \c 1 on error encountered
@@ -88,7 +89,8 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, unsigned char flags);
+              unsigned int NumBins, unsigned int EveryNth,
+              unsigned char flags);
 
 
 

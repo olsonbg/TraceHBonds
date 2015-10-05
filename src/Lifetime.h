@@ -29,7 +29,8 @@ typedef std::vector<struct HydrogenBondIterator_s> HBVecIter;
  *                          of each frame.
  */
 void
-Lifetime( std::vector< std::vector<bool> >*b,
+Lifetime( struct useroptions opts,
+		  std::vector< std::vector<bool> >*b,
           std::vector<struct HydrogenBondIterator_s > *TrjIdx_iter );
 
 /**

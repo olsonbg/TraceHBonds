@@ -11,6 +11,7 @@
 #include <list>
 #include <queue>
 #include <pthread.h>
+#include "options.h"
 #include "VectorTypes.h"
 #include "Point.h"
 #include "TraceHBonds.h"
@@ -72,6 +73,7 @@ struct worker_data_s
 	 * See also \ref JobTypes
 	 */
 	unsigned int jobtype;
+	struct useroptions *options;
 	//**@}*/
 
 	/**

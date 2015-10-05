@@ -10,6 +10,7 @@
 #include "queue.h"
 #include "WorkerThreads.h"
 #include "cpu.h"
+#include "options.h"
 
 /**
  * Flag for being verbose
@@ -25,17 +26,19 @@ extern Queue<struct worker_data_s> inQueue;
  */
 int main(int argc, char *argv[])
 {
-	unsigned int NumBins = 0;
-	unsigned int EveryNth = 1; // Load every frame by default
-	char *fArc        =  NULL; // arc filename (without the .arc extension).
-	char *ofPrefix    =  NULL; // Prefix for output filename.
-	char *ofSuffix    =  NULL; // Suffix for output filename.
-	double rCutoff    =   0.0;  // Distance Cutoff for Hydrogen bonds.
-	double angleCutoff= 180.0; // Angle Cutoff for Hydrogen bonds.
-	// Matching keys for hydrogens and acceptors.
-	struct HydrogenBondMatching match;
+	// unsigned int NumBins = 0;
+	// unsigned int EveryNth = 1; // Load every frame by default
+	// char *fArc        =  NULL; // arc filename (without the .arc extension).
+	// char *ofPrefix    =  NULL; // Prefix for output filename.
+	// char *ofSuffix    =  NULL; // Suffix for output filename.
+	// double rCutoff    =   0.0;  // Distance Cutoff for Hydrogen bonds.
+	// double angleCutoff= 180.0; // Angle Cutoff for Hydrogen bonds.
+	// // Matching keys for hydrogens and acceptors.
+	// struct HydrogenBondMatching match;
 	int   flag[9] = {}; // Initialize all element of flag to zero (0).
-	unsigned char flags = 0;
+	// unsigned char flags = 0;
+
+	struct useroptions options;
 
 	// Read command line arguments.
 	int c;
@@ -89,31 +92,31 @@ int main(int argc, char *argv[])
 					std::cout << " with arg " <<  optarg <<"\n";
 				break;
 			case 'i':
-				fArc = optarg;
+				options.fArc = optarg;
 				break;
 			case 'p':
-				ofPrefix = optarg;
+				options.ofPrefix = optarg;
 				break;
 			case 's':
-				ofSuffix = optarg;
+				options.ofSuffix = optarg;
 				break;
 			case 'b':
-				NumBins = atoi(optarg);
+				options.NumBins = atoi(optarg);
 				break;
 			case 'e':
-				EveryNth = atoi(optarg);
+				options.EveryNth = atoi(optarg);
 				break;
 			case 'r':
-				rCutoff = atof(optarg);
+				options.rCutoff = atof(optarg);
 				break;
 			case 'a':
-				angleCutoff = atof(optarg);
+				options.angleCutoff = atof(optarg);
 				break;
 			case 'H':
-				match.Hydrogens.push_back(optarg);
+				options.Hydrogens.push_back(optarg);
 				break;
 			case 'A':
-				match.Acceptors.push_back(optarg);
+				options.Acceptors.push_back(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -124,29 +127,29 @@ int main(int argc, char *argv[])
 	}
 	// Done reading command line arguments
 
-	if ( match.Hydrogens.size() == 0 ) {
+	if ( options.Hydrogens.size() == 0 ) {
 		Help(argv[0]);
 		BRIEF_MSG("\nError: Must specify at least one type of Hydrogen.");
 		return EXIT_FAILURE;
 	}
-	if ( match.Acceptors.size() == 0 ) {
+	if ( options.Acceptors.size() == 0 ) {
 		Help(argv[0]);
 		BRIEF_MSG("\nError: Must specify at least one type of Acceptor.");
 		return EXIT_FAILURE;
 	}
 	// Set the flags;
-	for ( int i=0; i < 8; i++ ) { flags |= flag[i]; };
+	for ( int i=0; i < 8; i++ ) { options.flags |= flag[i]; };
 
-	if ( flags & VERBOSE ) THB_VERBOSE=true;
+	if ( options.flags & VERBOSE ) THB_VERBOSE=true;
 
-	if ( (fArc == NULL) )
+	if ( (options.fArc == NULL) )
 	{
 		Help(argv[0]);
 		BRIEF_MSG("\nError: Must specify an input file.");
 		return EXIT_FAILURE;
 	}
 
-	if ( (flags & SIZE_HIST) && (ofPrefix == NULL) )
+	if ( (options.flags & SIZE_HIST) && (options.ofPrefix == NULL) )
 	{
 		Help(argv[0]);
 		BRIEF_MSG("\nError: Must specify a prefix for the output file.");
@@ -154,10 +157,10 @@ int main(int argc, char *argv[])
 	}
 
 	VERBOSE_MSG("\t--- Calculations ---");
-	if ( flags & LIFETIME )     VERBOSE_MSG("\tHydrogen bond lifetime correlations");
-	if ( flags & SIZE_HIST)     VERBOSE_MSG("\tChain lengths in each frame");
-	if ( flags & NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths");
-	if ( flags & LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
+	if ( options.flags & LIFETIME )     VERBOSE_MSG("\tHydrogen bond lifetime correlations");
+	if ( options.flags & SIZE_HIST)     VERBOSE_MSG("\tChain lengths in each frame");
+	if ( options.flags & NEIGHBOR_HIST) VERBOSE_MSG("\tConsolidated chain lengths");
+	if ( options.flags & LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS
@@ -172,10 +175,11 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	doArcFile(fArc, ofPrefix, ofSuffix,
-	          &match,
-	          rCutoff, angleCutoff,
-	          NumBins, EveryNth, flags);
+	doArcFile(options);
+	// doArcFile(options.fArc, options.ofPrefix, options.ofSuffix,
+	//           &options.match,
+	//           options.rCutoff, options.angleCutoff,
+	//           options.NumBins, options.EveryNth, options.flags);
 
 #ifdef PTHREADS
 	// Tell the threads to exit.

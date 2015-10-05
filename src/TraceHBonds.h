@@ -15,6 +15,7 @@
 #include <vector>
 #include <iostream>
 #include <set>
+#include "options.h"
 #include "MessageDefines.h"
 #include "ReadCarMdf.h"
 #include "ListOfHBonds.h"
@@ -85,12 +86,7 @@ struct HydrogenBondIterator_s
  *
  * \return integer \c 0 on success, \c 1 on error encountered
  */
-int doArcFile(char *ifilename,
-              char *ofPrefix, char *ofSuffix,
-              struct HydrogenBondMatching *match,
-              double rCutoff, double angleCutoff,
-              unsigned int NumBins, unsigned int EveryNth,
-              unsigned char flags);
+int doArcFile(struct useroptions ops);
 
 
 

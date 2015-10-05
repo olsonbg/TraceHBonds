@@ -366,16 +366,14 @@ bool ConnectionsMDF(const char *filename,
 	return(true);
 }
 
-bool PositionsCAR(const char *filename,
-                  unsigned int everyNth,
+bool PositionsCAR(struct useroptions opts,
                   std::vector<struct thbAtom *> *atom,
                   struct PBC *Cell,
                   std::vector<struct thbAtom *> *hydrogens,
-                  std::vector<struct thbAtom *> *acceptors,
-                  double rCutoff, double angleCutoff, bool SaveMemory)
+                  std::vector<struct thbAtom *> *acceptors)
 {
 	// Read coordinates from CAR files.
-	std::string CARfile = filename;
+	std::string CARfile = opts.fArc;
 
 	std::ifstream CARifp;
 	if (CARifp == NULL)
@@ -392,7 +390,7 @@ bool PositionsCAR(const char *filename,
 		while ( 1 ) {
 
 			struct worker_data_s wd;
-			if ( SaveMemory ) {
+			if ( opts.SaveMemory ) {
 				wd.coordinates = new std::vector<Point>;
 				wd.coordinates->reserve(atom->size());
 			} else {
@@ -400,19 +398,12 @@ bool PositionsCAR(const char *filename,
 			}
 
 			/** Read CAR, or next frame of ARC. */
-			if ( !ReadCar(&CARin, everyNth,
-			              atom, Cell, wd.coordinates, SaveMemory) ) {
-				if ( SaveMemory ) {
+			if ( !ReadCar(&CARin, opts.EveryNth,
+			              atom, Cell, wd.coordinates, opts.SaveMemory) ) {
+				if ( opts.SaveMemory ) {
 					delete wd.coordinates; }
 				break;
 			}
-
-			// if ( (Cell->framesInFile-1) % everyNth ) {
-				// // Skip this frame (--every)
-				// if ( SaveMemory ) {
-					// delete wd.coordinates; }
-				// continue;
-			// }
 
 			// Update the message every second.
 			if ( difftime(time(NULL), timer) > 1.0 )
@@ -421,7 +412,7 @@ bool PositionsCAR(const char *filename,
 				timer = time(NULL);
 			}
 
-			if ( SaveMemory ) {
+			if ( opts.SaveMemory ) {
 				wd.jobtype = THREAD_JOB_HBS2;
 
 			} else {
@@ -433,8 +424,8 @@ bool PositionsCAR(const char *filename,
 			wd.hydrogens = hydrogens;
 			wd.acceptors = acceptors;
 			wd.TrjIdx = Cell->frames - 1;
-			wd.rCutoff = rCutoff;
-			wd.angleCutoff = angleCutoff;
+			wd.rCutoff = opts.rCutoff;
+			wd.angleCutoff = opts.angleCutoff;
 			wd.hb = new HBVec;
 			wd.hb->reserve(acceptors->size()*2);
 

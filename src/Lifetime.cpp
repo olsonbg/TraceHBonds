@@ -1,7 +1,8 @@
 #include "Lifetime.h"
 
 void
-Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
+Lifetime(struct useroptions opts,
+		 std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 {
 	HBVec::iterator iter_hb;
 	HBVec::iterator iter_begin;

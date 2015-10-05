@@ -28,12 +28,7 @@ bool deleteAtom( struct thbAtom *atom ) {
 	return true;
 }
 
-int doArcFile(char *ifilename,
-              char *ofPrefix, char *ofSuffix,
-              struct HydrogenBondMatching *match,
-              double rCutoff, double angleCutoff,
-              unsigned int NumBins, unsigned int EveryNth,
-              unsigned char flags)
+int doArcFile(struct useroptions opts)
 {
 	HBVec hb;
 	std::vector<struct thbAtom *> atom;
@@ -42,15 +37,15 @@ int doArcFile(char *ifilename,
 	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
 	// save some memory by storing the atom coordinates only as long as we
 	// need the.
-	bool SaveMemory = true;
-	if ( flags&(NEIGHBOR_HIST|SIZE_HIST) )
-		SaveMemory = false;
-	VERBOSE_MSG("SaveMemory: " << SaveMemory);
+	opts.SaveMemory = true;
+	if ( opts.flags&(NEIGHBOR_HIST|SIZE_HIST) )
+		opts.SaveMemory = false;
+	VERBOSE_MSG("SaveMemory: " << opts.SaveMemory);
 
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
 	// Get Atoms and their connections.
-	if ( ! ConnectionsMDF( ifilename, &atom ) ) {
+	if ( ! ConnectionsMDF( opts.fArc, &atom ) ) {
 		return 1; }
 
 	// Find the Hydrogens and Acceptors.
@@ -60,17 +55,18 @@ int doArcFile(char *ifilename,
 	acceptors.reserve(atom.size()/2);
 
 	VERBOSE_MSG("");
-	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
+    struct HydrogenBondMatching match = {opts.Hydrogens,opts.Acceptors};
+	getHydrogenBondElements( &atom, &hydrogens, &acceptors, &match );
 
-	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
+	if ( (opts.flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
 	{
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}
 
 	// VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
-	VERBOSE_MSG("Max Distance (A): " << rCutoff);
-	VERBOSE_MSG("Min Angle  (deg): " << angleCutoff);
+	VERBOSE_MSG("Max Distance (A): " << opts.rCutoff);
+	VERBOSE_MSG("Min Angle  (deg): " << opts.angleCutoff);
 	VERBOSE_MSG("");
 
 	struct PBC *Cell;
@@ -82,15 +78,11 @@ int doArcFile(char *ifilename,
 	wd.jobtype     = THREAD_JOB_POSITIONS_CAR;
 	wd.jobnum      = 1;
 	wd.num_threads = NumberOfCPUs();
-	wd.filename    = ifilename;
-	wd.everyNth    = EveryNth;
 	wd.atom        = &atom;
 	wd.hydrogens   = &hydrogens;
 	wd.acceptors   = &acceptors;
 	wd.Cell        = Cell;
-	wd.rCutoff     = rCutoff;
-	wd.angleCutoff = angleCutoff;
-	wd.saveMemory  = SaveMemory;
+	wd.options     = &opts;
 
 	inQueue.push(wd);
 
@@ -142,7 +134,7 @@ int doArcFile(char *ifilename,
 	}
 	VERBOSE_MSG("");
 #else
-	PositionsCAR( ifilename, &atom, Cell, SaveMemory );
+	PositionsCAR( opts.fArc, &atom, Cell, opts.SaveMemory );
 #endif //PTHREADS
 	// std::vector<double>A, B, C;
 
@@ -189,16 +181,16 @@ int doArcFile(char *ifilename,
 
 
 	// Hydrogen bond lifetime correlations.
-	if ( flags & LIFETIME )
+	if ( opts.flags & LIFETIME )
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		VERBOSE_MSG("\tGenerating truth table.");
 		std::vector< std::vector<bool> >correlationData;
-		Lifetime(&correlationData, &TrjIdx_iter);
+		Lifetime(opts, &correlationData, &TrjIdx_iter);
 
 		if ( correlationData.size() != 0) {
 			std::stringstream ofilename;
-			ofilename << ofPrefix << "-lifetimes" << ofSuffix;
+			ofilename << opts.ofPrefix << "-lifetimes" << opts.ofSuffix;
 
 			std::ofstream out;
 			out.open(ofilename.str().c_str(),std::ios::out);
@@ -211,11 +203,11 @@ int doArcFile(char *ifilename,
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
-	if ( flags & LENGTHS )
+	if ( opts.flags & LENGTHS )
 	{
 		std::stringstream ofilename;
 
-		ofilename << ofPrefix << "-lengths" << ofSuffix;
+		ofilename << opts.ofPrefix << "-lengths" << opts.ofSuffix;
 
 		std::ofstream out(ofilename.str().c_str(),std::ios::out);
 
@@ -230,11 +222,11 @@ int doArcFile(char *ifilename,
 		}
 	}
 
-	if ( flags & ANGLES )
+	if ( opts.flags & ANGLES )
 	{
 		std::stringstream ofilename;
 
-		ofilename << ofPrefix << "-angles" << ofSuffix;
+		ofilename << opts.ofPrefix << "-angles" << opts.ofSuffix;
 
 		std::ofstream out(ofilename.str().c_str(),std::ios::out);
 
@@ -250,7 +242,7 @@ int doArcFile(char *ifilename,
 	}
 
 
-	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
+	if ( opts.flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
 
 		// Each element of the vector points to a string of hbonds.
 		// ListOfHBonds is a strings of hbonds.
@@ -261,21 +253,21 @@ int doArcFile(char *ifilename,
 		VERBOSE_RMSG("Tracing HB strings.");
 		Trace( &HBStrings, &TrjIdx_iter );
 
-		if ( flags & SIZE_HIST ) {
+		if ( opts.flags & SIZE_HIST ) {
 			sizehist(NumFramesInTrajectory,
-			         EveryNth,
-			         ofPrefix, ofSuffix,
+			         opts.EveryNth,
+			         opts.ofPrefix, opts.ofSuffix,
 			         &hb,
 			         Cell,
-			         NumBins,
-			         flags & POVRAY,
+			         opts.NumBins,
+			         opts.flags & POVRAY,
 			         &HBStrings);
 		}
 
-		if ( flags & NEIGHBOR_HIST ) {
+		if ( opts.flags & NEIGHBOR_HIST ) {
 			neighborhist(NumFramesInTrajectory,
-			             EveryNth,
-			             ofPrefix, ofSuffix,
+			             opts.EveryNth,
+			             opts.ofPrefix, opts.ofSuffix,
 			             Cell,
 			             &HBStrings);
 		}

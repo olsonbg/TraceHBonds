@@ -12,6 +12,7 @@
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <vector>
 #include <math.h>
+#include "options.h"
 #include "queue.h"
 #include "WorkerThreads.h"
 #include "cpu.h"
@@ -101,13 +102,11 @@ bool ConnectionsMDF(const char *filename,
  * \param[in]  angleCutoff    Minimum angle for hydrogen bonding
  * \param[in]  SaveMemory     Bool stating memory saving routines can be used
  */
-bool PositionsCAR(const char *filename,
-                  unsigned int everyNth,
+bool PositionsCAR(struct useroptions opts,
                   std::vector<struct thbAtom *> *atom,
                   struct PBC *Cell,
                   std::vector<struct thbAtom *> *hydrogens,
-                  std::vector<struct thbAtom *> *acceptors,
-                  double rCutoff, double angleCutoff, bool SaveMemory);
+                  std::vector<struct thbAtom *> *acceptors);
 
 #endif
 

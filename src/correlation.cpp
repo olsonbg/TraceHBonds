@@ -35,9 +35,20 @@ void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
                               unsigned int NumThreads=1,
                               unsigned int ThreadID=0)
 {
+	unsigned int f1inc;
+
+	unsigned int frames = continuous->at(0).size();
+
+	// Check is using window or not, and set f1inc appropriately.
+	if ( fcutoff == frames ) {
+		f1inc = fcutoff;
+	} else {
+		f1inc = 1;
+	}
+
 	for( unsigned int h=ThreadID; h < numHBs; h += NumThreads)
 	{
-		for( unsigned int f1=0; f1 < fcutoff; ++f1)
+		for( unsigned int f1=0; f1 < fcutoff; f1 += f1inc )
 		{
 			unsigned int f2=f1+1;
 			if ( v->at(h).at(f1) ) {

@@ -67,8 +67,8 @@ void *MyThread::run()
 			case THREAD_JOB_CORR_TABLE:
 				CorrelationsTableThread( wd.b,
 				                         wd.vvuiC, wd.vvuiI,
-				                         wd.fcutoff,
 				                         wd.numHBs,
+				                         wd.fcutoff,
 				                         wd.num_threads, wd.jobnum );
 				break;
 			case THREAD_JOB_LIFETIME:

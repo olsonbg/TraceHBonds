@@ -35,6 +35,7 @@ enum {
 	POVRAY        = 0x10, /**< Ouput in PovRay format             */
 	NEIGHBOR_HIST = 0x20, /**< Generge neighbor histograms        */
 	ANGLES        = 0x40, /**< Generate hydrogen bond angle list  */
+	NOWINDOW      = 0x80, /**< Do not use moving window in Correlation */
 	/** Do all possible calculations */
 	ALL           = (SIZE_HIST|LENGTHS|NEIGHBOR_HIST|LIFETIME|ANGLES),
 };

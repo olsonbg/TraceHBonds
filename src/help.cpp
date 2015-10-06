@@ -127,6 +127,9 @@ void Help(char *name)
 	HelpOption("--lifetime",
 	           NULL,
 	           "Calculate hydrogen bond lifetime correlations.");
+	HelpOption("--nowindow",
+	           NULL,
+	           "Do not use a moving window when calculating the lifetime correlations.");
 	HelpOption("--lengths",
 	           NULL,
 	           "Save length of all hydrogen bonds.");

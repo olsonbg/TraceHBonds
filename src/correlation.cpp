@@ -70,7 +70,12 @@ void Correlations( struct useroptions opts,
 	unsigned int numFrames = v->at(0).size();
 	// Using a sliding window, therefore cutoff should be half
 	// the total.
-	unsigned int fcutoff=numFrames/2;
+	unsigned int fcutoff;
+
+	if ( opts.flags & NOWINDOW )
+		fcutoff = numFrames;
+	else
+		fcutoff=numFrames/2;
 
 	VERBOSE_MSG("\tCalculating autocorrelation for all hydrogen bonds.");
 	VERBOSE_MSG("\t\tUsing moving window of " << fcutoff << " frames.");

@@ -26,18 +26,7 @@ extern Queue<struct worker_data_s> inQueue;
  */
 int main(int argc, char *argv[])
 {
-	// unsigned int NumBins = 0;
-	// unsigned int EveryNth = 1; // Load every frame by default
-	// char *fArc        =  NULL; // arc filename (without the .arc extension).
-	// char *ofPrefix    =  NULL; // Prefix for output filename.
-	// char *ofSuffix    =  NULL; // Suffix for output filename.
-	// double rCutoff    =   0.0;  // Distance Cutoff for Hydrogen bonds.
-	// double angleCutoff= 180.0; // Angle Cutoff for Hydrogen bonds.
-	// // Matching keys for hydrogens and acceptors.
-	// struct HydrogenBondMatching match;
-	int   flag[9] = {}; // Initialize all element of flag to zero (0).
-	// unsigned char flags = 0;
-
+	int   flag[10] = {}; // Initialize all element of flag to zero (0).
 	struct useroptions options;
 
 	// Read command line arguments.
@@ -47,15 +36,16 @@ int main(int argc, char *argv[])
 		static struct option long_options[] =
 		{
 			/* These options set a flag. */
-			{"verbose"     , no_argument, &flag[0], VERBOSE      },
-			{"brief"       , no_argument, &flag[0], 0            },
-			{"povray"      , no_argument, &flag[1], POVRAY       },
-			{"lifetime"    , no_argument, &flag[2], LIFETIME     },
-			{"lengths"     , no_argument, &flag[3], LENGTHS      },
-			{"angles"      , no_argument, &flag[4], ANGLES       },
-			{"sizehist"    , no_argument, &flag[5], SIZE_HIST    },
-			{"neighborhist", no_argument, &flag[6], NEIGHBOR_HIST},
-			{"all"         , no_argument, &flag[7], ALL          },
+			{"verbose"       , no_argument, &flag[0], VERBOSE      },
+			{"brief"         , no_argument, &flag[0], 0            },
+			{"povray"        , no_argument, &flag[1], POVRAY       },
+			{"lifetime"      , no_argument, &flag[2], LIFETIME     },
+			{"lengths"       , no_argument, &flag[3], LENGTHS      },
+			{"angles"        , no_argument, &flag[4], ANGLES       },
+			{"sizehist"      , no_argument, &flag[5], SIZE_HIST    },
+			{"neighborhist"  , no_argument, &flag[6], NEIGHBOR_HIST},
+			{"nowindow"      , no_argument, &flag[7], NOWINDOW     },
+			{"all"           , no_argument, &flag[8], ALL          },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
@@ -138,7 +128,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	// Set the flags;
-	for ( int i=0; i < 8; i++ ) { options.flags |= flag[i]; };
+	for ( int i=0; i < 9; i++ ) { options.flags |= flag[i]; };
 
 	if ( options.flags & VERBOSE ) THB_VERBOSE=true;
 

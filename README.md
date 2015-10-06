@@ -25,7 +25,7 @@ To compile the program
 ```bash
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=release ..
+cmake ..
 make
 src/TraceHBonds
 ```
@@ -73,12 +73,13 @@ command line.
 |verbose                                                     |            |               | no        | Show verbose messages while running. |
 |brief                                                       |            |               | no        | Show brief messages while running. |
 |[lifetime](#lifetime)          <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
+|[nowindow](#nowindow)          <a name="nowindow-t"></a>    |            |               | no        | Do not use a moving window when calculating hydrogen bond lifetime correlations. Default is to use a moving window of half the number of frames|
 |[lengths](#lengths)            <a name="lengths-t"></a>     |            |               | no        | Save length of all hydrogen bonds.|
-|[angles](#angles)              <a name="angles-t"></a>      |            |               |           | Save angle of all hydrogen bonds. |
+|[angles](#angles)              <a name="angles-t"></a>      |            |               | no        | Save angle of all hydrogen bonds. |
 |[sizehist](#sizehist)          <a name="sizehist-t"></a>    |            |               | no        | Save hydrogen bond strings and histograms. |
 |[neighborhist](#neighborhist)  <a name="neighborhist-t"></a>|            |               | no        | Save neighbor length lists. |
 |all                                                         |            |               | no        | Do all calculations and save all data. |
-|help                                                        |   h        |               |           | This help screen |
+|help                                                        |   h        |               | no        | This help screen |
 
 # Output
 
@@ -452,7 +453,13 @@ Single column of data listing the hydrogen bond angles in degrees.
 ## <a name="lifetime"></a> Hydrogen bond lifetime correlations (--lifetime)
 
 The [--lifetime](#lifetime-t) option calculates the continuous and
-intermittent hydrogen bond lifetime autocorrelation.
+intermittent hydrogen bond lifetime autocorrelation. A moving window with a
+width of half the total number of frames read is used, and additionally an
+average over all hydrogen bonds present in the initial frame is used. The
+moving average is useful when the system has only 1 or 2 hydrogren bonds,
+however when many are present (since we average all hydrogen bonds) this
+method is not needed. Therefore, the option [--nowindow](#nowindow-t) may
+be used to turn off calculations with a moving window.
 
 ### <a name="lifetime-files"></a>File Created
 

@@ -31,23 +31,21 @@ void *MyThread::run()
 		switch (wd.jobtype)
 		{
 			case THREAD_JOB_HBS:
-				HBs( wd.hb,
+				HBs( *wd.options,
+				     wd.hb,
 				     wd.cell,
 				     wd.hydrogens,
 				     wd.acceptors,
-				     wd.TrjIdx,
-				     wd.rCutoff,
-				     wd.angleCutoff );
+				     wd.TrjIdx);
 				break;
 			case THREAD_JOB_HBS2:
-				HBs( wd.hb,
+				HBs( *wd.options,
+				     wd.hb,
 				     wd.cell,
 				     wd.hydrogens,
 				     wd.acceptors,
 				     wd.coordinates,
-				     wd.TrjIdx,
-				     wd.rCutoff,
-				     wd.angleCutoff );
+				     wd.TrjIdx);
 				break;
 			case THREAD_JOB_RMDUPS:
 				RemoveDuplicatesThread( *wd.HBit );
@@ -69,7 +67,8 @@ void *MyThread::run()
 			case THREAD_JOB_CORR_TABLE:
 				CorrelationsTableThread( wd.b,
 				                         wd.vvuiC, wd.vvuiI,
-				                         wd.numHBs, wd.fcutoff,
+				                         wd.fcutoff,
+				                         wd.numHBs,
 				                         wd.num_threads, wd.jobnum );
 				break;
 			case THREAD_JOB_LIFETIME:

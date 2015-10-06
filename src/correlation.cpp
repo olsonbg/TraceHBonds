@@ -62,7 +62,8 @@ void CorrelationsTableThread( std::vector< std::vector<bool> > *v,
 	}
 }
 
-void Correlations( std::ostream *out,
+void Correlations( struct useroptions opts,
+                   std::ostream *out,
                    std::vector< std::vector<bool> > *v )
 {
 	unsigned int numHBs = v->size();

@@ -100,8 +100,6 @@ struct worker_data_s
 	std::vector<struct thbAtom *>*hydrogens;
 	std::vector<struct thbAtom *>*acceptors;
 	unsigned int TrjIdx;
-	double rCutoff;
-	double angleCutoff;
 	//**@}*/
 
 	/** \name
@@ -138,12 +136,9 @@ struct worker_data_s
 	 * Use for calls to PositionsCAR().
 	 */
 	//**@{*/
-	const char *filename;
-	unsigned int everyNth;
 	std::vector<struct thbAtom *> *atom;
 	struct PBC *Cell;
 	std::vector<Point> *coordinates;
-	bool saveMemory;
 	//**@}*/
 };
 

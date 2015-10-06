@@ -424,10 +424,9 @@ bool PositionsCAR(struct useroptions opts,
 			wd.hydrogens = hydrogens;
 			wd.acceptors = acceptors;
 			wd.TrjIdx = Cell->frames - 1;
-			wd.rCutoff = opts.rCutoff;
-			wd.angleCutoff = opts.angleCutoff;
 			wd.hb = new HBVec;
 			wd.hb->reserve(acceptors->size()*2);
+			wd.options = &opts;
 
 			inQueue.push(wd);
 		}

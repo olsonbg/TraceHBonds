@@ -186,7 +186,7 @@ int doArcFile(struct useroptions opts)
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		VERBOSE_MSG("\tGenerating truth table.");
 		std::vector< std::vector<bool> >correlationData;
-		Lifetime(opts, &correlationData, &TrjIdx_iter);
+		Lifetime(&correlationData, &TrjIdx_iter);
 
 		if ( correlationData.size() != 0) {
 			std::stringstream ofilename;
@@ -196,7 +196,7 @@ int doArcFile(struct useroptions opts)
 			out.open(ofilename.str().c_str(),std::ios::out);
 
 			if ( out.is_open() ) {
-				Correlations(&out, &correlationData); }
+				Correlations(opts, &out, &correlationData); }
 			out.close();
 			VERBOSE_MSG("\t\tSaved " << ofilename.str() << ".");
 		}

@@ -76,13 +76,13 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
  * \param[in]  angleCutoff  Minimum angle to consider for hydrogen bonding
  *
  */
-void HBs( std::vector<struct HydrogenBond *> *hb,
+void HBs( struct useroptions opts,
+          std::vector<struct HydrogenBond *> *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
           std::vector<Point> *Coordinates,
-          double TrjIdx,
-          double rCutoff, double angleCutoff);
+          double TrjIdx);
 /**
  * \anchor standard
  *
@@ -104,11 +104,12 @@ void HBs( std::vector<struct HydrogenBond *> *hb,
  * \param[in]  angleCutoff  Minimum angle to consider for hydrogen bonding
  *
  */
-void HBs( std::vector<struct HydrogenBond *> *hb,
+void HBs( struct useroptions opts,
+          std::vector<struct HydrogenBond *> *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
-          double TrjIdx, double rCutoff, double angleCutoff);
+          double TrjIdx);
 /**@}*/
 
 #endif // _HydrogenBonds_h

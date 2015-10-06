@@ -8,6 +8,7 @@
 #ifndef _lifetime_h
 #define _lifetime_h
 
+#include "options.h"
 #include "ListOfHBonds.h"
 #include "VectorTypes.h"
 #include "cpu.h"
@@ -24,7 +25,8 @@
  * \param[in] v     Boolean indicating which hydrogen bonds are formed, and
  *                  in which frame
  */
-void Correlations( std::ostream *out,
+void Correlations( struct useroptions opts,
+                   std::ostream *out,
                    std::vector< std::vector<bool> > *v );
 
 /**

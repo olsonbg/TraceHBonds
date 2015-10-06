@@ -1,3 +1,4 @@
+#include "options.h"
 #include "HydrogenBonds.h"
 
 void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
@@ -64,13 +65,13 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 }
 
 // Savemem version.
-void HBs( HBVec *hb,
+void HBs( struct useroptions opts,
+          HBVec *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
           std::vector<Point> *Coordinates,
-          double TrjIdx,
-          double rCutoff, double angleCutoff)
+          double TrjIdx)
 {
 
 	std::vector<struct thbAtom *>::iterator it_h;
@@ -78,7 +79,7 @@ void HBs( HBVec *hb,
 
 	Point r;
 
-	double rCutoff2 = pow(rCutoff,2.0);
+	double rCutoff2 = pow(opts.rCutoff,2.0);
 	double r2;
 
 	// Location of the Hydrogen (H) atom, the Acceptor (A) atom, and the Donor
@@ -111,7 +112,7 @@ void HBs( HBVec *hb,
 				D = Coordinates->at( (*it_h)->ConnectedAtom.at(0)->ID );
 
 				double angle = H.angle(A,D);
-				if ( angle > angleCutoff )
+				if ( angle > opts.angleCutoff )
 				{
 					struct HydrogenBond *NewHB;
 					NewHB = new struct HydrogenBond;
@@ -131,12 +132,12 @@ void HBs( HBVec *hb,
 	}
 }
 
-void HBs( HBVec *hb,
+void HBs( struct useroptions opts,
+          HBVec *hb,
           Point cell,
           std::vector<struct thbAtom *>*hydrogens,
           std::vector<struct thbAtom *>*acceptors,
-          double TrjIdx,
-          double rCutoff, double angleCutoff)
+          double TrjIdx)
 {
 
 	std::vector<struct thbAtom *>::iterator it_h;
@@ -144,7 +145,7 @@ void HBs( HBVec *hb,
 
 	Point r;
 
-	double rCutoff2 = pow(rCutoff,2.0);
+	double rCutoff2 = pow(opts.rCutoff,2.0);
 	double r2;
 
 	// Location of the Hydrogen (H) atom, the Acceptor (A) atom, and the Donor
@@ -177,7 +178,7 @@ void HBs( HBVec *hb,
 				D = (*it_h)->ConnectedAtom.at(0)->p.at(TrjIdx);
 
 				double angle = H.angle(A,D);
-				if ( angle > angleCutoff )
+				if ( angle > opts.angleCutoff )
 				{
 					struct HydrogenBond *NewHB;
 					NewHB = new struct HydrogenBond;

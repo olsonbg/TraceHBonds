@@ -192,10 +192,7 @@ int main(int argc, char *argv[])
 	wd.hydrogens = NULL;
 	wd.acceptors = NULL;
 	wd.hb = NULL;
-	wd.TrjIdx = 0;
 	wd.num_threads = NumberOfCPUs();
-	wd.rCutoff = 0.0;
-	wd.angleCutoff = 0.0;
 
 	for (unsigned int j=0; j != NumberOfCPUs(); ++j) {
 		inQueue.push(wd); }

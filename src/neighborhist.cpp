@@ -3,6 +3,7 @@
 #include "Trace.h"
 #include "neighborhistPrint.h"
 #include "neighborhist.h"
+#include "timedoutput.h"
 
 // Use the same stream but write to different file
 template <typename Stream>
@@ -25,7 +26,6 @@ void neighborhist(unsigned int NumFramesInTrajectory,
                   struct PBC *Cell,
                   std::vector<ListOfHBonds *>*HBStrings)
 {
-	time_t timer = time(NULL);
 	unsigned int TrjIdx;
 
 
@@ -35,6 +35,9 @@ void neighborhist(unsigned int NumFramesInTrajectory,
 	std::vector<struct Histograms_s> Histograms(NumFramesInTrajectory);
 
 	VERBOSE_MSG("Generating neighbor histograms.");
+
+	timedOutput msg(NumFramesInTrajectory, 1.0, "\tFrame ");
+
 	for( TrjIdx = 0 ; TrjIdx < NumFramesInTrajectory; ++TrjIdx ) {
 		Histograms.at(TrjIdx).TrjIdx = TrjIdx;
 
@@ -56,17 +59,8 @@ void neighborhist(unsigned int NumFramesInTrajectory,
 	// Wait for all the worker threads to finish.
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
 		outQueue.pop();
-
-		if (  (difftime(time(NULL),timer) > 1.0) ||
-		      ((TrjIdx+1)==NumFramesInTrajectory)  )
-		{
-			VERBOSE_RMSG("\tFrame "
-			             << TrjIdx+1
-			             <<"/"
-			             << NumFramesInTrajectory
-			             << ".");
-			timer = time(NULL);
-		}
+		if (THB_VERBOSE) {
+			msg.print(TrjIdx+1); }
 	}
 #endif
 	VERBOSE_MSG("");

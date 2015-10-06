@@ -2,6 +2,7 @@
 #include "queue.h"
 #include "WorkerThreads.h"
 #include "cpu.h"
+#include "timedoutput.h"
 #include "Trace.h"
 
 extern bool THB_VERBOSE;
@@ -87,7 +88,7 @@ bool TraceThread( std::vector<ListOfHBonds *> *HBStrings,
 void Trace( std::vector<ListOfHBonds *> *HBStrings,
             HBVecIter *TrjIdx_iter )
 {
-	time_t timer = time(NULL);
+	timedOutput msg(TrjIdx_iter->size()+1, 1.0, "Tracing HB strings: frame ");
 
 	for( unsigned int f=0; f < TrjIdx_iter->size(); ++f )
 	{
@@ -102,11 +103,7 @@ void Trace( std::vector<ListOfHBonds *> *HBStrings,
 
 		inQueue.push(wd);
 #else
-		if (  (difftime(time(NULL),timer) > 1.0) || ((f+1)==TrjIdx_iter->size())  )
-		{
-			VERBOSE_RMSG("Tracing HB strings: frame " << f+1 <<"/"<< TrjIdx_iter->size() << ".");
-			timer = time(NULL);
-		}
+		if ( THB_VERBOSE ) { msg.print(f+1); }
 
 		HBVec::iterator iter_hb = TrjIdx_iter->at(f).begin;
 		TraceThread( HBStrings, &TrjIdx_iter->at(f) );
@@ -116,11 +113,7 @@ void Trace( std::vector<ListOfHBonds *> *HBStrings,
 	// Get the results back from the worker threads.
 	for( unsigned int f=0; f < TrjIdx_iter->size(); ++f )
 	{
-		if (  (difftime(time(NULL),timer) > 1.0) || ((f+1)==TrjIdx_iter->size())  )
-		{
-			VERBOSE_RMSG("Tracing HB strings: frame " << f+1 <<"/"<< TrjIdx_iter->size() << ".");
-			timer = time(NULL);
-		}
+		if ( THB_VERBOSE ) { msg.print(f+1); }
 
 		struct worker_data_s wd = outQueue.pop();
 		HBStrings->reserve( TrjIdx_iter->size()*wd.HBStrings->size() );

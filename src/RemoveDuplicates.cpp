@@ -1,3 +1,4 @@
+#include "timedoutput.h"
 #include "RemoveDuplicates.h"
 
 bool SameAtom( struct thbAtom *A,
@@ -134,7 +135,8 @@ void RemoveDuplicates( HBVec *hb,
                        HBVecIter *TrjIdx_iter)
 {
 	unsigned int emptyFrames=0;
-	time_t timer = time(NULL);
+
+	timedOutput msg(TrjIdx_iter->size(), 1.0, "Processing frame ");
 
 	for(unsigned int i=0; i != TrjIdx_iter->size(); ++i) {
 		if ( TrjIdx_iter->at(i).begin == TrjIdx_iter->at(i).end ) {
@@ -149,12 +151,7 @@ void RemoveDuplicates( HBVec *hb,
 		wd.HBit = &(TrjIdx_iter->at(i));
 		inQueue.push(wd);
 #else
-		if (  (difftime(time(NULL),timer) > 1.0) ||
-		      ((i+1)==TrjIdx_iter->size())  )
-		{
-			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
-			timer = time(NULL);
-		}
+		if ( THB_VERBOSE ) { msg.print( i+1 ); }
 
 		RemoveDuplicatesThread(TrjIdx_iter->at(i));
 #endif
@@ -163,12 +160,7 @@ void RemoveDuplicates( HBVec *hb,
 #ifdef PTHREADS
 	// Get the results back from the worker threads.
 	for(unsigned int i=0; i != TrjIdx_iter->size()-emptyFrames; ++i) {
-		if (  (difftime(time(NULL),timer) > 1.0) ||
-		      ((i+1)==TrjIdx_iter->size())  )
-		{
-			VERBOSE_RMSG("Processing frame " << i+1 <<"/"<< TrjIdx_iter->size() << ".");
-			timer = time(NULL);
-		}
+		if ( THB_VERBOSE ) { msg.print( i+1 ); }
 
 		// Do not need to do anything with result of outQueue.pop,
 		// just have to wait for it to complete.

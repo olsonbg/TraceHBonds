@@ -1,5 +1,6 @@
 #include "MagicNumber.h"
 #include "ReadCarMdf.h"
+#include "timedoutput.h"
 #include <time.h>
 #ifdef USE_LZMA
 #include "lzma.h"
@@ -385,7 +386,7 @@ bool PositionsCAR(struct useroptions opts,
 	else {
 		VERBOSE_MSG("Reading atom coordinates from " << CARfile);
 
-		time_t timer = time(NULL);
+		timedOutput msg( 1.0, "Frames: " );
 
 		while ( 1 ) {
 
@@ -406,11 +407,8 @@ bool PositionsCAR(struct useroptions opts,
 			}
 
 			// Update the message every second.
-			if ( difftime(time(NULL), timer) > 1.0 )
-			{
-				VERBOSE_RMSG("Frames : " << Cell->frames);
-				timer = time(NULL);
-			}
+			if ( THB_VERBOSE ) {
+				msg.print( Cell->frames); }
 
 			if ( opts.SaveMemory ) {
 				wd.jobtype = THREAD_JOB_HBS2;

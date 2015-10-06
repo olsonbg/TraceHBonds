@@ -3,6 +3,7 @@
 #include "Trace.h"
 #include "Histograms.h"
 #include "sizehist.h"
+#include "timedoutput.h"
 
 void sizehist(unsigned int NumFramesInTrajectory,
               unsigned int everyNth,
@@ -13,9 +14,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
               bool povray,
               std::vector<ListOfHBonds *>* HBStrings)
 {
-	time_t timer = time(NULL);
 	unsigned int TrjIdx;
-
 
 	// Make histograms.
 
@@ -31,6 +30,8 @@ void sizehist(unsigned int NumFramesInTrajectory,
 	                                            Histogram);
 
 	VERBOSE_MSG("Generating size histograms.");
+	timedOutput msg(NumFramesInTrajectory, 1.0, "\tFrame ");
+
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
 		Histograms.at(TrjIdx).TrjIdx = TrjIdx;
 
@@ -52,17 +53,8 @@ void sizehist(unsigned int NumFramesInTrajectory,
 	// Wait for all the worker threads to finish.
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx ) {
 		outQueue.pop();
-
-		if (  (difftime(time(NULL),timer) > 1.0) ||
-		      ((TrjIdx+1)==NumFramesInTrajectory)  )
-		{
-			VERBOSE_RMSG("\tFrame "
-			             << TrjIdx+1
-			             <<"/"
-			             << NumFramesInTrajectory
-			             << ".");
-			timer = time(NULL);
-		}
+		if ( THB_VERBOSE) {
+			msg.print( TrjIdx+1 ); }
 	}
 #endif
 	VERBOSE_MSG("");
@@ -78,22 +70,19 @@ void sizehist(unsigned int NumFramesInTrajectory,
 	else
 		CC = CC1;
 
+	msg.message("Saving size histograms, frame ");
 	for( TrjIdx = 0 ; TrjIdx != NumFramesInTrajectory; ++TrjIdx )
 	{
 		std::stringstream ofilename;
 		ofilename << ofPrefix << everyNth*TrjIdx + 1 << ofSuffix;
 
-
 		std::ofstream out;
 		out.open(ofilename.str().c_str(),std::ios::out);
 		if ( out.is_open() )
 		{
-			if ( (difftime(time(NULL), timer) > 1.0) ||
-				 (TrjIdx == NumFramesInTrajectory-1) )
-			{
-				BRIEF_RMSG("Saving size histograms, frame " << TrjIdx+1 << "/" << NumFramesInTrajectory << " (" << ofilename.str() << ")");
-				timer = time(NULL);
-			}
+			if ( THB_VERBOSE ) {
+				msg.print(TrjIdx+1, ofilename.str() ); }
+
 			// Header
 			out << CC
 				<< " PBC "

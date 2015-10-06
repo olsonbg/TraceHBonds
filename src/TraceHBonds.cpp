@@ -10,6 +10,7 @@
 #include "correlation.h"
 #include "neighborhist.h"
 #include "deleteVectorPointers.h"
+#include "timedoutput.h"
 
 extern bool THB_VERBOSE;
 
@@ -88,7 +89,7 @@ int doArcFile(struct useroptions opts)
 
 	// Get the result back from the worker threads.
 	unsigned int FramesProcessed=0;
-	time_t timer = time(NULL);
+	timedOutput msg(1.0, "Processing frame: ");
 	while ( 1 )
 	{
 		struct worker_data_s wdOut = outQueue.pop();
@@ -96,9 +97,10 @@ int doArcFile(struct useroptions opts)
 		     (wdOut.jobtype == THREAD_JOB_HBS ) )
 		{
 			/** \todo Use a more appropriate value than 5000. */
-			hb.reserve(5000*wdOut.hb->size() );
 			if ( NumFramesInTrajectory != 0 )
 				hb.reserve(NumFramesInTrajectory*wdOut.hb->size() );
+			else
+				hb.reserve( 5000*wdOut.hb->size() );
 
 			hb.insert(hb.end(),
 			          wdOut.hb->begin(),
@@ -113,13 +115,9 @@ int doArcFile(struct useroptions opts)
 			FramesProcessed++;
 
 			// Only show this message if we are done reading all frames.
-			if ( THB_VERBOSE && (NumFramesInTrajectory != 0) &&
-				 ((difftime(time(NULL), timer) > 1.0) || (FramesProcessed == NumFramesInTrajectory))  )
-			{
-				VERBOSE_CMSG("Processing frame " << FramesProcessed );
-				VERBOSE_CMSG("/" << NumFramesInTrajectory);
-				VERBOSE_RMSG(". Hydrogen-acceptor pairs found: " << hb.size() << ".");
-				timer = time(NULL);
+			if ( THB_VERBOSE && (NumFramesInTrajectory != 0) ) {
+				msg.print( FramesProcessed,
+				           "Hydrogen-acceptor pairs found: ", hb.size() );
 			}
 
 			if ( FramesProcessed == NumFramesInTrajectory )
@@ -128,6 +126,7 @@ int doArcFile(struct useroptions opts)
 		if ( wdOut.jobtype == THREAD_JOB_POSITIONS_CAR )
 		{
 			NumFramesInTrajectory = wdOut.TrjIdx;
+			msg.maximum(NumFramesInTrajectory);
 			if ( FramesProcessed == NumFramesInTrajectory )
 				break;
 		}

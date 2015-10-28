@@ -332,7 +332,8 @@ class ListOfHBonds
 		unsigned int size;
 		unsigned int HBsize;
 		struct HydrogenBond *Beginning;
-		double Round (double r, double f);
+		Point  Round (Point p, double f=1.0);
+		double Round (double r, double f=1.0);
 
 };
 #endif // _ListOfHBonds_h

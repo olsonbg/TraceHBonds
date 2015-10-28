@@ -10,6 +10,7 @@
 #include "queue.h"
 #include "WorkerThreads.h"
 #include "cpu.h"
+#include "flags.h"
 
 /**
  * Flag for being verbose
@@ -51,7 +52,8 @@ int main(int argc, char *argv[])
 			{"angles"      , no_argument, &flag[4], ANGLES       },
 			{"sizehist"    , no_argument, &flag[5], SIZE_HIST    },
 			{"neighborhist", no_argument, &flag[6], NEIGHBOR_HIST},
-			{"all"         , no_argument, &flag[7], ALL          },
+			{"json"        , no_argument, &flag[7], JSON         },
+			{"all"         , no_argument, &flag[8], ALL          },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
@@ -130,7 +132,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	// Set the flags;
-	for ( int i=0; i < 8; i++ ) { flags |= flag[i]; };
+	for ( int i=0; i < 9; i++ ) { flags |= flag[i]; };
 
 	if ( flags & VERBOSE ) THB_VERBOSE=true;
 

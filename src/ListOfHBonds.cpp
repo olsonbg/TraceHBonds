@@ -183,7 +183,7 @@ Point ListOfHBonds::MinimumImage( struct thbAtom *A,
 double ListOfHBonds::PrintAll( std::ostream *out,
                                struct PBC Cell,
                                unsigned int TrjIdx,
-                               bool POVRAY )
+                               unsigned char flags )
 {
 	struct HydrogenBond *current;
 	double EndToEndLength;
@@ -274,7 +274,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		// counter++;
 	}
 
-	if (POVRAY)
+	if ( flags & POVRAY )
 		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount()
 		          << "}\n}" << "\n";
 

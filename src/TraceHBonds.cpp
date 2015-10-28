@@ -265,7 +265,7 @@ int doArcFile(char *ifilename,
 			         &hb,
 			         Cell,
 			         NumBins,
-			         flags & POVRAY,
+			         flags,
 			         &HBStrings);
 		}
 

@@ -173,7 +173,7 @@ prntHistograms( std::ostream *out,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,
-                bool POVRAY);
+                unsigned char flags);
 /**
  * Add to the counts in element \p bin of vector \p h, making sure enough space
  * is allocated for \p h by calling

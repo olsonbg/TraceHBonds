@@ -209,14 +209,14 @@ prntHistograms( std::ostream *out,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,
-                bool POVRAY)
+                unsigned char flags)
 {
 	double EndToEndLength;
 
 	OFmt colE2E(0,6);
 
 	// Header for povray file.
-	if (POVRAY)
+	if ( flags & POVRAY)
 	{
 		*out << "#version 3.6;" << "\n";
 		*out << "global_settings {  assumed_gamma 1.0 }" << "\n";
@@ -226,6 +226,19 @@ prntHistograms( std::ostream *out,
 		*out << "PBC( " << Cell->p.at(TrjIdx).x() << ", "
 		                << Cell->p.at(TrjIdx).y() << ", "
 		                << Cell->p.at(TrjIdx).z() << " )" << "\n";
+	}
+
+	// If JSON, only print data.
+	if ( flags & JSON )
+	{
+		*out << "[";
+		for( unsigned int i=0; i < HBStrings->size(); i++ )
+		{
+			if ( HBStrings->at(i)->TrajectoryIndex() != TrjIdx )
+				continue;
+			HBStrings->at(i)->PrintAll(out, *Cell, TrjIdx, flags);
+		}
+		return;
 	}
 
 	// Printout information about each hbond string.
@@ -256,7 +269,7 @@ prntHistograms( std::ostream *out,
 		*out << CC << " Periodic boundary conditions applied."
 		          << "\n";
 		// Show the Chain atoms, molecules and coordinates
-		EndToEndLength = HBStrings->at(i)->PrintAll(out, *Cell, TrjIdx, POVRAY);
+		EndToEndLength = HBStrings->at(i)->PrintAll(out, *Cell, TrjIdx, flags);
 		*out << CC << " Chain end-to-end distance: ";
 		*out << colE2E << EndToEndLength << "\n";
 	}

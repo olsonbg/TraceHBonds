@@ -13,6 +13,7 @@
 #include "VectorTypes.h"
 #include "OutputFormat.h"
 #include "Point.h"
+#include "flags.h"
 
 /**
  *
@@ -325,7 +326,7 @@ class ListOfHBonds
 		double PrintAll(std::ostream *out,
 		                struct PBC Cell,
 		                unsigned int TrjIdx,
-		                bool POVRAY);
+		                unsigned char flags);
 
 	private:
 		unsigned int size;

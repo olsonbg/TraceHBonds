@@ -24,6 +24,7 @@ import numpy as np
 import json
 import bpy,bmesh
 import mathutils
+import math
 from random import random
 # Import from the same directory this script is run from
 import os, sys
@@ -57,7 +58,7 @@ def draw_box(box, scale):
 	# and will also be the parent of the camera and lamps.
 	bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(PBC_2))
 	bpy.context.object.name = 'RotationBox'
-	empty = bpy.data.objects['RotationBox']
+	rotation_box = bpy.data.objects['RotationBox']
 
 	bpy.ops.mesh.primitive_cube_add(radius=PBC_2[0],location=(PBC_2))
 	bpy.ops.object.modifier_add(type='WIREFRAME')
@@ -65,13 +66,19 @@ def draw_box(box, scale):
 	bpy.context.object.modifiers["Wireframe"].use_even_offset = False
 	bpy.context.object.name = 'PBC'
 
-	# Add camera
-	# Looking down the z axis, and rotating around the y axis on animation.
-	bpy.ops.object.camera_add(view_align=True, location=(0,0,10*PBC_2[2]) )
-	bpy.ops.object.constraint_add(type='TRACK_TO')
-	bpy.context.object.constraints["Track To"].up_axis = 'UP_Y'
+	# Apply transforms for later calculations.
+	#  bpy.ops.object.transform_apply(scale=True)
+
+	# Add camera, looking down the z axis. RotationBox will be the parent, so
+	# location is relative to 'RotationBox'
+	camera_co = ( 0.0, 2.0*PBC_2[1], 10.0*PBC_2[2] )
+	# Angle the camera to it looks at the center of the PBC box (RotationBox)
+	angle = -1.0 * math.atan(camera_co[1]/camera_co[2])
+	bpy.ops.object.camera_add(view_align=True,
+	                          location=camera_co,
+	                          rotation=(angle,0,0) )
 	bpy.context.object.name = 'Camera'
-	bpy.data.objects['Camera'].parent = empty
+	bpy.data.objects['Camera'].parent = rotation_box
 
 	# Add light source
 
@@ -88,7 +95,7 @@ def draw_box(box, scale):
 
 	lamp_object.location = ( 0, 0, 10.1 * PBC_2[2] )
 
-	bpy.data.objects['lamp-center'].parent = empty
+	bpy.data.objects['lamp-center'].parent = rotation_box
 
 	nodes = bpy.data.lamps['lamp-center'].node_tree.nodes
 	# clear all nodes to start clean

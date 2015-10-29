@@ -50,7 +50,7 @@ def put_marker( co, name="Test" ):
 
 # Add PBC box, camera, and light source
 def draw_box(box, scale):
-	PBC = box["PBC"][0]["xyz"]
+	PBC = box[0]["xyz"]
 	PBC_2 = [ x/2.0/scale for x in PBC ]
 
 	# Empty object used for rotation/animation, placed at center of PBC box,
@@ -111,17 +111,16 @@ def draw_box(box, scale):
 
 
 
-def draw_molecule(molecule, i, radius, scale):
+def draw_hbchain(chain, i, radius, scale):
 	coordinates = list()
-	numatoms = len(molecule["atoms"])
+	numatoms = len(chain)
 
-	for atom in molecule["atoms"]:
+	for atom in chain:
 		coordinates.append( [ x/scale for x in atom["location"]])
 
-	num_co = len(coordinates)
 	tubeName   = 'Chain{0:04d}'.format(i)
-	groupName  = 'GroupLength{0:02d}'.format(num_co)
-	lengthName = 'Length{0:02d}'.format(num_co)
+	groupName  = 'GroupLength{0:02d}'.format(numatoms)
+	lengthName = 'Length{0:02d}'.format(numatoms)
 
 	# If groupName doesn't exist, then neither does the empty LengthName
 	if not groupName in bpy.data.groups:
@@ -366,7 +365,7 @@ def main():
 
 	# Load data
 	json_data=open(args.filename).read()
-	molecules = json.loads(json_data)
+	hb_data = json.loads(json_data)
 
 	scene = bpy.context.scene
 
@@ -392,14 +391,14 @@ def main():
 	bpy.context.object.name = 'Chains'
 
 	i = 0
-	for mol in molecules:
-		if "PBC" in mol:
-			# Add PBC box, camera, and light source
-			draw_box(mol,args.scale)
-		if "atoms" in mol:
+	for data in hb_data:
+		if "hbchain" in data:
 			#  print("Drawing chain {0:d}.".format(i))
-			draw_molecule(mol, i, args.radius, args.scale)
+			draw_hbchain(data["hbchain"], i, args.radius, args.scale)
 			i = i+1
+		elif "PBC" in data:
+			# Add PBC box, camera, and light source
+			draw_box(data["PBC"],args.scale)
 
 
 	print("Number of chains: {0:d}.".format(i))

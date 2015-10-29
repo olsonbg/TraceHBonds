@@ -221,7 +221,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount()
 		          << "," << "\n";
 	else if ( flags & JSON )
-		*out << "{\n    \"atoms\": [\n";
+		*out << "{\n    \"hbchain\": [\n";
 
 	OFmt colX(9,4);
 	OFmt colY(9,4);

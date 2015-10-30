@@ -32,7 +32,7 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, unsigned char flags)
+              int NumBins, unsigned int flags)
 {
 	HBVec hb;
 	std::vector<struct thbAtom *> atom;
@@ -42,7 +42,7 @@ int doArcFile(char *ifilename,
 	// save some memory by storing the atom coordinates only as long as we
 	// need the.
 	bool SaveMemory = true;
-	if ( flags&(NEIGHBOR_HIST|SIZE_HIST) )
+	if ( flags&(Flags::NEIGHBOR_HIST|Flags::SIZE_HIST) )
 		SaveMemory = false;
 	VERBOSE_MSG("SaveMemory: " << SaveMemory);
 
@@ -61,7 +61,7 @@ int doArcFile(char *ifilename,
 	VERBOSE_MSG("");
 	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
-	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
+	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS)) == 0 )
 	{
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
@@ -187,7 +187,7 @@ int doArcFile(char *ifilename,
 
 
 	// Hydrogen bond lifetime correlations.
-	if ( flags & LIFETIME )
+	if ( flags & Flags::LIFETIME )
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		VERBOSE_MSG("\tGenerating truth table.");
@@ -209,7 +209,7 @@ int doArcFile(char *ifilename,
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
-	if ( flags & LENGTHS )
+	if ( flags & Flags::LENGTHS )
 	{
 		std::stringstream ofilename;
 
@@ -228,7 +228,7 @@ int doArcFile(char *ifilename,
 		}
 	}
 
-	if ( flags & ANGLES )
+	if ( flags & Flags::ANGLES )
 	{
 		std::stringstream ofilename;
 
@@ -248,7 +248,7 @@ int doArcFile(char *ifilename,
 	}
 
 
-	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
+	if ( flags & (Flags::SIZE_HIST|Flags::NEIGHBOR_HIST) ) {
 
 		// Each element of the vector points to a string of hbonds.
 		// ListOfHBonds is a strings of hbonds.
@@ -259,7 +259,7 @@ int doArcFile(char *ifilename,
 		VERBOSE_RMSG("Tracing HB strings.");
 		Trace( &HBStrings, &TrjIdx_iter );
 
-		if ( flags & SIZE_HIST ) {
+		if ( flags & Flags::SIZE_HIST ) {
 			sizehist(NumFramesInTrajectory,
 			         ofPrefix, ofSuffix,
 			         &hb,
@@ -269,7 +269,7 @@ int doArcFile(char *ifilename,
 			         &HBStrings);
 		}
 
-		if ( flags & NEIGHBOR_HIST ) {
+		if ( flags & Flags::NEIGHBOR_HIST ) {
 			neighborhist(NumFramesInTrajectory,
 			             ofPrefix, ofSuffix,
 			             Cell,

@@ -9,7 +9,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
               HBVec *hb,
               struct PBC *Cell,
               int NumBins,
-              unsigned char flags,
+              unsigned int flags,
               std::vector<ListOfHBonds *>* HBStrings)
 {
 	time_t timer = time(NULL);
@@ -72,7 +72,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
 	std::string CC;
 
 	// Povray uses a different comment string.
-	if ( flags & POVRAY )
+	if ( flags & Flags::POVRAY )
 		CC = CC2;
 	else
 		CC = CC1;
@@ -94,7 +94,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
 				timer = time(NULL);
 			}
 			// Header
-			if ( ! (flags & JSON) ) 
+			if ( ! (flags & Flags::JSON) ) 
 			{
 				out << CC
 				    << " PBC "
@@ -114,7 +114,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
 			prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx),
 			                CC, NumBins, Cell, TrjIdx, flags );
 
-			if ( flags & JSON )
+			if ( flags & Flags::JSON )
 			{
 				out << "{\n    \"PBC\": [\n"
 				    << "        { \"xyz\": ["

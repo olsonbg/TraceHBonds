@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
 	double angleCutoff= 180.0; // Angle Cutoff for Hydrogen bonds.
 	// Matching keys for hydrogens and acceptors.
 	struct HydrogenBondMatching match;
-	int   flag[9] = {}; // Initialize all element of flag to zero (0).
-	unsigned char flags = 0;
+	int   flag[(unsigned int)Flags::COUNT] = {}; // Initialize all elements of flag to zero.
+	unsigned int flags = 0;
 
 	// Read command line arguments.
 	int c;
@@ -44,16 +44,18 @@ int main(int argc, char *argv[])
 		static struct option long_options[] =
 		{
 			/* These options set a flag. */
-			{"verbose"     , no_argument, &flag[0], VERBOSE      },
-			{"brief"       , no_argument, &flag[0], 0            },
-			{"povray"      , no_argument, &flag[1], POVRAY       },
-			{"lifetime"    , no_argument, &flag[2], LIFETIME     },
-			{"lengths"     , no_argument, &flag[3], LENGTHS      },
-			{"angles"      , no_argument, &flag[4], ANGLES       },
-			{"sizehist"    , no_argument, &flag[5], SIZE_HIST    },
-			{"neighborhist", no_argument, &flag[6], NEIGHBOR_HIST},
-			{"json"        , no_argument, &flag[7], JSON         },
-			{"all"         , no_argument, &flag[8], ALL          },
+			{"verbose"     , no_argument, &flag[0],  (unsigned int)Flags::VERBOSE      },
+			{"brief"       , no_argument, &flag[0],  0            },
+			{"povray"      , no_argument, &flag[1],  (unsigned int)Flags::POVRAY       },
+			{"lifetime"    , no_argument, &flag[2],  (unsigned int)Flags::LIFETIME     },
+			{"lengths"     , no_argument, &flag[3],  (unsigned int)Flags::LENGTHS      },
+			{"angles"      , no_argument, &flag[4],  (unsigned int)Flags::ANGLES       },
+			{"sizehist"    , no_argument, &flag[5],  (unsigned int)Flags::SIZE_HIST    },
+			{"neighborhist", no_argument, &flag[6],  (unsigned int)Flags::NEIGHBOR_HIST},
+			{"json"        , no_argument, &flag[7],  (unsigned int)Flags::JSON         },
+			{"incell"      , no_argument, &flag[8],  (unsigned int)Flags::INCELL       },
+			{"jsonall"     , no_argument, &flag[9],  (unsigned int)Flags::JSONALL      },
+			{"all"         , no_argument, &flag[10], (unsigned int)Flags::ALL          },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
@@ -132,9 +134,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	// Set the flags;
-	for ( int i=0; i < 9; i++ ) { flags |= flag[i]; };
+	for ( unsigned int i=0; i < (unsigned int)Flags::COUNT; i++ ) {
+		flags |= flag[i]; 
+	}
 
-	if ( flags & VERBOSE ) THB_VERBOSE=true;
+	if ( flags & Flags::VERBOSE ) THB_VERBOSE=true;
 
 	if ( (fArc == NULL) )
 	{
@@ -143,7 +147,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if ( (flags & SIZE_HIST) && (ofPrefix == NULL) )
+	if ( (flags & Flags::SIZE_HIST) && (ofPrefix == NULL) )
 	{
 		Help(argv[0]);
 		BRIEF_MSG("\nError: Must specify a prefix for the output file.");
@@ -151,10 +155,10 @@ int main(int argc, char *argv[])
 	}
 
 	VERBOSE_MSG("\t--- Calculations ---");
-	if ( flags & LIFETIME )     VERBOSE_MSG("\tHydrogen bond lifetime correlations");
-	if ( flags & SIZE_HIST)     VERBOSE_MSG("\tChain lengths in each frame");
-	if ( flags & NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths");
-	if ( flags & LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
+	if ( flags & Flags::LIFETIME )     VERBOSE_MSG("\tHydrogen bond lifetime correlations");
+	if ( flags & Flags::SIZE_HIST)     VERBOSE_MSG("\tChain lengths in each frame");
+	if ( flags & Flags::NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths");
+	if ( flags & Flags::LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS

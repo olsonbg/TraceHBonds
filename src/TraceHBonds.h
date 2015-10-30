@@ -74,7 +74,7 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, unsigned char flags);
+              int NumBins, unsigned int flags);
 
 
 

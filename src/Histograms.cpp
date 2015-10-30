@@ -209,14 +209,14 @@ prntHistograms( std::ostream *out,
                 struct Histograms_s *Histogram,
                 std::string CC, unsigned int NumBins,
                 struct PBC *Cell, unsigned int TrjIdx,
-                unsigned char flags)
+                unsigned int flags)
 {
 	double EndToEndLength;
 
 	OFmt colE2E(0,6);
 
 	// Header for povray file.
-	if ( flags & POVRAY)
+	if ( flags & Flags::POVRAY)
 	{
 		*out << "#version 3.6;" << "\n";
 		*out << "global_settings {  assumed_gamma 1.0 }" << "\n";
@@ -229,7 +229,7 @@ prntHistograms( std::ostream *out,
 	}
 
 	// If JSON, only print data.
-	if ( flags & JSON )
+	if ( flags & Flags::JSON )
 	{
 		*out << "[";
 		for( unsigned int i=0; i < HBStrings->size(); i++ )

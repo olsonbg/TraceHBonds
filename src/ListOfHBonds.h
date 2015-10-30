@@ -326,7 +326,7 @@ class ListOfHBonds
 		double PrintAll(std::ostream *out,
 		                struct PBC Cell,
 		                unsigned int TrjIdx,
-		                unsigned char flags);
+		                unsigned int flags);
 
 	private:
 		unsigned int size;

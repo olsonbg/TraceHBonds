@@ -192,7 +192,7 @@ Point ListOfHBonds::MinimumImage( struct thbAtom *A,
 double ListOfHBonds::PrintAll( std::ostream *out,
                                struct PBC Cell,
                                unsigned int TrjIdx,
-                               unsigned char flags )
+                               unsigned int flags )
 {
 	struct HydrogenBond *current;
 	double EndToEndLength;
@@ -206,21 +206,25 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 
 	// TODO: add --incell flag
 
+	Point r( current->donor->p.at(TrjIdx).x(),
+	         current->donor->p.at(TrjIdx).y(),
+	         current->donor->p.at(TrjIdx).z() );
 	// Use for non-wrapped
-	// Point r( current->donor->p.at(TrjIdx).x(),
-	//          current->donor->p.at(TrjIdx).y(),
-	//          current->donor->p.at(TrjIdx).z() );
 
+	if ( flags & Flags::INCELL ) {
+		// Put the first element of this chain inside the PBC cell
+		r = MinimumImage(current->donor, TrjIdx, Point(0,0,0), Cell) +
+		    Cell.p.at(TrjIdx)/2.0;
+	}
 	// Use for wrapped (in-cell)
-	// Put the first element of this chain inside the PBC cell
-	Point r = MinimumImage(current->donor, TrjIdx, Point(0,0,0), Cell) +
-	          Cell.p.at(TrjIdx)/2.0;
+	// Point r = MinimumImage(current->donor, TrjIdx, Point(0,0,0), Cell) +
+	//           Cell.p.at(TrjIdx)/2.0;
 //	Point r(0.0,0.0,0.0);
 
-	if ( flags & POVRAY )
+	if ( flags & Flags::POVRAY )
 		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount()
 		          << "," << "\n";
-	else if ( flags & JSON )
+	else if ( flags & Flags::JSON )
 		*out << "{\n    \"hbchain\": [\n";
 
 	OFmt colX(9,4);
@@ -236,7 +240,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		r = r + MinimumImage(current->acceptor, TrjIdx, current->hydrogen->p.at(TrjIdx),Cell);
 		Point C = Round(r, 10000.0);
 
-		if ( flags & POVRAY )
+		if ( flags & Flags::POVRAY )
 		{
 			*out << "\t<";
 			*out << colX << A.x() << ", ";
@@ -256,7 +260,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 				*out << colZ << C.z() << ">,ChainRadius" << "\n";
 			}
 		}
-		else if ( flags & JSON )
+		else if ( flags & Flags::JSON )
 		{
 			*out << "        { \"location\": [ "
 			     << colX << A.x() << ", "
@@ -334,7 +338,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		// counter++;
 	}
 
-	if ( flags & POVRAY )
+	if ( flags & Flags::POVRAY )
 		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount()
 		          << "}\n}" << "\n";
 

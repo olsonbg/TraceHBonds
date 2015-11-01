@@ -159,6 +159,7 @@ int main(int argc, char *argv[])
 	if ( flags & Flags::SIZE_HIST)     VERBOSE_MSG("\tChain lengths in each frame");
 	if ( flags & Flags::NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths");
 	if ( flags & Flags::LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
+	if ( flags & Flags::ANGLES)        VERBOSE_MSG("\tHydrogen bond angles");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS

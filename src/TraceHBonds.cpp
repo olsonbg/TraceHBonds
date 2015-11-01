@@ -63,13 +63,12 @@ int doArcFile(char *ifilename,
 	VERBOSE_MSG("");
 	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
-	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS)) == 0 )
+	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS|Flags::ANGLES)) == 0 )
 	{
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}
 
-	// VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
 	VERBOSE_MSG("Max Distance (A): " << rCutoff);
 	VERBOSE_MSG("Min Angle  (deg): " << angleCutoff);
 	VERBOSE_MSG("");

@@ -116,8 +116,8 @@ unsigned int ListOfHBonds::MoleculeCount()
 	{
 		// Donor and Hydrogen are always on same molecule,
 		// So using one of them is sufficient.
-		molecules.push_back(current->hydrogen->Molecule);
-		molecules.push_back(current->acceptor->Molecule);
+		molecules.push_back(current->hydrogen->Molecule->Name);
+		molecules.push_back(current->acceptor->Molecule->Name);
 
 		current = current->Next;
 	}
@@ -268,7 +268,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			     << colZ << A.z() << " ],\n"
 			     << "          "
 			     << "\"element\": \""     << current->donor->Type << "\", "
-			     << " \"molecule\": \""   << current->donor->Molecule << "\",\n"
+			     << " \"molecule\": \""   << current->donor->Molecule->Name << "\",\n"
 			     << "          "
 			     << "\"name\": \""        << current->donor->Name << "\","
 			     << " \"forcefield\": \"" << current->donor->ForceField
@@ -280,7 +280,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			     << colZ << B.z() << " ],\n"
 			     << "          "
 			     << "\"element\": \""     << current->hydrogen->Type << "\", "
-			     << " \"molecule\": \""   << current->hydrogen->Molecule << "\",\n"
+			     << " \"molecule\": \""   << current->hydrogen->Molecule->Name << "\",\n"
 			     << "          "
 			     << "\"name\": \""        << current->hydrogen->Name << "\","
 			     << " \"forcefield\": \"" << current->hydrogen->ForceField
@@ -294,7 +294,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 				     << colZ << C.z() << " ],\n"
 				     << "          "
 				     << "\"element\": \""     << current->acceptor->Type << "\", "
-				     << " \"molecule\": \""   << current->acceptor->Molecule << "\",\n"
+				     << " \"molecule\": \""   << current->acceptor->Molecule->Name << "\",\n"
 				     << "          "
 				     << "\"name\": \""        << current->acceptor->Name << "\","
 				     << " \"forcefield\": \"" << current->acceptor->ForceField
@@ -309,7 +309,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			*out << colZ << A.z();
 
 			*out << " [" << current->donor->Type << "]";
-			*out << "  " << current->donor->Molecule;
+			*out << "  " << current->donor->Molecule->Name;
 			*out << "  " << current->donor->Name;
 			*out << "  " << current->donor->ForceField << "\n";
 
@@ -318,7 +318,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 			*out << colZ << B.z();
 
 			*out << " [" << current->hydrogen->Type << "]";
-			*out << "  " << current->hydrogen->Molecule;
+			*out << "  " << current->hydrogen->Molecule->Name;
 			*out << "  " << current->hydrogen->Name;
 			*out << "  " << current->hydrogen->ForceField << "\n";
 
@@ -329,7 +329,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 				*out << colZ << C.z();
 
 				*out << " [" << current->acceptor->Type << "]";
-				*out << "  " << current->acceptor->Molecule;
+				*out << "  " << current->acceptor->Molecule->Name;
 				*out << "  " << current->acceptor->Name;
 				*out << "  " << current->acceptor->ForceField << "\n";
 			}

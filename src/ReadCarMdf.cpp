@@ -160,9 +160,11 @@ bool openfile( const char *filename,
 }
 
 bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
-             std::vector<struct thbAtom *> *atom)
+             std::vector<struct thbAtom     *> *atom,
+             std::vector<struct thbMolecule *> *mol)
 {
 	struct thbAtom *NewAtom;
+	struct thbMolecule *NewMolecule;
 	int lineno=0; // Line number of datafile, used for error messages.
 
 	char line[256];
@@ -193,15 +195,34 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 			//Check for '@molecule' parameter.
 			if ( !strncmp(line,"@molecule ", 10) )
 			{
+				/* If we were reading a molecule, then we are done now and can
+				 * push to the vector.
+				 */
+				if ( ReadingMolecule ) {
+					mol->push_back(NewMolecule);
+				}
+
+				/* Make sure ReadingMolecule is true */
 				ReadingMolecule = true;
 				if( sscanf(line, "%*s %s", molecule) != 1 )
 				{
 					std::cerr << "Error datermining molecule name!" << "\n";
 					return(false);
 				}
+				NewMolecule = new struct thbMolecule;
+				NewMolecule->Name = molecule;
 			}
 			else
+			{
+				/* If we were reading a molecule, then we are done now and can
+				 * push to the vector.
+				 */
+				if ( ReadingMolecule ) {
+					mol->push_back(NewMolecule);
+				}
+
 				ReadingMolecule = false;
+			}
 		}
 		else if( (line[0] != '#') && ReadingMolecule ) //Must be an atom line.
 		{
@@ -225,10 +246,12 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 			NewAtom->ID         = ID; ID++;
 			NewAtom->Name       = name;
 			NewAtom->Type       = type;
-			NewAtom->Molecule   = molecule;
+			NewAtom->Molecule   = NewMolecule;
 			NewAtom->Residue    = residue;
 			NewAtom->ResidueNum = residueNum;
 			NewAtom->ForceField = forcefield;
+
+			NewMolecule->atoms.push_back(NewAtom);
 
 			for (unsigned int i=0; i< cA.size(); i=i+4)
 			{
@@ -254,13 +277,18 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 		in->getline(line,255); lineno++;
 	}
 
+	/* If we were reading a molecule, then we are done now and can
+	 * push to the vector.
+	 */
+	if ( ReadingMolecule ) {
+		mol->push_back(NewMolecule);
+	}
+
 	return(true);
 }
 // Is b connected to a
 bool isConnectedAtom( struct thbAtom *a, struct thbAtom *b, unsigned int i)
 {
-
-
 	// Compare the first characters of Name initially, to speed this up a
 	// little bit.
 	if( (a->ConnectedAtomName.at(i).at(0) == b->Name[0] ) &&
@@ -272,8 +300,11 @@ bool isConnectedAtom( struct thbAtom *a, struct thbAtom *b, unsigned int i)
 
 	return(false);
 }
-void doAtomConnections( std::vector<struct thbAtom *> *atom )
+
+void doAtomConnections( std::vector<struct thbAtom *> *atom,
+                        std::vector<struct thbBond *> *bonds )
 {
+	struct thbBond *NewBond;
 	std::vector<struct thbAtom *>::iterator it_a;
 	std::vector<struct thbAtom *>::iterator it_b;
 
@@ -288,9 +319,15 @@ void doAtomConnections( std::vector<struct thbAtom *> *atom )
 			{
 				if ( isConnectedAtom( *it_a, *it_b, i ) )
 				{
-					// Connect these two atoms.
-					(*it_a)->ConnectedAtom.push_back(*it_b);
-					(*it_b)->ConnectedAtom.push_back(*it_a);
+					NewBond = new struct thbBond;
+					NewBond->A = *it_a;
+					NewBond->B = *it_b;
+					NewBond->Order = (*it_a)->ConnectedAtomBondOrder.back();
+
+					bonds->push_back(NewBond);
+
+					(*it_a)->Bonds.push_back(NewBond);
+					(*it_b)->Bonds.push_back(NewBond);
 
 					// We don't need these anymore.
 					(*it_a)->ConnectedAtomName.pop_back();
@@ -325,7 +362,9 @@ void doAtomConnections( std::vector<struct thbAtom *> *atom )
 }
 
 bool ConnectionsMDF(const char *filename,
-                    std::vector<struct thbAtom *> *atom)
+                    std::vector<struct thbAtom *> *atom,
+                    std::vector<struct thbMolecule *> *molecules,
+                    std::vector<struct thbBond *> *bonds)
 {
 	//
 	// Read atoms from MDF files.
@@ -351,7 +390,7 @@ bool ConnectionsMDF(const char *filename,
 	    return(false); }
     else {
 		VERBOSE_MSG("Reading atom configuration from " << MDFfile);
-		ReadMdf( &MDFin, atom );
+		ReadMdf( &MDFin, atom, molecules );
 		MDFifp.close();
     }
 
@@ -360,8 +399,16 @@ bool ConnectionsMDF(const char *filename,
 		std::vector<struct thbAtom *>(*atom).swap(*atom);
 	DEBUG_MSG("Capacity/size of atom: " << atom->capacity() << "/" << atom->size());
 
+	bonds->reserve( atom->size() );
+	DEBUG_MSG("Capacity/size of bonds: " << bonds->capacity() << "/" << bonds->size());
+
 	VERBOSE_MSG("Determining atom connections.");
-	doAtomConnections( atom );
+	doAtomConnections( atom, bonds );
+
+	// Free up some space, if possible.
+	if ( bonds->size() != bonds->capacity() )
+		std::vector<struct thbBond *>(*bonds).swap(*bonds);
+	DEBUG_MSG("Capacity/size of bonds: " << bonds->capacity() << "/" << bonds->size());
 
 	return(true);
 }

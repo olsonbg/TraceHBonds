@@ -60,12 +60,14 @@ bool ReadCar(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
  * Reads atoms connections, and molecule and residue information from MDF file.
  *
  * \param[in]     in      boost filtering_stream previously setup for file
- * \param[in,out] atom    atom vector containing descriptions of all atoms
+ * \param[in,out] atom    atom vector containing description of all atoms
+ * \param[in,out] atom    vector containing description of all molecule
  *
  * \return \c TRUE on success, \c FALSE otherwise
  */
 bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
-             std::vector<struct thbAtom *> *atom);
+             std::vector<struct thbAtom *> *atom,
+             std::vector<struct thbMolecule *> *molecule);
 
 /**
  * Read connections from MDF file
@@ -73,12 +75,15 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
  * Calls openfile(), then ReadMdf()
  *
  * \param[in]     filename   Name of file to open
- * \param[in,out] atom       atom vector containing descriptions of all atoms
+ * \param[in,out] atom       vector containing description of all atoms
+ * \param[in,out] atom       vector containing description of all molecule
  *
  * \return \c TRUE on success, \c FALSE othewise
  */
 bool ConnectionsMDF(const char *filename,
-                    std::vector<struct thbAtom *> *atom);
+                    std::vector<struct thbAtom *> *atom,
+                    std::vector<struct thbMolecule *> *molecules,
+                    std::vector<struct thbBond *> *bonds);
 /**
  * CAR/ARC
  *   - calls openfile()

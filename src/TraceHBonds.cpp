@@ -35,7 +35,9 @@ int doArcFile(char *ifilename,
               int NumBins, unsigned int flags)
 {
 	HBVec hb;
-	std::vector<struct thbAtom *> atom;
+	std::vector<struct thbAtom     *> atom;
+	std::vector<struct thbMolecule *> molecules;
+	std::vector<struct thbBond     *> bonds;
 	unsigned int NumFramesInTrajectory = 0;
 
 	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
@@ -47,9 +49,9 @@ int doArcFile(char *ifilename,
 	VERBOSE_MSG("SaveMemory: " << SaveMemory);
 
 	atom.reserve(50000);
-	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
+	DEBUG_MSG("Capacity/size of atom : " << atom.capacity() << "/" << atom.size());
 	// Get Atoms and their connections.
-	if ( ! ConnectionsMDF( ifilename, &atom ) ) {
+	if ( !ConnectionsMDF( ifilename, &atom, &molecules, &bonds ) ) {
 		return 1; }
 
 	// Find the Hydrogens and Acceptors.
@@ -101,10 +103,14 @@ int doArcFile(char *ifilename,
 		if ( (wdOut.jobtype == THREAD_JOB_HBS2) ||
 		     (wdOut.jobtype == THREAD_JOB_HBS ) )
 		{
-			/** \todo Use a more appropriate value than 5000. */
-			hb.reserve(5000*wdOut.hb->size() );
-			if ( NumFramesInTrajectory != 0 )
+			/** \todo Use a more appropriate value than 5000. Need to find
+			 * a way to estimae the number of frames
+			 **/
+			if ( NumFramesInTrajectory != 0 ) {
 				hb.reserve(NumFramesInTrajectory*wdOut.hb->size() );
+			} else {
+				hb.reserve(5000*wdOut.hb->size() );
+			}
 
 			hb.insert(hb.end(),
 			          wdOut.hb->begin(),
@@ -153,19 +159,15 @@ int doArcFile(char *ifilename,
 
 		//Cleanup
 		delete Cell;
+		DeleteVectorPointers( bonds ); bonds.clear();
+		DeleteVectorPointers( molecules ); molecules.clear();
 		DeleteVectorPointers( atom ); atom.clear();
 		DeleteVectorPointers( hb ); hb.clear();
 
 		return(1);
 	}
-	// Reserve space for hydrogen bonds to minimize reallocations.
-	// This is just an emperical guess for reserve size.
-	// hb.reserve((atom.size()/4)*NumFramesInTrajectory);
+
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
-	// Now  determine the hydrogen bonds
-	// AtomNeighbors( &hb, Cell, &hydrogens, &acceptors,
-	//                rCutoff, angleCutoff );
-	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	if ( hb.size() != hb.capacity() )
 		HBVec(hb).swap(hb);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
@@ -281,6 +283,8 @@ int doArcFile(char *ifilename,
 
 	//Cleanup
 	delete Cell;
+	DeleteVectorPointers( bonds ); bonds.clear();
+	DeleteVectorPointers( molecules ); molecules.clear();
 	DeleteVectorPointers( atom ); atom.clear();
 	DeleteVectorPointers( hb ); hb.clear();
 

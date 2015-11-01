@@ -24,5 +24,13 @@ template void DeleteVectorPointers<thbAtom>(std::vector<thbAtom *>);
 template bool deleteVectorPointers<thbAtom>(thbAtom *);
 
 // Used in: TraceHBonds.cpp
+template void DeleteVectorPointers<thbMolecule>(std::vector<thbMolecule *>);
+template bool deleteVectorPointers<thbMolecule>(thbMolecule *);
+
+// Used in: TraceHBonds.cpp
+template void DeleteVectorPointers<thbBond>(std::vector<thbBond *>);
+template bool deleteVectorPointers<thbBond>(thbBond *);
+
+// Used in: TraceHBonds.cpp
 template void DeleteVectorPointers<HydrogenBond>(std::vector<HydrogenBond *>);
 template bool deleteVectorPointers<HydrogenBond>(HydrogenBond *);

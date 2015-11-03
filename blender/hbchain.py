@@ -51,7 +51,7 @@ def put_marker( co, name="Test" ):
 
 # Add PBC box, camera, and light source
 def draw_box(box, scale):
-	PBC = box[0]["xyz"]
+	PBC = box["xyz"]
 	PBC_2 = [ x/2.0/scale for x in PBC ]
 
 	# Empty object used for rotation/animation, placed at center of PBC box,

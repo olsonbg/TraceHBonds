@@ -116,18 +116,18 @@ void sizehist(unsigned int NumFramesInTrajectory,
 
 			if ( flags & Flags::JSON )
 			{
-				out << "{\n    \"PBC\": [\n"
-				    << "        { \"xyz\": ["
+				out << "{\n    \"PBC\": {\n"
+				    << "          \"xyz\": ["
 				    << Cell->p.at(TrjIdx).x()      << ", "
 				    << Cell->p.at(TrjIdx).y()      << ", "
 				    << Cell->p.at(TrjIdx).z()      << " "
-				    << "] },\n"
-				    << "        { \"angles\": ["
+				    << "] ,\n"
+				    << "          \"angles\": ["
 				    << Cell->angles.at(TrjIdx).x() << ", "
 				    << Cell->angles.at(TrjIdx).y() << ", "
 				    << Cell->angles.at(TrjIdx).z()
-				    << "] }\n"
-				    << "    ]\n}]\n";
+				    << "] \n"
+				    << "    }\n}]\n";
 			}
 			out.close();
 		} else {

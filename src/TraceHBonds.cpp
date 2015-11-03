@@ -7,6 +7,7 @@
 #include "Trace.h"
 #include "RemoveDuplicates.h"
 #include "sizehist.h"
+#include "Structure.h"
 #include "correlation.h"
 #include "neighborhist.h"
 #include "deleteVectorPointers.h"
@@ -20,6 +21,7 @@ extern Queue<struct worker_data_s> outQueue;
 
 typedef std::vector<struct HydrogenBond *> HBVec;
 typedef std::vector<struct HydrogenBondIterator_s> HBVecIter;
+
 
 // Used with remove_if()
 bool deleteAtom( struct thbAtom *atom ) {
@@ -147,10 +149,8 @@ int doArcFile(char *ifilename,
 #else
 	PositionsCAR( ifilename, &atom, Cell, SaveMemory );
 #endif //PTHREADS
-	// std::vector<double>A, B, C;
 
 	NumFramesInTrajectory = Cell->frames;
-
 
 	if ( hb.size() == 0 )
 	{
@@ -275,6 +275,13 @@ int doArcFile(char *ifilename,
 			             ofPrefix, ofSuffix,
 			             Cell,
 			             &HBStrings);
+		}
+
+		if ( flags & Flags::JSONALL ) {
+			saveStructure(NumFramesInTrajectory,
+			              ofPrefix, ofSuffix,
+			              Cell,
+			              &molecules);
 		}
 		//Cleanup
 		DeleteVectorPointers( HBStrings ); HBStrings.clear();

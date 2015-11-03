@@ -55,6 +55,7 @@ struct thbMolecule
 	std::string Name;
 	/** All atoms associated in this molecule **/
 	std::vector<struct thbAtom *> atoms;
+	std::vector<struct thbBond *> bonds;
 };
 
 /**

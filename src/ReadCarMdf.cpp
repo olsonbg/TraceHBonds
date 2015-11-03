@@ -326,8 +326,11 @@ void doAtomConnections( std::vector<struct thbAtom *> *atom,
 
 					bonds->push_back(NewBond);
 
+					// Save the bond in the thbAtom->Bonds vector.
 					(*it_a)->Bonds.push_back(NewBond);
 					(*it_b)->Bonds.push_back(NewBond);
+					// Save the bond in the thbMolecule->bonds vector.
+					(*it_a)->Molecule->bonds.push_back(NewBond);
 
 					// We don't need these anymore.
 					(*it_a)->ConnectedAtomName.pop_back();

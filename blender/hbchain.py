@@ -66,9 +66,6 @@ def draw_box(box, scale):
 	bpy.context.object.modifiers["Wireframe"].use_even_offset = False
 	bpy.context.object.name = 'PBC'
 
-	# Apply transforms for later calculations.
-	#  bpy.ops.object.transform_apply(scale=True)
-
 	# Add camera, looking down the z axis. RotationBox will be the parent, so
 	# location is relative to 'RotationBox'
 	camera_co = ( 0.0, 2.0*PBC_2[1], 10.0*PBC_2[2] )
@@ -116,6 +113,266 @@ def draw_box(box, scale):
 	links = bpy.data.lamps['lamp-center'].node_tree.links
 	link = links.new(node_emission.outputs[0], node_output.inputs[0])
 
+
+def element_sphere( obname, element, scale ):
+	# Typical CPK coloring assignments from
+	# https://en.wikipedia.org/wiki/CPK_coloring
+	element_colors = {
+	                   'H' : (221, 221, 221, 255),
+	                   'C' : ( 34,  34,  34, 255),
+	                   'N' : (135, 206, 235, 255),
+	                   'O' : (255,  13,  13, 255),
+	                   'F' : ( 31, 240,  31, 255),
+	                   'Cl': ( 31, 240,  31, 255),
+	                   'Br': (153,  34,   0, 255),
+	                   'I' : (102,   0, 187, 255),
+	                   'He': (  0, 255, 255, 255),
+	                   'Ne': (  0, 255, 255, 255),
+	                   'Ar': (  0, 255, 255, 255),
+	                   'Xe': (  0, 255, 255, 255),
+	                   'Kr': (  0, 255, 255, 255),
+	                   'P' : (255, 153,   0, 255),
+	                   'S' : (221, 221,   0, 255),
+	                   'other' : (221, 119, 255, 255)
+	                 }
+
+	# Van der Waals Radius of the elements (angstroms)
+	element_sizes = {
+	                  'H' : 1.20,
+	                  'Zn': 1.39,
+	                  'He': 1.39,
+	                  'Cu': 1.40,
+	                  'F' : 1.47,
+	                  'O' : 1.52,
+	                  'Ne': 1.54,
+	                  'N' : 1.55,
+	                  'Au': 1.66,
+	                  'C' : 1.70,
+	                  'Ag': 1.72,
+	                  'Cl': 1.75,
+	                  'P' : 1.80,
+	                  'S' : 1.80,
+	                  'other' : 1.70
+	                }
+
+	mat_name = 'ElementMaterial-{0:s}'.format(obname)
+
+	mat = bpy.data.materials.new(mat_name)
+	if element in element_colors:
+		color = element_colors[element]
+	else:
+		color = element_colors['other']
+		print("No color definition for {0:s}.".format( element ) )
+
+	color = [x/255.0 for x in color]
+
+	material_nodes(mat, color )
+
+	# Sphere for this element
+	bpy.ops.object.select_all(action='DESELECT')
+
+	if element in element_sizes:
+		e_size = element_sizes[element]
+	else:
+		e_size = element_sizes['other']
+		print("No size definition for {0:s}.".format( element ) )
+
+	# For ball and stick divide by 5.0
+	bpy.ops.mesh.primitive_uv_sphere_add(location=(0,0,0),
+	                                     size=e_size/scale/5.0)
+	sphere = bpy.context.object
+	sphere.name = 'Element-{0:s}'.format(element)
+	bpy.ops.object.shade_smooth()
+	sphere.data.materials.append( mat )
+	sphere.select = False
+
+	bpy.context.scene.objects.unlink(sphere)
+	return(sphere)
+
+# Cylinder for bonds
+def element_cylinder( name, bondradius, scale ):
+	bpy.ops.object.select_all(action='DESELECT')
+	bpy.ops.mesh.primitive_cylinder_add(location=(0,0,0),
+	                                    radius=bondradius/scale)
+	cylinder = bpy.context.object
+	cylinder.name = name
+	cylinder.rotation_mode = 'QUATERNION'
+	cylinder.data.materials.append( bpy.data.materials['BondMaterial'])
+	cylinder.select = False
+
+	bpy.context.scene.objects.unlink(cylinder)
+
+	return(cylinder)
+
+
+def draw_structure( data, scale ):
+	# Empty object used as parent for chemical structure.
+	bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
+	bpy.context.object.name = 'Structure'
+	bpy.context.object.hide        = True
+	bpy.context.object.hide_render = True
+	bpy.context.object.hide_select = True
+
+	# Materials
+	mat = bpy.data.materials.new("BondMaterial")
+	material_nodes(mat, (0.02, 0.02, 0.02, 1) )
+
+	# Initial cylinder for bonds.
+	cylinder_axis = mathutils.Vector( (0,0,1) )
+	bondradius = 1.2/5.0/4.0
+	v_double = 1.5*bondradius/scale
+	v_triple = 3.0*bondradius/scale
+
+	ob_elements = {}
+	ob_bonds = {}
+	Ats = []
+	obs = list()
+	for mol in data:
+		if 'name' in mol:
+			# Empty object used as parent for molecules.
+			bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
+			bpy.context.object.name = mol['name']
+			bpy.context.object.parent = bpy.data.objects['Structure']
+			bpy.context.object.hide        = True
+			bpy.context.object.hide_render = True
+			bpy.context.object.hide_select = True
+			ob_molecule = bpy.data.objects[ mol['name'] ]
+			print( "Molecule: {0:s}".format( mol['name'] ) )
+
+		if 'atoms' in mol:
+			start_time2 = time.time()
+			# Empty object used as parent for atoms.
+			bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
+			bpy.context.object.name = 'Atoms'
+			bpy.context.object.parent = ob_molecule
+			bpy.context.object.hide        = True
+			bpy.context.object.hide_render = True
+			bpy.context.object.hide_select = True
+			ob_atom_parent = bpy.data.objects['Atoms']
+
+			for atom in mol['atoms']:
+				loc = [ x/scale for x in atom['location'] ]
+
+				element = "{0:s} {1:s}".format( atom['element'],
+				                                atom['forcefield'] )
+
+				if element not in ob_elements:
+					ob_elements[element] = element_sphere(element,atom['element'],scale)
+					bpy.ops.object.empty_add(type='CUBE',radius=0.1)
+					bpy.context.object.name = element
+					bpy.context.object.parent = ob_atom_parent
+					bpy.context.object.hide        = True
+					bpy.context.object.hide_render = True
+					bpy.context.object.hide_select = True
+					#  print("Size of elements: {0:d}".format( len(ob_elements) ))
+
+				ob = ob_elements[element].copy()
+				ob.location = loc
+				ob.parent = bpy.data.objects[element]
+				ob.name = atom['name']
+
+				obs.append(ob)
+
+				# Used for determining bond locations
+				Ats += [None]*len( mol['atoms'] )
+				Ats[ atom['ID'] ] = [ loc, atom['forcefield'], atom['name'] ]
+
+			print("Atoms: %s seconds" % (time.time() - start_time2))
+
+		#  print("Objects in scene: {0:d} ".format( len(bpy.context.scene.objects) ))
+		#  for obj in bpy.context.scene.objects:
+		#      print("\tObject in scene: {0:s} ".format( obj.name ) )
+
+		if 'bonds' in mol:
+			start_time2 = time.time()
+			# Empty object used as parent for bonds
+			bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
+			bpy.context.object.name = 'Bonds'
+			bpy.context.object.parent = ob_molecule
+			bpy.context.object.hide        = True
+			bpy.context.object.hide_render = True
+			bpy.context.object.hide_select = True
+			ob_bond_parent = bpy.data.objects['Bonds']
+
+			for bond in mol['bonds']:
+				ID1 = bond["IDs"][0]
+				ID2 = bond["IDs"][1]
+
+				v1 = mathutils.Vector( Ats[ID1][0] )
+				v2 = mathutils.Vector( Ats[ID2][0] )
+				vdiff = v2-v1
+				height = vdiff.magnitude
+				loc = v1+vdiff/2.0
+				to_rotate = cylinder_axis.rotation_difference( vdiff )
+
+				bond_type = "{0:s}-{1:s}({2:d})".format( Ats[ID1][1],
+				                                        Ats[ID2][1],
+				                                        bond['order'] )
+				bond_name = "{0:s}-{1:s}".format( Ats[ID1][2],
+				                                  Ats[ID2][2])
+				if bond_type not in ob_bonds:
+					ob_bonds[bond_type] = element_cylinder( bond_name,
+					                                        bondradius,
+					                                        scale )
+					bpy.ops.object.empty_add(type='CUBE',radius=0.1)
+					bpy.context.object.name = bond_type
+					bpy.context.object.parent = ob_bond_parent
+					bpy.context.object.hide        = True
+					bpy.context.object.hide_render = True
+					bpy.context.object.hide_select = True
+					#  print("Size of bonds: {0:d}".format( len(ob_bonds) ))
+
+				ob = ob_bonds[bond_type].copy()
+				#  ob.data = ob_bonds[bond_name].data.copy() # Full copy, not linked
+				ob.parent = bpy.data.objects[bond_type]
+				ob.dimensions[2] = height
+				ob.rotation_quaternion = to_rotate
+
+				if bond['order'] == 1:
+					ob.location = loc
+					obs.append(ob)
+				elif bond['order'] == 2:
+					ob.location = loc + v_double*loc.normalized()
+					obs.append(ob)
+
+					ob2 = ob.copy()
+					ob2.location = loc - v_double*loc.normalized()
+					obs.append(ob2)
+				elif bond['order'] == 3:
+					ob.location = loc
+					obs.append(ob)
+
+					ob2 = ob.copy()
+					ob2.location = loc + v_triple*loc.normalized()
+					obs.append(ob2)
+
+					ob3 = ob.copy()
+					ob3.location = loc - v_triple*loc.normalized()
+					obs.append(ob3)
+
+			print("Bonds: %s seconds " % (time.time() - start_time2))
+		#  print("Objects in scene: {0:d} ".format( len(bpy.context.scene.objects) ))
+		#  for obj in bpy.context.scene.objects:
+		#      print("\tObject in scene: {0:s} ".format( obj.name ) )
+
+
+	# Cleanup
+	bpy.ops.object.select_all(action='DESELECT')
+	#  Select objects to delete
+	for ob_name in ob_bonds:
+		ob_bonds[ob_name].select = True
+
+	for ob_name in ob_elements:
+		ob_elements[ob_name].select = True
+
+	bpy.ops.object.delete()
+
+	print("Linking objects to scene")
+	for ob in obs:
+		bpy.context.scene.objects.link(ob)
+	print("Updating scene")
+
+	bpy.context.scene.update()
 
 
 def draw_hbchain(chain, i, radius, scale):
@@ -226,7 +483,6 @@ def generate_colormap(num_low, num_high):
 
 	for i,c in enumerate(ColorMap):
 		c.append(1)
-		#  print("color[{:d}]: {:f} {:f}  {:f}  {:f} ".format(i,c[0], c[1], c[2], c[3]))
 
 	return ColorMap
 
@@ -348,6 +604,10 @@ def main():
 	                    metavar='FILE', required=True,
 	                    help="This file will be loaded")
 
+	parser.add_argument("-c", "--chemfile", dest="chemfile", type=str,
+	                    metavar='FILE', required=False, default=None,
+	                    help="This file describes the full chemical structure")
+
 	parser.add_argument("-r", "--radius", dest="radius", type=float,
 	                    required=False, default=Radius,
 	                    help="Radius of the tubes. (default: %(default)d)")
@@ -371,6 +631,7 @@ def main():
 		return
 
 	# Load data
+	print("Loading data.")
 	json_data=open(args.filename).read()
 	hb_data = json.loads(json_data)
 
@@ -397,6 +658,7 @@ def main():
 	bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
 	bpy.context.object.name = 'Chains'
 
+	print("Drawing hydrogen bond chains.")
 	i = 0
 	for data in hb_data:
 		if "hbchain" in data:
@@ -407,11 +669,21 @@ def main():
 			# Add PBC box, camera, and light source
 			draw_box(data["PBC"],args.scale)
 
-
 	print("Number of chains: {0:d}.".format(i))
 
 	generate_materials(args.white_index)
 	assignMaterials()
+
+	if args.chemfile is not None:
+		# Load chemical structure data
+		print("Loading data.")
+		json_data=open(args.chemfile).read()
+		chem_data = json.loads(json_data)
+		print("Drawing chemical structure.")
+		for data in chem_data:
+			if "molecules" in data:
+				# Draw to full chemical structure
+				draw_structure(data["molecules"], args.scale)
 
 	setupAnimation(args.frames)
 

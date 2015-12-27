@@ -239,7 +239,7 @@ threads, and depend upon the order in which they finish.
 The program [Blender](http://www.blender.org) can be used to convert the
 output of [--sizehist](#sizehist-t) [--json](#json-t) to an image or even a
 movie of the image rotating. Here is an example image using the
-[hbchains.py](blender/hbchains.py) script in the [blender](blender/)
+[hbchain.py](blender/hbchain.py) script in the [blender](blender/)
 directory:
 
 ![Figure 1: Hydrogen bond strings, colored by chain length. Rendered with Blender](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings (Bender)")

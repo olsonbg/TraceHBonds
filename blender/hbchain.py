@@ -610,7 +610,7 @@ def main():
 
 	parser.add_argument("-r", "--radius", dest="radius", type=float,
 	                    required=False, default=Radius,
-	                    help="Radius of the tubes. (default: %(default)d)")
+	                    help="Radius of the tubes. (default: %(default)f)")
 
 	parser.add_argument("-n", "--numframes", dest="frames", type=int,
 	                    required=False, default=NumFrames,

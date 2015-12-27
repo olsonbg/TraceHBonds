@@ -80,7 +80,7 @@ void Help(char *name)
 	std::cerr << "\n";
 
 	std::cerr << "USAGE: " << "\n";
-	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--all]";
+	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--json] [--jsonall] [--incell] [--all]";
 	std::string USAGE = name;
 	USAGE += " ";
 	USAGE += usage;
@@ -115,6 +115,15 @@ void Help(char *name)
 	HelpOption("--povray",
 	           NULL,
 	           "Output in povray format, relevant for --sizehist only.");
+	HelpOption("--json",
+	           NULL,
+	           "Output in json format, relevant for --sizehist only. Useful for processing with python, and blender scripts in the blender/ directory.");
+	HelpOption("--jsonall",
+	           NULL,
+	           "Saves the chemical structure for all frames in json format. Useful for processing with python, and blender scripts in the blender/ directory.");
+	HelpOption("--incell",
+	           NULL,
+	           "Apply PBC to all hydrogen bond chains (each chain will start inside the PBC cell). Relevant for --sizehist only.");
 	HelpOption("--verbose",
 	           NULL,
 	           "Show verbose messages while running.");

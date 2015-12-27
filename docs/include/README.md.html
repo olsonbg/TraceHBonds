@@ -56,6 +56,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </style>
 <article class="markdown-body">
 <h1 id="tracehbonds">TraceHBonds</h1>
+<p>A program for finding strings of hydrogen bonded atoms in a trajectory file generated from the <em>Discover</em> molecular dynamics program.</p>
+<div class="figure">
+<img src="images/HydrogenBondStringsB.png?raw=true" title="Hydrogen Bond strings" alt="Hydrogen bond strings, colored by chain length" />
+<p class="caption">Hydrogen bond strings, colored by chain length</p>
+</div>
 <h1 id="contents">Contents</h1>
 <ul>
 <li><a href="#installation">Installation</a></li>
@@ -64,7 +69,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <ul>
 <li><a href="#sizehist">Hydrogen bond strings</a>
 <ul>
-<li><a href="#generating-image">Generating Images</a></li>
+<li><a href="#generating-images">Generating Images</a></li>
 </ul></li>
 <li><a href="#neighborhist">Neighbor distance in chains</a></li>
 <li><a href="#lengths">Hydrogen bond lengths</a></li>
@@ -73,19 +78,20 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 </ul>
 <h1 id="installation">Installation</h1>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">mkdir</span> build
-$ <span class="kw">cd</span> build
-$ <span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release ..
-$ <span class="kw">make</span>
-$ <span class="kw">src/TraceHBonds</span></code></pre></div>
-<p>To generate the documentation as html, available at <code>docs/html/index.html</code>, use</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">make</span> docs</code></pre></div>
-<p>To cross-compile, use:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<span class="kw">&lt;</span>Toolchain cmake file<span class="kw">&gt;</span> ..</code></pre></div>
+<p>To compile the program</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">mkdir</span> build
+<span class="kw">cd</span> build
+<span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release ..
+<span class="kw">make</span>
+<span class="kw">src/TraceHBonds</span></code></pre></div>
+<p>To generate the documentation as html, which will be available at <code>docs/html/index.html</code>, use</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> docs</code></pre></div>
+<p>To cross-compile, use your toolchain cmake file as:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<span class="kw">&lt;</span>Toolchain cmake file<span class="kw">&gt;</span> ..</code></pre></div>
 <h1 id="usage">Usage</h1>
-<p>And example command line would be:</p>
+<p>A typical command line would look like this:</p>
 <div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">TraceHBonds</span> --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
-<p>Below is a table of all options available from the command line. The long form options are preceded with <code>--</code>, and short form <code>-</code>. For options with both a long and short form, either one may be used on the command line.</p>
+<p>Below is a table of all options available from the command line. The long form options are preceded with <code>--</code>, and short form a single <code>-</code>. For options with both a long and short form, either one may be used on the command line.</p>
 <table>
 <thead>
 <tr class="header">
@@ -123,104 +129,125 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
 <td align="center">r</td>
 <td align="left">real number</td>
 <td align="center">yes</td>
-<td align="left">Set the cutoff length, in angstroms, for the determination of a hydrogen bond.</td>
+<td align="left">Set the cutoff length, in angstroms, for the determination of a hydrogen bond (e.g. <code>-r 2.5</code>).</td>
 </tr>
 <tr class="odd">
 <td align="left">anglecutoff</td>
 <td align="center">a</td>
 <td align="left">real number</td>
 <td align="center">yes</td>
-<td align="left">Set the cutoff angle, in degrees, for the determination of a hydrogen bond.</td>
+<td align="left">Set the cutoff angle, in degrees, for the determination of a hydrogen bond (e.g. <code>-a 90.0</code>).</td>
 </tr>
 <tr class="even">
 <td align="left">hydrogen</td>
 <td align="center">H</td>
 <td align="left">string</td>
 <td align="center">yes</td>
-<td align="left">Set the force field of donor hydrogens for hydrogen bonding (e.g. -H h1o). More than one force field may be used by specifying additional -H force field parameters. <strong>NOTE</strong> the short option is a capital 'H.'</td>
+<td align="left">Set the force field of donor hydrogens for hydrogen bonding (e.g. <code>-H h1o</code>). More than one force field may be used by specifying this option multiple times. <strong>NOTE</strong> the short option is a capital 'H.'</td>
 </tr>
 <tr class="odd">
 <td align="left">acceptor</td>
 <td align="center">A</td>
 <td align="left">string</td>
 <td align="center">yes</td>
-<td align="left">Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying additional -A force field parameters (e.g. -A o2h -A o1=). <strong>NOTE</strong> the short option is a capital 'A.'</td>
+<td align="left">Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. <code>-A o2h -A o1=</code>). <strong>NOTE</strong> the short option is a capital 'A.'</td>
 </tr>
 <tr class="even">
 <td align="left">bins</td>
 <td align="center">b</td>
 <td align="left">integer</td>
 <td align="center">no</td>
-<td align="left">Minimum number of bins to show in histograms.</td>
+<td align="left">Minimum number of bins to show in histograms (e.g. <code>-b 20</code>).</td>
 </tr>
 <tr class="odd">
-<td align="left">povray <a name="povray-t"></a></td>
+<td align="left"><a href="#povray">povray</a> <a name="povray-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
-<td align="left">Output in povray format, relevant for --sizehist only.</td>
+<td align="left">Output in povray format, relevant for <a href="#sizehist-t">--sizehist</a> only.</td>
 </tr>
 <tr class="even">
+<td align="left"><a href="#blender">json</a> <a name="json-t"></a></td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Output in json format, relevant for <a href="#sizehist-t">--sizehist</a> only. Useful for processing with python, and blender scripts in the blender/ directory</td>
+</tr>
+<tr class="odd">
+<td align="left">jsonall</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Saves the chemical structure for all frames in json format. Useful for processing with python, and blender scripts in the blender/ directory.</td>
+</tr>
+<tr class="even">
+<td align="left">incell</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center">no</td>
+<td align="left">Apply PBC to all hydrogen bond chains (each chain will start inside the PBC cell). Relevant for <a href="#sizehist-t">--sizehist</a> only.</td>
+</tr>
+<tr class="odd">
 <td align="left">verbose</td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Show verbose messages while running.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">brief</td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Show brief messages while running.</td>
 </tr>
-<tr class="even">
-<td align="left">lifetime <a name="lifetime-t"></a></td>
+<tr class="odd">
+<td align="left"><a href="#lifetime">lifetime</a> <a name="lifetime-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Calculate hydrogen bond lifetime correlations.</td>
 </tr>
-<tr class="odd">
-<td align="left">lengths <a name="lengths-t"></a></td>
+<tr class="even">
+<td align="left"><a href="#lengths">lengths</a> <a name="lengths-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Save length of all hydrogen bonds.</td>
 </tr>
-<tr class="even">
-<td align="left">angles <a name="angles-t"></a></td>
+<tr class="odd">
+<td align="left"><a href="#angles">angles</a> <a name="angles-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center"></td>
 <td align="left">Save angle of all hydrogen bonds.</td>
 </tr>
-<tr class="odd">
-<td align="left">sizehist <a name="sizehist-t"></a></td>
+<tr class="even">
+<td align="left"><a href="#sizehist">sizehist</a> <a name="sizehist-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Save hydrogen bond strings and histograms.</td>
 </tr>
-<tr class="even">
-<td align="left">neighborhist <a name="neighborhist-t"></a></td>
+<tr class="odd">
+<td align="left"><a href="#neighborhist">neighborhist</a> <a name="neighborhist-t"></a></td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Save neighbor length lists.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">all</td>
 <td align="center"></td>
 <td align="left"></td>
 <td align="center">no</td>
 <td align="left">Do all calculations and save all data.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">help</td>
 <td align="center">h</td>
 <td align="left"></td>
-<td align="center"></td>
+<td align="center">no</td>
 <td align="left">This help screen</td>
 </tr>
 </tbody>
@@ -244,7 +271,7 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
 <ul>
 <li><a href="#angles-files">List of Files Created</a></li>
 </ul></li>
-<li><a href="#lifetime">Hydrogen bond lifetiem correlations (--lifetime)</a>
+<li><a href="#lifetime">Hydrogen bond lifetime correlations (--lifetime)</a>
 <ul>
 <li><a href="#lifetime-files">List of Files Created</a></li>
 </ul></li>
@@ -259,7 +286,7 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
 <h3 id="description-of-files">Description of files</h3>
 <p>The files generated from the <a href="#sizehist-t">--sizehist</a> option consist of two parts: the <a href="#individual-chains">individual chains</a> and their atoms, and <a href="#chain-histograms">histograms of chain sizes</a>.</p>
 <h4 id="individual-chains">Individual Chains</h4>
-<p>As an example, a few lines from a data file follows, showing 3 chains.</p>
+<p>As an example, a few lines from a data file follows, showing 3 chains. The output will look a little different if either the <a href="#povray-t">--povray</a>, or <a href="#json-t">--json</a> options are used.</p>
 <pre><code># Current Element : 589
 # Atoms in Chain : 3
 # Molecules : 2
@@ -302,78 +329,8 @@ $ <span class="kw">src/TraceHBonds</span></code></pre></div>
   31.6526   21.1038   39.2359 [H]  Molecule6  H5925  h1o
   33.3777   21.2051   38.4486 [O]  Molecule6  O5420  o2h
 # Chain end-to-end distance: 5.251614</code></pre>
-<p>If the <a href="#povray-t">--povray</a> option is used, then the same hydrogen bond chains would look like this:</p>
-<pre><code>// Current Element : 1
-// Atoms in Chain : 3
-// Molecules : 2
-// Unique forcefields : 3
-// Times chain switched between Molecules (switching) : 1
-// Periodic boundary conditions applied.
-sphere_sweep {
-    linear_spline
-    3,
-    &lt;  21.6276,   27.0261,   44.9056&gt;,ChainRadius
-    &lt;  21.3585,   27.9405,   44.8265&gt;,ChainRadius
-    &lt;  20.1321,   29.5776,   43.8281&gt;,ChainRadius
-    tolerance 0.07
-    texture{ChainLength3}
-}
-// Chain end-to-end distance: 3.147660
-
-
-// Current Element : 2
-// Atoms in Chain : 9
-// Molecules : 2
-// Unique forcefields : 3
-// Times chain switched between Molecules (switching) : 1
-// Periodic boundary conditions applied.
-sphere_sweep {
-    linear_spline
-    9,
-    &lt;  24.6835,   23.4992,   41.1162&gt;,ChainRadius
-    &lt;  24.2312,   22.9546,   41.6786&gt;,ChainRadius
-    &lt;  23.0622,   23.9573,   43.4825&gt;,ChainRadius
-    &lt;  22.4585,   23.9183,   44.2600&gt;,ChainRadius
-    &lt;  21.5617,   24.1262,   45.5633&gt;,ChainRadius
-    &lt;  21.6362,   24.7840,   46.3132&gt;,ChainRadius
-    &lt;  22.6499,   25.4540,   47.5703&gt;,ChainRadius
-    &lt;  23.5335,   25.7281,   47.6493&gt;,ChainRadius
-    &lt;  25.0893,   24.1132,   46.6706&gt;,ChainRadius
-    tolerance 0.07
-    texture{ChainLength9}
-}
-// Chain end-to-end distance: 5.602967
-
-
-// Current Element : 3
-// Atoms in Chain : 5
-// Molecules : 2
-// Unique forcefields : 2
-// Times chain switched between Molecules (switching) : 1
-// Periodic boundary conditions applied.
-sphere_sweep {
-    linear_spline
-    5,
-    &lt;  28.8885,   22.9984,   40.5006&gt;,ChainRadius
-    &lt;  29.6141,   22.3548,   40.3725&gt;,ChainRadius
-    &lt;  30.7792,   21.1779,   38.8075&gt;,ChainRadius
-    &lt;  31.6526,   21.1038,   39.2359&gt;,ChainRadius
-    &lt;  33.3777,   21.2051,   38.4486&gt;,ChainRadius
-    tolerance 0.07
-    texture{ChainLength5}
-}
-// Chain end-to-end distance: 5.251614</code></pre>
-<p>The <code>Current Element</code> numbers are different because they are assigned by threads, and depend upon the order in which they finish.</p>
-<h5 id="generating-image">Generating Image</h5>
-<p>The program <a href="http://www.povray.org">POV-Ray</a> can be used to convert the output of <a href="#sizehist-t">--sizehist</a> <a href="#povray-t">--povray</a> to an image or even a movie of the image rotating. Here is an example image using the <a href="povray/prettybox.pov">prettybox.pov</a> script in the <a href="povray/">povray</a> directory for colorings and shapes:</p>
-<div style="text-align:center" markdown="1">
-<div class="figure">
-<img src="https://raw.githubusercontent.com/olsonbg/TraceHBonds/savememDocs/images/HydrogenBondStrings.png" title="Hydrogen Bond strings" alt="Hydrogen bond strings, colored by chain length" />
-<p class="caption">Hydrogen bond strings, colored by chain length</p>
-</div>
-</div>
 <h4 id="chain-histograms">Chain Histograms</h4>
-<p>This histogram shows how many chains of a specific length there are in this frame. It also shows how many loops are closed, the begin and end at the same hydrogen bond. This particular data had no closed loops.</p>
+<p>This histogram shows how many chains of a specific length there are in this frame. It also shows how many chains form closed loops (begin and end at the same hydrogen bond). This particular data had no closed loops.</p>
 <pre><code># Atoms/HBonds |Count| (For all Chains, including Closed Loops)
 #    3 /   1   |  175|**************************************************************
 #    5 /   2   |   72|**************************
@@ -414,8 +371,27 @@ sphere_sweep {
 #    1      |    8|**************************************************************
 #    2      |    8|**************************************************************
 #    3      |    3|***********************</code></pre>
+<h3 id="generating-images">Generating Images</h3>
+<h4 id="using-blender"><a name="blender"></a>Using Blender</h4>
+<p>The program <a href="http://www.blender.org">Blender</a> can be used to convert the output of <a href="#sizehist-t">--sizehist</a> <a href="#json-t">--json</a> to an image or even a movie of the image rotating. Here is an example image using the <a href="blender/hbchain.py">hbchain.py</a> script in the <a href="blender/">blender</a> directory (I need to add a legend):</p>
+<div class="figure">
+<img src="images/HydrogenBondStringsB.png?raw=true" title="Hydrogen Bond strings (Bender)" alt="Figure 1: Hydrogen bond strings, colored by chain length. Rendered with Blender" />
+<p class="caption">Figure 1: Hydrogen bond strings, colored by chain length. Rendered with Blender</p>
+</div>
+<p>The image was created by Blender using</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">blender</span> -P blender/hbchain.py -- -f output/HBonds1.json</code></pre></div>
+<p>where <code>output/HBonds1.json</code> is the output of <code>TraceHBonds</code> with the appropriate options.</p>
+<p>For help with the Blender script, try</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">blender</span> -P hbchain.py -- --help</code></pre></div>
+<h4 id="using-pov-ray"><a name="povray"></a>Using POV-Ray</h4>
+<p>The program <a href="http://www.povray.org">POV-Ray</a> can be used to convert the output of <a href="#sizehist-t">--sizehist</a> <a href="#povray-t">--povray</a> to an image or even a movie of the image rotating. Here is an example image using the <a href="povray/prettybox.pov">prettybox.pov</a> script in the <a href="povray/">povray</a> directory:</p>
+<div class="figure">
+<img src="images/HydrogenBondStrings.png?raw=true" title="Hydrogen Bond strings (POV-Ray" alt="Figure 2: Hydrogen bond strings, colored by chain length. Rendered with POV-Ray." />
+<p class="caption">Figure 2: Hydrogen bond strings, colored by chain length. Rendered with POV-Ray.</p>
+</div>
+<p>The legend text was added with <a href="http://www.gimp.org">GIMP</a>.</p>
 <h2 id="neighbor-distance-in-chains---neighborhist"><a name="neighborhist"></a>Neighbor Distance in chains (--neighborhist)</h2>
-<p>The <a href="#neighborhist-t">neighborhist</a> option calculates the distance between non-hydrogen atoms in the hydrogen bond chains. For a chain consisting of only oxygen and hydrogen atoms, this would calculate the neighbor distances between oxygen atoms in the chain.</p>
+<p>The <a href="#neighborhist-t">--neighborhist</a> option calculates the distance between non-hydrogen atoms in the hydrogen bond chains. For a chain consisting of only oxygen and hydrogen atoms, this would calculate the neighbor distances between oxygen atoms in the chain.</p>
 <h3 id="files-created-1"><a name="neighborhist-files"></a>Files Created</h3>
 <ul>
 <li>&lt;prefix&gt;-NN-AllFrames&lt;suffix&gt;</li>
@@ -424,7 +400,7 @@ sphere_sweep {
 </ul>
 <p>All files contain tab delimited text.</p>
 <h3 id="description-of-files-1">Description of files</h3>
-<p>The data start with statistics of each individual frame in a trajectory (NN-AllFrames), then all frames together (NN-Combined), followed by combining all chain lengths together for a list of only neighbor distances (NN-only).</p>
+<p>The data start with statistics of each individual frame in a trajectory <a href="#nn-allframes">NN-AllFrames</a>, then all frames together <a href="#nn-combined">NN-Combined</a>, followed by combining all chain lengths together for a list of only neighbor distances <a href="#nn-only">NN-only</a>.</p>
 <h4 id="nn-allframes">NN-AllFrames</h4>
 <p>The table in this file consists of a Count, Average, and StdDev column for each frame of the trajectory, so the table can have many columns if a trajectory with many frames is used. It's not uncommon to read 100, 1000, or more frames. Sample output is shown below, in table format for easy viewing. <strong>Note</strong>: Only the first 2 off 1000 frames of a large trajectory file are shown, and the first 13 of 27 atoms in chain for this particular sample trajectory file.</p>
 <p>n.n. = Nearest neighbor, and f is the frame number.</p>
@@ -952,7 +928,7 @@ sphere_sweep {
 </tbody>
 </table>
 <h2 id="hydrogen-bond-lengths---lengths"><a name="lengths"></a>Hydrogen bond lengths (--lengths)</h2>
-<p>The <a href="#lengths-t">--lengths</a> option calculate the length of all hydrogen bonds (hydrogen-acceptor distance), in every frame.</p>
+<p>The <a href="#lengths-t">--lengths</a> option calculates the length of all hydrogen bonds (hydrogen-acceptor distance), in every frame.</p>
 <h3 id="file-created"><a name="lengths-files"></a>File Created</h3>
 <ul>
 <li>&lt;prefix&gt;-lengths&lt;suffix&gt;</li>
@@ -968,7 +944,7 @@ sphere_sweep {
 <h3 id="description-of-file-1">Description of file</h3>
 <p>Single column of data listing the hydrogen bond angles in degrees.</p>
 <h2 id="hydrogen-bond-lifetime-correlations---lifetime"><a name="lifetime"></a> Hydrogen bond lifetime correlations (--lifetime)</h2>
-<p>The <a href="#lifetime-t">--lifetime</a> option calculates the hydrogen bond lifetime autocorrelation.</p>
+<p>The <a href="#lifetime-t">--lifetime</a> option calculates the continuous and intermittent hydrogen bond lifetime autocorrelation.</p>
 <h3 id="file-created-2"><a name="lifetime-files"></a>File Created</h3>
 <ul>
 <li>&lt;prefix&gt;-lifetimes&lt;suffix&gt;</li>

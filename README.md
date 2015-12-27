@@ -4,7 +4,7 @@ TraceHBonds
 A program for finding strings of hydrogen bonded atoms in a trajectory file
 generated from the _Discover_ molecular dynamics program.
 
-![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
+![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings")
 
 # Contents
 
@@ -68,7 +68,10 @@ command line.
 |hydrogen                                                    |   H        | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. `-H h1o`). More than one force field may be used by specifying this option multiple times.  **NOTE** the short option is a capital 'H.'|
 |acceptor                                                    |   A        | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. `-A o2h -A o1=`). **NOTE** the short option is a capital 'A.'|
 |bins                                                        |   b        | integer       | no        | Minimum number of bins to show in histograms (e.g. `-b 20`).|
-|povray                         <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
+|[povray](#povray)              <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
+|[json](#blender)               <a name="json-t"></a>        |            |               | no        | Output in json format, relevant for [--sizehist](#sizehist-t) only. Useful for processing with python, and blender scripts in the blender/ directory|
+|jsonall                                                     |            |               | no        | Saves the chemical structure for all frames in json format. Useful for processing with python, and blender scripts in the blender/ directory.|
+|incell                                                      |            |               | no        | Apply PBC to all hydrogen bond chains (each chain will start inside the PBC cell). Relevant for [--sizehist](#sizehist-t) only.|
 |verbose                                                     |            |               | no        | Show verbose messages while running. |
 |brief                                                       |            |               | no        | Show brief messages while running. |
 |[lifetime](#lifetime)          <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
@@ -77,7 +80,7 @@ command line.
 |[sizehist](#sizehist)          <a name="sizehist-t"></a>    |            |               | no        | Save hydrogen bond strings and histograms. |
 |[neighborhist](#neighborhist)  <a name="neighborhist-t"></a>|            |               | no        | Save neighbor length lists. |
 |all                                                         |            |               | no        | Do all calculations and save all data. |
-|help                                                        |   h        |               |           | This help screen |
+|help                                                        |   h        |               | no        | This help screen |
 
 # Output
 
@@ -231,15 +234,35 @@ sphere_sweep {
 The `Current Element` numbers are different because they are assigned by
 threads, and depend upon the order in which they finish.
 
-##### Generating Image
+##### <a name="blender"></a>Generating Image with Blender
+
+The program [Blender](http://www.blender.org) can be used to convert the
+output of [--sizehist](#sizehist-t) [--json](#json-t) to an image or even a
+movie of the image rotating. Here is an example image using the
+[hbchains.py](blender/hbchains.py) script in the [blender](blender/)
+directory:
+
+![Figure 1: Hydrogen bond strings, colored by chain length. Rendered with Blender](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings (Bender)")
+
+The image was created by Blender using
+
+```bash
+blender -P blender/hbchain.py -- -f output/HBonds1.json
+```
+
+where `output/HBonds1.json` is the output of TraceHBonds with the appropriate
+options.
+
+##### <a name="povray"></a>Generating Image with POV-Ray
 
 The program [POV-Ray](http://www.povray.org) can be used to convert the
 output of [--sizehist](#sizehist-t) [--povray](#povray-t) to an image or
 even a movie of the image rotating. Here is an example image using the
 [prettybox.pov](povray/prettybox.pov) script in the [povray](povray/)
-directory:
+directory (I need to add a legend):
 
-![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
+![Figure 2: Hydrogen bond strings, colored by chain length. Rendered with POV-Ray.](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings (POV-Ray")
+
 
 The legend text was added with [GIMP](http://www.gimp.org).
 

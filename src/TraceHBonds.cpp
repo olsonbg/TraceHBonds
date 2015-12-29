@@ -7,6 +7,7 @@
 #include "Trace.h"
 #include "RemoveDuplicates.h"
 #include "sizehist.h"
+#include "Structure.h"
 #include "correlation.h"
 #include "neighborhist.h"
 #include "deleteVectorPointers.h"
@@ -21,6 +22,7 @@ extern Queue<struct worker_data_s> outQueue;
 typedef std::vector<struct HydrogenBond *> HBVec;
 typedef std::vector<struct HydrogenBondIterator_s> HBVecIter;
 
+
 // Used with remove_if()
 bool deleteAtom( struct thbAtom *atom ) {
 	// delete atom->Molecule;
@@ -32,24 +34,26 @@ int doArcFile(char *ifilename,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
-              int NumBins, unsigned char flags)
+              int NumBins, unsigned int flags)
 {
 	HBVec hb;
-	std::vector<struct thbAtom *> atom;
+	std::vector<struct thbAtom     *> atom;
+	std::vector<struct thbMolecule *> molecules;
+	std::vector<struct thbBond     *> bonds;
 	unsigned int NumFramesInTrajectory = 0;
 
 	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
 	// save some memory by storing the atom coordinates only as long as we
 	// need the.
 	bool SaveMemory = true;
-	if ( flags&(NEIGHBOR_HIST|SIZE_HIST) )
+	if ( flags&(Flags::NEIGHBOR_HIST|Flags::SIZE_HIST) )
 		SaveMemory = false;
 	VERBOSE_MSG("SaveMemory: " << SaveMemory);
 
 	atom.reserve(50000);
-	DEBUG_MSG("Capacity/size of atom: " << atom.capacity() << "/" << atom.size());
+	DEBUG_MSG("Capacity/size of atom : " << atom.capacity() << "/" << atom.size());
 	// Get Atoms and their connections.
-	if ( ! ConnectionsMDF( ifilename, &atom ) ) {
+	if ( !ConnectionsMDF( ifilename, &atom, &molecules, &bonds ) ) {
 		return 1; }
 
 	// Find the Hydrogens and Acceptors.
@@ -61,13 +65,12 @@ int doArcFile(char *ifilename,
 	VERBOSE_MSG("");
 	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
-	if ( (flags & (LIFETIME|SIZE_HIST|NEIGHBOR_HIST|LENGTHS)) == 0 )
+	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS|Flags::ANGLES)) == 0 )
 	{
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}
 
-	// VERBOSE_MSG("Finding hydrogen bonds with:\n\n\tRc    < " << rCutoff << " Angstroms, and \n\tangle > " << angleCutoff << " degrees.\n");
 	VERBOSE_MSG("Max Distance (A): " << rCutoff);
 	VERBOSE_MSG("Min Angle  (deg): " << angleCutoff);
 	VERBOSE_MSG("");
@@ -101,10 +104,14 @@ int doArcFile(char *ifilename,
 		if ( (wdOut.jobtype == THREAD_JOB_HBS2) ||
 		     (wdOut.jobtype == THREAD_JOB_HBS ) )
 		{
-			/** \todo Use a more appropriate value than 5000. */
-			hb.reserve(5000*wdOut.hb->size() );
-			if ( NumFramesInTrajectory != 0 )
+			/** \todo Use a more appropriate value than 5000. Need to find
+			 * a way to estimae the number of frames
+			 **/
+			if ( NumFramesInTrajectory != 0 ) {
 				hb.reserve(NumFramesInTrajectory*wdOut.hb->size() );
+			} else {
+				hb.reserve(5000*wdOut.hb->size() );
+			}
 
 			hb.insert(hb.end(),
 			          wdOut.hb->begin(),
@@ -142,10 +149,8 @@ int doArcFile(char *ifilename,
 #else
 	PositionsCAR( ifilename, &atom, Cell, SaveMemory );
 #endif //PTHREADS
-	// std::vector<double>A, B, C;
 
 	NumFramesInTrajectory = Cell->frames;
-
 
 	if ( hb.size() == 0 )
 	{
@@ -153,19 +158,15 @@ int doArcFile(char *ifilename,
 
 		//Cleanup
 		delete Cell;
+		DeleteVectorPointers( bonds ); bonds.clear();
+		DeleteVectorPointers( molecules ); molecules.clear();
 		DeleteVectorPointers( atom ); atom.clear();
 		DeleteVectorPointers( hb ); hb.clear();
 
 		return(1);
 	}
-	// Reserve space for hydrogen bonds to minimize reallocations.
-	// This is just an emperical guess for reserve size.
-	// hb.reserve((atom.size()/4)*NumFramesInTrajectory);
+
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
-	// Now  determine the hydrogen bonds
-	// AtomNeighbors( &hb, Cell, &hydrogens, &acceptors,
-	//                rCutoff, angleCutoff );
-	DEBUG_MSG("Capacity/size of hb: " << hb.capacity() << "/" << hb.size());
 	if ( hb.size() != hb.capacity() )
 		HBVec(hb).swap(hb);
 	DEBUG_MSG("\tCapacity/size of hb: " << hb.capacity() << "/" << hb.size());
@@ -187,7 +188,7 @@ int doArcFile(char *ifilename,
 
 
 	// Hydrogen bond lifetime correlations.
-	if ( flags & LIFETIME )
+	if ( flags & Flags::LIFETIME )
 	{
 		VERBOSE_MSG("Lifetime of a hydrogen bond.");
 		VERBOSE_MSG("\tGenerating truth table.");
@@ -209,7 +210,7 @@ int doArcFile(char *ifilename,
 	}
 
 	// Save Hydrogen bond length H...Acceptor, and angle.
-	if ( flags & LENGTHS )
+	if ( flags & Flags::LENGTHS )
 	{
 		std::stringstream ofilename;
 
@@ -228,7 +229,7 @@ int doArcFile(char *ifilename,
 		}
 	}
 
-	if ( flags & ANGLES )
+	if ( flags & Flags::ANGLES )
 	{
 		std::stringstream ofilename;
 
@@ -248,7 +249,7 @@ int doArcFile(char *ifilename,
 	}
 
 
-	if ( flags & (SIZE_HIST|NEIGHBOR_HIST) ) {
+	if ( flags & (Flags::SIZE_HIST|Flags::NEIGHBOR_HIST) ) {
 
 		// Each element of the vector points to a string of hbonds.
 		// ListOfHBonds is a strings of hbonds.
@@ -259,21 +260,28 @@ int doArcFile(char *ifilename,
 		VERBOSE_RMSG("Tracing HB strings.");
 		Trace( &HBStrings, &TrjIdx_iter );
 
-		if ( flags & SIZE_HIST ) {
+		if ( flags & Flags::SIZE_HIST ) {
 			sizehist(NumFramesInTrajectory,
 			         ofPrefix, ofSuffix,
 			         &hb,
 			         Cell,
 			         NumBins,
-			         flags & POVRAY,
+			         flags,
 			         &HBStrings);
 		}
 
-		if ( flags & NEIGHBOR_HIST ) {
+		if ( flags & Flags::NEIGHBOR_HIST ) {
 			neighborhist(NumFramesInTrajectory,
 			             ofPrefix, ofSuffix,
 			             Cell,
 			             &HBStrings);
+		}
+
+		if ( flags & Flags::JSONALL ) {
+			saveStructure(NumFramesInTrajectory,
+			              ofPrefix, ofSuffix,
+			              Cell,
+			              &molecules);
 		}
 		//Cleanup
 		DeleteVectorPointers( HBStrings ); HBStrings.clear();
@@ -281,6 +289,8 @@ int doArcFile(char *ifilename,
 
 	//Cleanup
 	delete Cell;
+	DeleteVectorPointers( bonds ); bonds.clear();
+	DeleteVectorPointers( molecules ); molecules.clear();
 	DeleteVectorPointers( atom ); atom.clear();
 	DeleteVectorPointers( hb ); hb.clear();
 

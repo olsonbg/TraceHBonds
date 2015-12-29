@@ -9,7 +9,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
               HBVec *hb,
               struct PBC *Cell,
               int NumBins,
-              bool povray,
+              unsigned int flags,
               std::vector<ListOfHBonds *>* HBStrings)
 {
 	time_t timer = time(NULL);
@@ -72,7 +72,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
 	std::string CC;
 
 	// Povray uses a different comment string.
-	if ( povray )
+	if ( flags & Flags::POVRAY )
 		CC = CC2;
 	else
 		CC = CC1;
@@ -94,23 +94,41 @@ void sizehist(unsigned int NumFramesInTrajectory,
 				timer = time(NULL);
 			}
 			// Header
-			out << CC
-				<< " PBC "
-				<< Cell->p.at(TrjIdx).x()      << " "
-				<< Cell->p.at(TrjIdx).y()      << " "
-				<< Cell->p.at(TrjIdx).z()      << " "
-				<< Cell->angles.at(TrjIdx).x() << " "
-				<< Cell->angles.at(TrjIdx).y() << " "
-				<< Cell->angles.at(TrjIdx).z()
-				<< "\n";
-
-			out <<CC<< " Donor Oxygen atoms    : " << hb->size() << "\n";
-			out <<CC<< " Hydrogen atoms        : " << hb->size() << "\n";
-			out <<CC<< " Acceptor Oxygen atoms : " << hb->size() << "\n";
+			if ( ! (flags & Flags::JSON) ) 
+			{
+				out << CC
+				    << " PBC "
+				    << Cell->p.at(TrjIdx).x()      << " "
+				    << Cell->p.at(TrjIdx).y()      << " "
+				    << Cell->p.at(TrjIdx).z()      << " "
+				    << Cell->angles.at(TrjIdx).x() << " "
+				    << Cell->angles.at(TrjIdx).y() << " "
+				    << Cell->angles.at(TrjIdx).z()
+				    << "\n";
+				out <<CC<< " Donor Oxygen atoms    : " << hb->size() << "\n";
+				out <<CC<< " Hydrogen atoms        : " << hb->size() << "\n";
+				out <<CC<< " Acceptor Oxygen atoms : " << hb->size() << "\n";
+			}
 
 			// print the histograms and chains
 			prntHistograms( &out, HBStrings, &Histograms.at(TrjIdx),
-			                CC, NumBins, Cell, TrjIdx, povray );
+			                CC, NumBins, Cell, TrjIdx, flags );
+
+			if ( flags & Flags::JSON )
+			{
+				out << "{\n    \"PBC\": {\n"
+				    << "          \"xyz\": ["
+				    << Cell->p.at(TrjIdx).x()      << ", "
+				    << Cell->p.at(TrjIdx).y()      << ", "
+				    << Cell->p.at(TrjIdx).z()      << " "
+				    << "] ,\n"
+				    << "          \"angles\": ["
+				    << Cell->angles.at(TrjIdx).x() << ", "
+				    << Cell->angles.at(TrjIdx).y() << ", "
+				    << Cell->angles.at(TrjIdx).z()
+				    << "] \n"
+				    << "    }\n}]\n";
+			}
 			out.close();
 		} else {
 			BRIEF_MSG("ERROR: Can not save " <<ofilename.str() << "!" );

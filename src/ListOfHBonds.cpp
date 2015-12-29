@@ -116,8 +116,8 @@ unsigned int ListOfHBonds::MoleculeCount()
 	{
 		// Donor and Hydrogen are always on same molecule,
 		// So using one of them is sufficient.
-		molecules.push_back(current->hydrogen->Molecule);
-		molecules.push_back(current->acceptor->Molecule);
+		molecules.push_back(current->hydrogen->Molecule->Name);
+		molecules.push_back(current->acceptor->Molecule->Name);
 
 		current = current->Next;
 	}
@@ -166,7 +166,16 @@ int ListOfHBonds::AddAtEnd(struct HydrogenBond *NewItem)
 	return (size);
 }
 
-double ListOfHBonds::Round (double r,double f=1.0)
+Point ListOfHBonds::Round (Point p, double f)
+{
+	Point r( Round(p.x(), f),
+	         Round(p.y(), f),
+	         Round(p.z(), f) );
+
+	return(r);
+}
+
+double ListOfHBonds::Round (double r,double f)
 {
 	return (r > 0.0) ? floor(r*f + 0.5)/f : ceil(r*f - 0.5)/f;
 }
@@ -183,7 +192,7 @@ Point ListOfHBonds::MinimumImage( struct thbAtom *A,
 double ListOfHBonds::PrintAll( std::ostream *out,
                                struct PBC Cell,
                                unsigned int TrjIdx,
-                               bool POVRAY )
+                               unsigned int flags )
 {
 	struct HydrogenBond *current;
 	double EndToEndLength;
@@ -195,77 +204,132 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 	               current->donor->p.at(TrjIdx).z() );
 
 
+	// TODO: add --incell flag
+
 	Point r( current->donor->p.at(TrjIdx).x(),
 	         current->donor->p.at(TrjIdx).y(),
 	         current->donor->p.at(TrjIdx).z() );
+	// Use for non-wrapped
 
-	if (POVRAY)
+	if ( flags & Flags::INCELL ) {
+		// Put the first element of this chain inside the PBC cell
+		r = MinimumImage(current->donor, TrjIdx, Point(0,0,0), Cell) +
+		    Cell.p.at(TrjIdx)/2.0;
+	}
+	// Use for wrapped (in-cell)
+	// Point r = MinimumImage(current->donor, TrjIdx, Point(0,0,0), Cell) +
+	//           Cell.p.at(TrjIdx)/2.0;
+//	Point r(0.0,0.0,0.0);
+
+	if ( flags & Flags::POVRAY )
 		*out << "sphere_sweep {\n\tlinear_spline\n\t" << AtomCount()
 		          << "," << "\n";
+	else if ( flags & Flags::JSON )
+		*out << "{\n    \"hbchain\": [\n";
 
 	OFmt colX(9,4);
 	OFmt colY(9,4);
 	OFmt colZ(9,4);
 	while (current != NULL )
 	{
-		if (POVRAY)
+		Point A = Round(r, 10000.0);
+
+		r = r + MinimumImage(current->hydrogen, TrjIdx, current->donor->p.at(TrjIdx), Cell);
+		Point B = Round(r, 10000.0);
+
+		r = r + MinimumImage(current->acceptor, TrjIdx, current->hydrogen->p.at(TrjIdx),Cell);
+		Point C = Round(r, 10000.0);
+
+		if ( flags & Flags::POVRAY )
 		{
-			if ( current != Begin() )
-				r = r + MinimumImage( current->donor, TrjIdx, r, Cell );
+			*out << "\t<";
+			*out << colX << A.x() << ", ";
+			*out << colY << A.y() << ", ";
+			*out << colZ << A.z() << ">,ChainRadius" << "\n";
 
 			*out << "\t<";
-			*out << colX << Round(r.x(),10000.0) << ", ";
-			*out << colY << Round(r.y(),10000.0) << ", ";
-			*out << colZ << Round(r.z(),10000.0) << ">,ChainRadius" << "\n";
-
-			r = r + MinimumImage( current->hydrogen, TrjIdx, r, Cell );
-			*out << "\t<";
-			*out << colX << Round(r.x(),10000.0) << ", ";
-			*out << colY << Round(r.y(),10000.0) << ", ";
-			*out << colZ << Round(r.z(),10000.0) << ">,ChainRadius" << "\n";
+			*out << colX << B.x() << ", ";
+			*out << colY << B.y() << ", ";
+			*out << colZ << B.z() << ">,ChainRadius" << "\n";
 
 			if ( current == End() )
 			{
-				r = r + MinimumImage( current->acceptor, TrjIdx, r, Cell );
 				*out << "\t<";
-				*out << colX << Round(r.x(),10000.0) << ", ";
-				*out << colY << Round(r.y(),10000.0) << ", ";
-				*out << colZ << Round(r.z(),10000.0) << ">,ChainRadius" << "\n";
+				*out << colX << C.x() << ", ";
+				*out << colY << C.y() << ", ";
+				*out << colZ << C.z() << ">,ChainRadius" << "\n";
+			}
+		}
+		else if ( flags & Flags::JSON )
+		{
+			*out << "        { \"location\": [ "
+			     << colX << A.x() << ", "
+			     << colY << A.y() << ", "
+			     << colZ << A.z() << " ],\n"
+			     << "          "
+			     << "\"element\": \""     << current->donor->Type << "\", "
+			     << " \"molecule\": \""   << current->donor->Molecule->Name << "\",\n"
+			     << "          "
+			     << "\"name\": \""        << current->donor->Name << "\","
+			     << " \"forcefield\": \"" << current->donor->ForceField
+				 << "\" },\n";
+
+			*out << "        { \"location\": [ "
+			     << colX << B.x() << ", "
+			     << colY << B.y() << ", "
+			     << colZ << B.z() << " ],\n"
+			     << "          "
+			     << "\"element\": \""     << current->hydrogen->Type << "\", "
+			     << " \"molecule\": \""   << current->hydrogen->Molecule->Name << "\",\n"
+			     << "          "
+			     << "\"name\": \""        << current->hydrogen->Name << "\","
+			     << " \"forcefield\": \"" << current->hydrogen->ForceField
+				 << "\" },\n";
+
+			if ( current == End() )
+			{
+				*out << "        { \"location\": [ "
+				     << colX << C.x() << ", "
+				     << colY << C.y() << ", "
+				     << colZ << C.z() << " ],\n"
+				     << "          "
+				     << "\"element\": \""     << current->acceptor->Type << "\", "
+				     << " \"molecule\": \""   << current->acceptor->Molecule->Name << "\",\n"
+				     << "          "
+				     << "\"name\": \""        << current->acceptor->Name << "\","
+				     << " \"forcefield\": \"" << current->acceptor->ForceField
+				     << "\" }\n"
+				     << "    ]\n},\n";
 			}
 		}
 		else
 		{
-			if ( current != Begin() )
-				r = r + MinimumImage( current->donor, TrjIdx, r, Cell );
-
-			*out << colX << Round(r.x(),10000.0) << " ";
-			*out << colY << Round(r.y(),10000.0) << " ";
-			*out << colZ << Round(r.z(),10000.0);
+			*out << colX << A.x() << " ";
+			*out << colY << A.y() << " ";
+			*out << colZ << A.z();
 
 			*out << " [" << current->donor->Type << "]";
-			*out << "  " << current->donor->Molecule;
+			*out << "  " << current->donor->Molecule->Name;
 			*out << "  " << current->donor->Name;
 			*out << "  " << current->donor->ForceField << "\n";
 
-			r = r + MinimumImage( current->hydrogen, TrjIdx, r, Cell );
-			*out << colX << Round(r.x(),10000.0) << " ";
-			*out << colY << Round(r.y(),10000.0) << " ";
-			*out << colZ << Round(r.z(),10000.0);
+			*out << colX << B.x() << " ";
+			*out << colY << B.y() << " ";
+			*out << colZ << B.z();
 
 			*out << " [" << current->hydrogen->Type << "]";
-			*out << "  " << current->hydrogen->Molecule;
+			*out << "  " << current->hydrogen->Molecule->Name;
 			*out << "  " << current->hydrogen->Name;
 			*out << "  " << current->hydrogen->ForceField << "\n";
 
 			if ( current == End() )
 			{
-				r = r + MinimumImage( current->acceptor, TrjIdx, r, Cell );
-				*out << colX << Round(r.x(),10000.0) << " ";
-				*out << colY << Round(r.y(),10000.0) << " ";
-				*out << colZ << Round(r.z(),10000.0);
+				*out << colX << C.x() << " ";
+				*out << colY << C.y() << " ";
+				*out << colZ << C.z();
 
 				*out << " [" << current->acceptor->Type << "]";
-				*out << "  " << current->acceptor->Molecule;
+				*out << "  " << current->acceptor->Molecule->Name;
 				*out << "  " << current->acceptor->Name;
 				*out << "  " << current->acceptor->ForceField << "\n";
 			}
@@ -274,7 +338,7 @@ double ListOfHBonds::PrintAll( std::ostream *out,
 		// counter++;
 	}
 
-	if (POVRAY)
+	if ( flags & Flags::POVRAY )
 		*out << "\ttolerance 0.07\n\ttexture{ChainLength" << AtomCount()
 		          << "}\n}" << "\n";
 

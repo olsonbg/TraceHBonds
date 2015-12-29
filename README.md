@@ -4,7 +4,7 @@ TraceHBonds
 A program for finding strings of hydrogen bonded atoms in a trajectory file
 generated from the _Discover_ molecular dynamics program.
 
-![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
+![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings")
 
 # Contents
 
@@ -12,7 +12,7 @@ generated from the _Discover_ molecular dynamics program.
   * [Usage](#usage)
   * [Output](#output)
       * [Hydrogen bond strings](#sizehist)
-          * [Generating Images](#generating-image)
+          * [Generating Images](#generating-images)
       * [Neighbor distance in chains](#neighborhist)
       * [Hydrogen bond lengths](#lengths)
       * [Hydrogen bond angles](#angles)
@@ -68,7 +68,10 @@ command line.
 |hydrogen                                                    |   H        | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. `-H h1o`). More than one force field may be used by specifying this option multiple times.  **NOTE** the short option is a capital 'H.'|
 |acceptor                                                    |   A        | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. `-A o2h -A o1=`). **NOTE** the short option is a capital 'A.'|
 |bins                                                        |   b        | integer       | no        | Minimum number of bins to show in histograms (e.g. `-b 20`).|
-|povray                         <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
+|[povray](#povray)              <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
+|[json](#blender)               <a name="json-t"></a>        |            |               | no        | Output in json format, relevant for [--sizehist](#sizehist-t) only. Useful for processing with python, and blender scripts in the blender/ directory|
+|jsonall                                                     |            |               | no        | Saves the chemical structure for all frames in json format. Useful for processing with python, and blender scripts in the blender/ directory.|
+|incell                                                      |            |               | no        | Apply PBC to all hydrogen bond chains (each chain will start inside the PBC cell). Relevant for [--sizehist](#sizehist-t) only.|
 |verbose                                                     |            |               | no        | Show verbose messages while running. |
 |brief                                                       |            |               | no        | Show brief messages while running. |
 |[lifetime](#lifetime)          <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
@@ -77,7 +80,7 @@ command line.
 |[sizehist](#sizehist)          <a name="sizehist-t"></a>    |            |               | no        | Save hydrogen bond strings and histograms. |
 |[neighborhist](#neighborhist)  <a name="neighborhist-t"></a>|            |               | no        | Save neighbor length lists. |
 |all                                                         |            |               | no        | Do all calculations and save all data. |
-|help                                                        |   h        |               |           | This help screen |
+|help                                                        |   h        |               | no        | This help screen |
 
 # Output
 
@@ -92,7 +95,7 @@ The description of all calculations are listed below
     - [List of Files Created](#lengths-files)
   - [Hydrogen bond angles (--angles)](#angles)
     - [List of Files Created](#angles-files)
-  - [Hydrogen bond lifetiem correlations (--lifetime)](#lifetime)
+  - [Hydrogen bond lifetime correlations (--lifetime)](#lifetime)
     - [List of Files Created](#lifetime-files)
 
 ## <a name="sizehist"></a>Hydrogen bond strings (--sizehist)
@@ -115,7 +118,9 @@ parts: the [individual chains](#individual-chains) and their atoms, and
 
 #### Individual Chains
 
-As an example, a few lines from a data file follows, showing 3 chains.
+As an example, a few lines from a data file follows, showing 3 chains.  The
+output will look a little different if either the [--povray](#povray-t), or
+[--json](#json-t) options are used.
 
 ~~~~~~~~~~~~~
 # Current Element : 589
@@ -161,87 +166,6 @@ As an example, a few lines from a data file follows, showing 3 chains.
   33.3777   21.2051   38.4486 [O]  Molecule6  O5420  o2h
 # Chain end-to-end distance: 5.251614
 ~~~~~~~~~~~~~
-
-If the [--povray](#povray-t) option is used, then the same hydrogen bond
-chains would look like this:
-
-```
-// Current Element : 1
-// Atoms in Chain : 3
-// Molecules : 2
-// Unique forcefields : 3
-// Times chain switched between Molecules (switching) : 1
-// Periodic boundary conditions applied.
-sphere_sweep {
-	linear_spline
-	3,
-	<  21.6276,   27.0261,   44.9056>,ChainRadius
-	<  21.3585,   27.9405,   44.8265>,ChainRadius
-	<  20.1321,   29.5776,   43.8281>,ChainRadius
-	tolerance 0.07
-	texture{ChainLength3}
-}
-// Chain end-to-end distance: 3.147660
-
-
-// Current Element : 2
-// Atoms in Chain : 9
-// Molecules : 2
-// Unique forcefields : 3
-// Times chain switched between Molecules (switching) : 1
-// Periodic boundary conditions applied.
-sphere_sweep {
-	linear_spline
-	9,
-	<  24.6835,   23.4992,   41.1162>,ChainRadius
-	<  24.2312,   22.9546,   41.6786>,ChainRadius
-	<  23.0622,   23.9573,   43.4825>,ChainRadius
-	<  22.4585,   23.9183,   44.2600>,ChainRadius
-	<  21.5617,   24.1262,   45.5633>,ChainRadius
-	<  21.6362,   24.7840,   46.3132>,ChainRadius
-	<  22.6499,   25.4540,   47.5703>,ChainRadius
-	<  23.5335,   25.7281,   47.6493>,ChainRadius
-	<  25.0893,   24.1132,   46.6706>,ChainRadius
-	tolerance 0.07
-	texture{ChainLength9}
-}
-// Chain end-to-end distance: 5.602967
-
-
-// Current Element : 3
-// Atoms in Chain : 5
-// Molecules : 2
-// Unique forcefields : 2
-// Times chain switched between Molecules (switching) : 1
-// Periodic boundary conditions applied.
-sphere_sweep {
-	linear_spline
-	5,
-	<  28.8885,   22.9984,   40.5006>,ChainRadius
-	<  29.6141,   22.3548,   40.3725>,ChainRadius
-	<  30.7792,   21.1779,   38.8075>,ChainRadius
-	<  31.6526,   21.1038,   39.2359>,ChainRadius
-	<  33.3777,   21.2051,   38.4486>,ChainRadius
-	tolerance 0.07
-	texture{ChainLength5}
-}
-// Chain end-to-end distance: 5.251614
-```
-
-The `Current Element` numbers are different because they are assigned by
-threads, and depend upon the order in which they finish.
-
-##### Generating Image
-
-The program [POV-Ray](http://www.povray.org) can be used to convert the
-output of [--sizehist](#sizehist-t) [--povray](#povray-t) to an image or
-even a movie of the image rotating. Here is an example image using the
-[prettybox.pov](povray/prettybox.pov) script in the [povray](povray/)
-directory:
-
-![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings")
-
-The legend text was added with [GIMP](http://www.gimp.org).
 
 #### Chain Histograms
 
@@ -305,6 +229,46 @@ for each chain length.
 #    2      |    8|**************************************************************
 #    3      |    3|***********************
 ```
+
+### Generating Images
+
+#### <a name="blender"></a>Using Blender
+
+The program [Blender](http://www.blender.org) can be used to convert the
+output of [--sizehist](#sizehist-t) [--json](#json-t) to an image or even a
+movie of the image rotating. Here is an example image using the
+[hbchain.py](blender/hbchain.py) script in the [blender](blender/)
+directory (I need to add a legend):
+
+![Figure 1: Hydrogen bond strings, colored by chain length. Rendered with Blender](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings (Bender)")
+
+The image was created by Blender using
+
+```bash
+blender -P blender/hbchain.py -- -f output/HBonds1.json
+```
+
+where `output/HBonds1.json` is the output of `TraceHBonds` with the appropriate
+options.
+
+For help with the Blender script, try
+
+```bash
+blender -P hbchain.py -- --help
+```
+
+#### <a name="povray"></a>Using POV-Ray
+
+The program [POV-Ray](http://www.povray.org) can be used to convert the
+output of [--sizehist](#sizehist-t) [--povray](#povray-t) to an image or
+even a movie of the image rotating. Here is an example image using the
+[prettybox.pov](povray/prettybox.pov) script in the [povray](povray/)
+directory:
+
+![Figure 2: Hydrogen bond strings, colored by chain length. Rendered with POV-Ray.](/images/HydrogenBondStrings.png?raw=true "Hydrogen Bond strings (POV-Ray")
+
+
+The legend text was added with [GIMP](http://www.gimp.org).
 
 
 ## <a name="neighborhist"></a>Neighbor Distance in chains (--neighborhist)

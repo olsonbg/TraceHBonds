@@ -13,6 +13,7 @@
 #include "VectorTypes.h"
 #include "OutputFormat.h"
 #include "Point.h"
+#include "flags.h"
 
 /**
  *
@@ -36,6 +37,28 @@ struct PBC
 };
 
 /**
+ * Structure to hold bonds
+ **/
+struct thbBond
+{
+	struct thbAtom *A;      /**< Atom participating in this bond */
+	struct thbAtom *B;      /**< Atom participating in this bond */
+	int Order;              /**< Bond order */
+};
+
+
+/**
+ * Structure to hold molecule information
+ **/
+struct thbMolecule
+{
+	std::string Name;
+	/** All atoms associated in this molecule **/
+	std::vector<struct thbAtom *> atoms;
+	std::vector<struct thbBond *> bonds;
+};
+
+/**
  * Structure to hold atom information
  **/
 struct thbAtom
@@ -46,17 +69,19 @@ struct thbAtom
 	std::vector<class Point> p;
 
 	// These should not change with different frames(snapshots).
-	unsigned int ID;            /**< Unique ID of this atom */
-	std::string Type;           /**< Type of atom (E.g., "C", "H", "N", "Au")*/
-	std::string Name;           /**< Unique name of atom                     */
-	std::string Residue;        /**< Residue this atom belongs to            */
-	unsigned int ResidueNum;    /**< Residue number this atom belongs to     */
-	std::string Molecule;       /**< Molecule name this atom belongs to      */
-	std::string ForceField;     /**< Forcefield used for this atom           */
+	unsigned int ID;              /**< Unique ID of this atom                */
+	std::string Type;             /**< Type of atom (E.g., "C", "H", "N")    */
+	std::string Name;             /**< Unique name of atom                   */
+	std::string Residue;          /**< Residue this atom belongs to          */
+	unsigned int ResidueNum;      /**< Residue number which this atom belongs*/
+	struct thbMolecule *Molecule; /**< Molecule to which this atom belongsi  */
+	std::string ForceField;       /**< Forcefield used for this atom         */
 	/**
 	 * How many times this atom can contribute to hydrogen bonding
 	 **/
 	unsigned int HydrogenBondMax;
+	/** Bonds this atom participates in */
+	std::vector<struct thbBond *> Bonds;
 
 	/**
 	 * \name Atoms connected to this one.
@@ -325,13 +350,14 @@ class ListOfHBonds
 		double PrintAll(std::ostream *out,
 		                struct PBC Cell,
 		                unsigned int TrjIdx,
-		                bool POVRAY);
+		                unsigned int flags);
 
 	private:
 		unsigned int size;
 		unsigned int HBsize;
 		struct HydrogenBond *Beginning;
-		double Round (double r, double f);
+		Point  Round (Point p, double f=1.0);
+		double Round (double r, double f=1.0);
 
 };
 #endif // _ListOfHBonds_h

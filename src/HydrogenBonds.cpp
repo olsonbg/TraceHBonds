@@ -63,6 +63,37 @@ void getHydrogenBondElements( std::vector<struct thbAtom *> *atom,
 	BRIEF_MSG("]");
 }
 
+bool Connected( struct thbAtom *A, struct thbAtom *B )
+{
+	for ( std::vector<struct thbBond *>::iterator it = A->Bonds.begin();
+	      it < A->Bonds.end();
+	      ++it )
+	{
+		if (std::find(B->Bonds.begin(), B->Bonds.end(), *it) != B->Bonds.end())
+		{
+			// VERBOSE_MSG("Connected");
+			return(true);
+		}
+	}
+
+	// VERBOSE_MSG("Not Connected");
+	return(false);
+}
+
+std::vector<struct thbAtom *>ConnectedAtoms( struct thbAtom *atom )
+{
+	std::vector<struct thbAtom *> c;
+
+	for( std::vector<struct thbBond *>::iterator it = atom->Bonds.begin();
+	     it < atom->Bonds.end();
+	     ++it)
+	{
+		( (*it)->A == atom )?c.push_back( (*it)->B ):c.push_back( (*it)->A );
+	}
+
+	return(c);
+}
+
 // Savemem version.
 void HBs( HBVec *hb,
           Point cell,
@@ -95,7 +126,7 @@ void HBs( HBVec *hb,
 			// Make sure this acceptor is not covalently bonded to the hydrogen
 			// we are looking at.  The angle check would catch this, but this
 			// will skip a few calculations.
-			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
+			if ( Connected(*it_a, *it_h) )
 				continue;
 
 			// location of the acceptor atom of interest.
@@ -107,8 +138,13 @@ void HBs( HBVec *hb,
 			if ( r2 < rCutoff2)
 			{
 				// Distance cutoff is good, now check the angle.
-				// location of the donor atom connected to the Hydrogen.
-				D = Coordinates->at( (*it_h)->ConnectedAtom.at(0)->ID );
+				std::vector<struct thbAtom *>donors = ConnectedAtoms(*it_h);
+
+				// Only one atom can be bonded to a hydrogen, so we know
+				// element zero (0) is the one we want.
+				// D is the location of the donor atom connected to the
+				// Hydrogen.
+				D = Coordinates->at( donors.at(0)->ID );
 
 				double angle = H.angle(A,D);
 				if ( angle > angleCutoff )
@@ -120,7 +156,7 @@ void HBs( HBVec *hb,
 					NewHB->angle    = angle;
 					NewHB->hydrogen = *it_h;
 					NewHB->acceptor = *it_a;
-					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
+					NewHB->donor    = donors.at(0);
 					NewHB->TrajIdx  = TrjIdx;
 					// NewHB->acceptorDonorDistance=D.minimumImageDistance(A,cell);
 
@@ -161,7 +197,7 @@ void HBs( HBVec *hb,
 			// Make sure this acceptor is not covalently bonded to the hydrogen
 			// we are looking at.  The angle check would catch this, but this
 			// will skip a few calculations.
-			if ( (*it_a) == (*it_h)->ConnectedAtom.at(0) )
+			if ( Connected(*it_a, *it_h) )
 				continue;
 
 			// location of the acceptor atom of interest.
@@ -173,10 +209,20 @@ void HBs( HBVec *hb,
 			if ( r2 < rCutoff2)
 			{
 				// Distance cutoff is good, now check the angle.
-				// location of the donor atom connected to the Hydrogen.
-				D = (*it_h)->ConnectedAtom.at(0)->p.at(TrjIdx);
+				std::vector<struct thbAtom *>donors = ConnectedAtoms(*it_h);
+
+				// Only one atom can be bonded to a hydrogen, so we know
+				// element zero (0) is the one we want.
+				// D is the location of the donor atom connected to the
+				// Hydrogen.
+				D = donors.at(0)->p.at(TrjIdx);
 
 				double angle = H.angle(A,D);
+
+				// VERBOSE_MSG("A: " << (*it_a)->Name << " " << A.x() << " " << A.y() << " " << A.z());
+				// VERBOSE_MSG("H: " << (*it_h)->Name << " " << H.x() << " " << H.y() << " " << H.z());
+				// VERBOSE_MSG("D: " << donors.at(0)->Name << " " << D.x() << " " << D.y() << " " << D.z());
+
 				if ( angle > angleCutoff )
 				{
 					struct HydrogenBond *NewHB;
@@ -186,7 +232,7 @@ void HBs( HBVec *hb,
 					NewHB->angle    = angle;
 					NewHB->hydrogen = *it_h;
 					NewHB->acceptor = *it_a;
-					NewHB->donor    = (*it_h)->ConnectedAtom.at(0);
+					NewHB->donor    = donors.at(0);
 					NewHB->TrajIdx  = TrjIdx;
 
 					NewHB->acceptorDonorDistance=D.minimumImageDistance(A,cell);

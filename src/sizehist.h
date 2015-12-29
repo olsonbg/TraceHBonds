@@ -5,7 +5,7 @@ void sizehist(unsigned int NumFramesInTrajectory,
               HBVec *hb,
               struct PBC *Cell,
               int NumBins,
-              bool povray,
+              unsigned int flags,
               std::vector<ListOfHBonds *>*HBStrings);
 
 #endif // _sizehist_h

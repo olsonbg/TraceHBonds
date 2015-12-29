@@ -1,2 +1,4 @@
 /build/
 /datafiles
+/blender/*.pyc
+__pycache__

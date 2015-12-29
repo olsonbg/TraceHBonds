@@ -40,7 +40,7 @@ class lzma_input_filter : public boost::iostreams::input_filter {
 				int c;
 				strm.next_in = inbuf;
 
-				int i = 0;
+				unsigned int i = 0;
 				while( i < sizeof(inbuf) )
 				{
 					if ( (c = boost::iostreams::get(src)) == EOF ||

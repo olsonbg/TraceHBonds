@@ -155,18 +155,22 @@ def element_sphere( obname, element, scale ):
 	                  'other' : 1.70
 	                }
 
-	mat_name = 'ElementMaterial-{0:s}'.format(obname)
+	mat_name = 'ElementMaterial-{0:s}'.format(element)
 
-	mat = bpy.data.materials.new(mat_name)
-	if element in element_colors:
-		color = element_colors[element]
+	mat = None
+	if mat_name not in bpy.data.materials:
+		mat = bpy.data.materials.new(mat_name)
+		if element in element_colors:
+			color = element_colors[element]
+		else:
+			color = element_colors['other']
+			print("No color definition for {0:s}.".format( element ) )
+
+		color = [x/255.0 for x in color]
+
+		material_nodes(mat, color )
 	else:
-		color = element_colors['other']
-		print("No color definition for {0:s}.".format( element ) )
-
-	color = [x/255.0 for x in color]
-
-	material_nodes(mat, color )
+		mat = bpy.data.materials[mat_name]
 
 	# Sphere for this element
 	bpy.ops.object.select_all(action='DESELECT')
@@ -181,7 +185,7 @@ def element_sphere( obname, element, scale ):
 	bpy.ops.mesh.primitive_uv_sphere_add(location=(0,0,0),
 	                                     size=e_size/scale/5.0)
 	sphere = bpy.context.object
-	sphere.name = 'Element-{0:s}'.format(element)
+	sphere.name = obname
 	bpy.ops.object.shade_smooth()
 	sphere.data.materials.append( mat )
 	sphere.select = False
@@ -206,12 +210,16 @@ def element_cylinder( name, bondradius, scale ):
 
 
 def draw_structure( data, scale ):
+	# Store objects here, then link them to the scene at the end of this
+	# function.
+	obs = list()
+
 	# Empty object used as parent for chemical structure.
-	bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
-	bpy.context.object.name = 'Structure'
-	bpy.context.object.hide        = True
-	bpy.context.object.hide_render = True
-	bpy.context.object.hide_select = True
+	ob_structure = bpy.data.objects.new('Structure', None)
+	ob_structure.hide        = False
+	ob_structure.hide_render = False
+	ob_structure.hide_select = False
+	obs.append(ob_structure)
 
 	# Materials
 	mat = bpy.data.materials.new("BondMaterial")
@@ -224,51 +232,56 @@ def draw_structure( data, scale ):
 	v_triple = 3.0*bondradius/scale
 
 	ob_elements = {}
-	ob_bonds = {}
+	ob_bondtypes = {}
 	Ats = []
-	obs = list()
+
 	for mol in data:
+		ob_molecule = None
+		ob_atoms = None
+		ob_element = None
+		ob_bonds = None
+		ob_bondtype = None
+
 		if 'name' in mol:
 			# Empty object used as parent for molecules.
-			bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
-			bpy.context.object.name = mol['name']
-			bpy.context.object.parent = bpy.data.objects['Structure']
-			bpy.context.object.hide        = True
-			bpy.context.object.hide_render = True
-			bpy.context.object.hide_select = True
-			ob_molecule = bpy.data.objects[ mol['name'] ]
+			ob_molecule = bpy.data.objects.new(mol['name'], None)
+			ob_molecule.parent = ob_structure
+			obs.append(ob_molecule)
 			print( "Molecule: {0:s}".format( mol['name'] ) )
 
 		if 'atoms' in mol:
 			start_time2 = time.time()
 			# Empty object used as parent for atoms.
-			bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
-			bpy.context.object.name = 'Atoms'
-			bpy.context.object.parent = ob_molecule
-			bpy.context.object.hide        = True
-			bpy.context.object.hide_render = True
-			bpy.context.object.hide_select = True
-			ob_atom_parent = bpy.data.objects['Atoms']
+			atom_parent_name = 'Atoms ({0:s})'.format( mol['name'] )
+			ob_atoms = bpy.data.objects.new(atom_parent_name, None)
+			ob_atoms.parent = ob_molecule
+			obs.append(ob_atoms)
 
 			for atom in mol['atoms']:
 				loc = [ x/scale for x in atom['location'] ]
 
 				element = "{0:s} {1:s}".format( atom['element'],
 				                                atom['forcefield'] )
+				atom_name = "{0:s} {1:s} ({2:s})".format( atom['element'],
+				                                          atom['forcefield'],
+				                                          mol['name'] )
 
-				if element not in ob_elements:
-					ob_elements[element] = element_sphere(element,atom['element'],scale)
-					bpy.ops.object.empty_add(type='CUBE',radius=0.1)
-					bpy.context.object.name = element
-					bpy.context.object.parent = ob_atom_parent
-					bpy.context.object.hide        = True
-					bpy.context.object.hide_render = True
-					bpy.context.object.hide_select = True
-					#  print("Size of elements: {0:d}".format( len(ob_elements) ))
+				if atom_name not in ob_elements:
+					sphere_name = 'Sphere-{0:s}'.format( atom_name )
+					ob_elements[atom_name] = element_sphere(sphere_name,
+					                                        atom['element'],
+					                                        scale)
 
-				ob = ob_elements[element].copy()
+					# Empty element to be parent of these atoms
+					ob_element = bpy.data.objects.new(atom_name, None)
+					ob_element.parent = ob_atoms
+					obs.append(ob_element)
+				else:
+					ob_element = bpy.data.objects[atom_name]
+
+				ob = ob_elements[atom_name].copy()
 				ob.location = loc
-				ob.parent = bpy.data.objects[element]
+				ob.parent = ob_element
 				ob.name = atom['name']
 
 				obs.append(ob)
@@ -279,20 +292,14 @@ def draw_structure( data, scale ):
 
 			print("Atoms: %s seconds" % (time.time() - start_time2))
 
-		#  print("Objects in scene: {0:d} ".format( len(bpy.context.scene.objects) ))
-		#  for obj in bpy.context.scene.objects:
-		#      print("\tObject in scene: {0:s} ".format( obj.name ) )
 
 		if 'bonds' in mol:
 			start_time2 = time.time()
 			# Empty object used as parent for bonds
-			bpy.ops.object.empty_add(type='CUBE',radius=0.1, location=(0,0,0))
-			bpy.context.object.name = 'Bonds'
-			bpy.context.object.parent = ob_molecule
-			bpy.context.object.hide        = True
-			bpy.context.object.hide_render = True
-			bpy.context.object.hide_select = True
-			ob_bond_parent = bpy.data.objects['Bonds']
+			bond_parent_name = 'Bonds ({0:s})'.format( mol['name'] )
+			ob_bonds = bpy.data.objects.new(bond_parent_name, None)
+			ob_bonds.parent = ob_molecule
+			obs.append(ob_bonds)
 
 			for bond in mol['bonds']:
 				ID1 = bond["IDs"][0]
@@ -300,72 +307,86 @@ def draw_structure( data, scale ):
 
 				v1 = mathutils.Vector( Ats[ID1][0] )
 				v2 = mathutils.Vector( Ats[ID2][0] )
-				vdiff = v2-v1
-				height = vdiff.magnitude
-				loc = v1+vdiff/2.0
-				to_rotate = cylinder_axis.rotation_difference( vdiff )
+				vbond = v2-v1
+				height = vbond.magnitude
+				loc = v1+vbond/2.0
+				to_rotate = cylinder_axis.rotation_difference( vbond )
 
-				bond_type = "{0:s}-{1:s}({2:d})".format( Ats[ID1][1],
-				                                        Ats[ID2][1],
-				                                        bond['order'] )
-				bond_name = "{0:s}-{1:s}".format( Ats[ID1][2],
-				                                  Ats[ID2][2])
-				if bond_type not in ob_bonds:
-					ob_bonds[bond_type] = element_cylinder( bond_name,
-					                                        bondradius,
-					                                        scale )
-					bpy.ops.object.empty_add(type='CUBE',radius=0.1)
-					bpy.context.object.name = bond_type
-					bpy.context.object.parent = ob_bond_parent
-					bpy.context.object.hide        = True
-					bpy.context.object.hide_render = True
-					bpy.context.object.hide_select = True
-					#  print("Size of bonds: {0:d}".format( len(ob_bonds) ))
+				bond_name = "{0:s}-{1:s} [{2:d}] ({3:s})".format( Ats[ID1][1],
+				                                                  Ats[ID2][1],
+				                                                  bond['order'],
+				                                                  mol['name'])
+				if bond_name not in ob_bondtypes:
+					cylinder_name = 'Cylinder-{0:s}'.format( bond_name )
+					ob_bondtypes[bond_name] = element_cylinder( cylinder_name,
+					                                            bondradius,
+					                                            scale )
 
-				ob = ob_bonds[bond_type].copy()
-				#  ob.data = ob_bonds[bond_name].data.copy() # Full copy, not linked
-				ob.parent = bpy.data.objects[bond_type]
+					# Empty element to be parent of these bonds
+					ob_bondtype = bpy.data.objects.new(bond_name, None)
+					ob_bondtype.parent = ob_bonds
+					obs.append(ob_bondtype)
+				else:
+					ob_bondtype = bpy.data.objects[bond_name]
+
+				ob = ob_bondtypes[bond_name].copy()
+				ob.parent = ob_bondtype
 				ob.dimensions[2] = height
 				ob.rotation_quaternion = to_rotate
 
 				if bond['order'] == 1:
 					ob.location = loc
+					ob.name = '{0:d}-{1:d}'.format( ID1, ID2 )
 					obs.append(ob)
 				elif bond['order'] == 2:
-					ob.location = loc + v_double*loc.normalized()
-					obs.append(ob)
+					# any unit vector perpendicular to vbond (the bond vector)
+					# will suffice.
+					orthogonal = vbond.orthogonal().normalized()
+
+					ob.location = loc + v_double * orthogonal
 
 					ob2 = ob.copy()
-					ob2.location = loc - v_double*loc.normalized()
+					ob2.location = loc - v_double * orthogonal
+
+					ob.name  = '{0:d}-{1:d} b1'.format( ID1, ID2 )
+					ob2.name = '{0:d}-{1:d} b2'.format( ID1, ID2 )
+
+					obs.append(ob)
 					obs.append(ob2)
 				elif bond['order'] == 3:
+					# any unit vector perpendicular to vbond (the bond vector)
+					# will suffice.
+					orthogonal = vbond.orthogonal().normalized()
+
 					ob.location = loc
-					obs.append(ob)
 
 					ob2 = ob.copy()
-					ob2.location = loc + v_triple*loc.normalized()
-					obs.append(ob2)
+					ob2.location = ob.location + v_triple * orthogonal
 
 					ob3 = ob.copy()
-					ob3.location = loc - v_triple*loc.normalized()
+					ob3.location = ob.location - v_triple * orthogonal
+
+					ob.name  = '{0:d}-{1:d} b1'.format( ID1, ID2 )
+					ob2.name = '{0:d}-{1:d} b2'.format( ID1, ID2 )
+					ob3.name = '{0:d}-{1:d} b3'.format( ID1, ID2 )
+
+					obs.append(ob)
+					obs.append(ob2)
 					obs.append(ob3)
 
 			print("Bonds: %s seconds " % (time.time() - start_time2))
-		#  print("Objects in scene: {0:d} ".format( len(bpy.context.scene.objects) ))
-		#  for obj in bpy.context.scene.objects:
-		#      print("\tObject in scene: {0:s} ".format( obj.name ) )
-
 
 	# Cleanup
 	bpy.ops.object.select_all(action='DESELECT')
 	#  Select objects to delete
-	for ob_name in ob_bonds:
-		ob_bonds[ob_name].select = True
+	for ob_name in ob_bondtypes:
+		ob_bondtypes[ob_name].select = True
 
 	for ob_name in ob_elements:
 		ob_elements[ob_name].select = True
 
 	bpy.ops.object.delete()
+
 
 	print("Linking objects to scene")
 	for ob in obs:

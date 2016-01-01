@@ -307,10 +307,10 @@ def draw_structure( data, scale ):
 
 				v1 = mathutils.Vector( Ats[ID1][0] )
 				v2 = mathutils.Vector( Ats[ID2][0] )
-				vdiff = v2-v1
-				height = vdiff.magnitude
-				loc = v1+vdiff/2.0
-				to_rotate = cylinder_axis.rotation_difference( vdiff )
+				vbond = v2-v1
+				height = vbond.magnitude
+				loc = v1+vbond/2.0
+				to_rotate = cylinder_axis.rotation_difference( vbond )
 
 				bond_name = "{0:s}-{1:s} [{2:d}] ({3:s})".format( Ats[ID1][1],
 				                                                  Ats[ID2][1],
@@ -336,24 +336,42 @@ def draw_structure( data, scale ):
 
 				if bond['order'] == 1:
 					ob.location = loc
+					ob.name = '{0:d}-{1:d}'.format( ID1, ID2 )
 					obs.append(ob)
 				elif bond['order'] == 2:
-					ob.location = loc + v_double*loc.normalized()
-					obs.append(ob)
+					# any unit vector perpendicular to vbond (the bond vector)
+					# will suffice.
+					orthogonal = vbond.orthogonal().normalized()
+
+					ob.location = loc + v_double * orthogonal
 
 					ob2 = ob.copy()
-					ob2.location = loc - v_double*loc.normalized()
+					ob2.location = loc - v_double * orthogonal
+
+					ob.name  = '{0:d}-{1:d} b1'.format( ID1, ID2 )
+					ob2.name = '{0:d}-{1:d} b2'.format( ID1, ID2 )
+
+					obs.append(ob)
 					obs.append(ob2)
 				elif bond['order'] == 3:
+					# any unit vector perpendicular to vbond (the bond vector)
+					# will suffice.
+					orthogonal = vbond.orthogonal().normalized()
+
 					ob.location = loc
-					obs.append(ob)
 
 					ob2 = ob.copy()
-					ob2.location = loc + v_triple*loc.normalized()
-					obs.append(ob2)
+					ob2.location = ob.location + v_triple * orthogonal
 
 					ob3 = ob.copy()
-					ob3.location = loc - v_triple*loc.normalized()
+					ob3.location = ob.location - v_triple * orthogonal
+
+					ob.name  = '{0:d}-{1:d} b1'.format( ID1, ID2 )
+					ob2.name = '{0:d}-{1:d} b2'.format( ID1, ID2 )
+					ob3.name = '{0:d}-{1:d} b3'.format( ID1, ID2 )
+
+					obs.append(ob)
+					obs.append(ob2)
 					obs.append(ob3)
 
 			print("Bonds: %s seconds " % (time.time() - start_time2))

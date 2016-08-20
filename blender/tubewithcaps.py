@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #------------------------------------------------------------------------------
 # Name:        tubewithcaps.py
 # Purpose:     Generate tubes in blender which follow a path. The tubes have a

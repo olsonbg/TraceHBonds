@@ -1,4 +1,3 @@
-#include <math.h>
 #include "Point.h"
 
 double Point::Round (double r, double f) {

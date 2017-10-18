@@ -385,8 +385,8 @@ bool ConnectionsMDF(const char *filename,
 		MDFfile.replace(tag, 4, ".mdf");
 
 	std::ifstream MDFifp;
-	if (MDFifp == NULL)
-		return(false);
+	// if (MDFifp == NULL)
+	//     return(false);
     boost::iostreams::filtering_stream<boost::iostreams::input> MDFin;
 
     if ( !openfile( MDFfile.c_str(), &MDFin, &MDFifp ) ) {
@@ -427,8 +427,8 @@ bool PositionsCAR(const char *filename,
 	std::string CARfile = filename;
 
 	std::ifstream CARifp;
-	if (CARifp == NULL)
-		return(false);
+	// if (CARifp == NULL)
+	//     return(false);
     boost::iostreams::filtering_stream<boost::iostreams::input> CARin;
 
 	if ( !openfile( CARfile.c_str(), &CARin, &CARifp ) ) {

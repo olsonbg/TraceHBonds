@@ -169,7 +169,7 @@ bool ReadMdf(boost::iostreams::filtering_stream<boost::iostreams::input> *in,
 
 	char line[256];
 	char molecule[80];
-	char residue[4];
+	char residue[5];
 	unsigned int residueNum;
 	unsigned int ID=0;
 	char name[80];

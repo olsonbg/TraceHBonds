@@ -6,33 +6,18 @@
 #ifndef _ReadCarMdf_h
 #define _ReadCarMdf_h
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/bzip2.hpp>
+// #include <boost/iostreams/device/file.hpp>
+// #include <boost/iostreams/copy.hpp>
+// #include <boost/iostreams/filter/gzip.hpp>
+// #include <boost/iostreams/filter/bzip2.hpp>
 #include <vector>
 #include <math.h>
+#include "OpenFile.h"
 #include "queue.h"
 #include "WorkerThreads.h"
 #include "cpu.h"
 #include "ListOfHBonds.h"
 #include "TraceHBonds.h"
-
-/**
- * Opens a file for reading
- *
- * Determines the type of file and sets up the appropriate
- * boost::iostreams::filtering_stream.
- *
- * \param[in]      filename Name of file
- * \param[in,out]  in       boost filtering_stream
- * \param[in,out]  ifp      ifstream
- *
- * \return \c TRUE if the file could be open, \c FALSE otherwise
- */
-bool openfile(const char *filename,
-              boost::iostreams::filtering_stream<boost::iostreams::input> *in,
-              std::ifstream *ifp);
 
 /**
  * Read Discover CAR or ARC file.

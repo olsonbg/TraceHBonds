@@ -5,13 +5,6 @@
 #include "lzma.h"
 #endif
 
-extern bool THB_VERBOSE;
-
-#ifdef PTHREADS
-extern Queue<struct worker_data_s> inQueue;
-extern Queue<struct worker_data_s> outQueue;
-#endif
-
 unsigned int toUInt(std::string s)
 {
 	std::stringstream in(s, std::ios_base::in);

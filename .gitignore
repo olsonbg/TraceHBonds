@@ -1,4 +1,5 @@
 /build/
 /datafiles
 /blender/*.pyc
+/src/.syntastic_cpp_config
 __pycache__

@@ -6,7 +6,7 @@
  **/
 #ifndef _MessageDefines_h
 #define _MessageDefines_h
-#include <ostream>
+#include <iostream>
 
 // namespace Color {
 //     enum Code {
@@ -31,6 +31,8 @@
 /** Macro for writing debug messages.  */
 #define DEBUG_MSG(str) do { } while ( false )
 #endif
+
+extern bool THB_VERBOSE;
 
 #ifdef __linux
 	/** \name Macros for writing verbose messages to stdout*/

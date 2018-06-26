@@ -614,11 +614,10 @@ def main():
         argv = argv[argv.index("--") + 1:]  # get all args after "--"
 
     # When --help or no args are given, print this help
-    usage_text = \
-        "Run blender with this script:\n\n" \
-        "  blender --python " + __file__ + " -- [options]"
+    usage_text = "  blender --python " + __file__ + " -- [options]"
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=usage_text)
+    parser = argparse.ArgumentParser(description="Render output from TraceHBonds",
+                                     prog=usage_text)
 
     # Possible types are: string, int, long, choice, float and complex.
     parser.add_argument("-f", "--file", dest="filename", type=str,
@@ -645,11 +644,12 @@ def main():
                         required=False, default=WhiteIndex,
                         help="Location of 'white' in the divergent colormap. From the shortest chain to WHITE_INDEX the color will go blue to white. From WHITE_INDEX to the longest chain the color will go white to red. (default: %(default)d)")
 
-    args = parser.parse_args(argv)
-
     if not argv:
         parser.print_help()
+        bpy.ops.wm.quit_blender()
         return
+
+    args = parser.parse_args(argv)
 
     # Load data
     print("Loading data.")

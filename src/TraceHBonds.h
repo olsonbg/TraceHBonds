@@ -17,6 +17,7 @@
 #include <set>
 #include "MessageDefines.h"
 #include "ReadCarMdf.h"
+#include "ReadLAMMPS.h"
 #include "ListOfHBonds.h"
 #include "Lifetime.h"
 #include "Point.h"
@@ -59,7 +60,9 @@ struct HydrogenBondIterator_s
  *
  * Main function to drive calculations.
  *
- * \param[in] ifilename    Name of file to open
+ * \param[in] ifilename    Name of file to open for connections
+ * \param[in] fileTrj      Name of file to open for coordinates (trajectory)
+ * \param[in] fileMols     Name of file to open for molecule definitions
  * \param[in] ofPrefix     Prefix of filename to save data (e.g. "HBonds")
  * \param[in] ofSuffix     Suffix of filename to save data (e.g. ".dat")
  * \param[in] match        Atoms which contribute to hydrogen bonding, specified by their forcefields,
@@ -70,7 +73,7 @@ struct HydrogenBondIterator_s
  *
  * \return integer \c 0 on success, \c 1 on error encountered
  */
-int doArcFile(char *ifilename,
+int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,

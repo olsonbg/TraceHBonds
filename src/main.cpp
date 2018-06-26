@@ -27,7 +27,11 @@ extern Queue<struct worker_data_s> inQueue;
 int main(int argc, char *argv[])
 {
 	unsigned int NumBins = 0;
-	char *fArc        =  NULL; // arc filename (without the .arc extension).
+	// Connections filename without the .arc extension for discover, with
+	// extension for LAMMPS.
+	char *fileData    =  NULL;
+	char *fileTrj     =  NULL; // LAMMPS trajectory file.
+	char *fileMols    =  NULL; // Molecular definition file for LAMMPS.
 	char *ofPrefix    =  NULL; // Prefix for output filename.
 	char *ofSuffix    =  NULL; // Suffix for output filename.
 	double rCutoff    =   0.0;  // Distance Cutoff for Hydrogen bonds.
@@ -59,6 +63,8 @@ int main(int argc, char *argv[])
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
+			{"trajectory",  required_argument, 0, 't'},
+			{"molecules",   required_argument, 0, 'm'},
 			{"outprefix",   required_argument, 0, 'p'},
 			{"outsuffix",   required_argument, 0, 's'},
 			{"bins",        required_argument, 0, 'b'},
@@ -73,7 +79,7 @@ int main(int argc, char *argv[])
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
 
-		c = getopt_long (argc, argv, "i:p:s:f:l:b:r:a:H:A:h",
+		c = getopt_long (argc, argv, "i:t:m:p:s:f:l:b:r:a:H:A:h",
 		                 long_options, &option_index);
 
 		/* Detect the end of the options. */
@@ -91,7 +97,13 @@ int main(int argc, char *argv[])
 					std::cout << " with arg " <<  optarg <<"\n";
 				break;
 			case 'i':
-				fArc = optarg;
+				fileData = optarg;
+				break;
+			case 't':
+				fileTrj = optarg;
+				break;
+			case 'm':
+				fileMols = optarg;
 				break;
 			case 'p':
 				ofPrefix = optarg;
@@ -140,10 +152,24 @@ int main(int argc, char *argv[])
 
 	if ( flags & Flags::VERBOSE ) THB_VERBOSE=true;
 
-	if ( (fArc == NULL) )
+	if ( (fileData == NULL) )
 	{
 		Help(argv[0]);
 		BRIEF_MSG("\nError: Must specify an input file.");
+		return EXIT_FAILURE;
+	}
+
+	if ( (fileTrj != NULL) && (fileMols == NULL) )
+	{
+		Help(argv[0]);
+		BRIEF_MSG("\nError: When specifying a trajectory file, must also specify a molecule file.");
+		return EXIT_FAILURE;
+	}
+
+	if ( (fileMols != NULL) && (fileTrj == NULL) )
+	{
+		Help(argv[0]);
+		BRIEF_MSG("\nError: When specifying a molecule file, must also specify an trajectory file.");
 		return EXIT_FAILURE;
 	}
 
@@ -174,7 +200,8 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	doArcFile(fArc, ofPrefix, ofSuffix,
+	doArcFile(fileData, fileTrj, fileMols,
+	          ofPrefix, ofSuffix,
 	          &match,
 	          rCutoff, angleCutoff,
 	          NumBins, flags);

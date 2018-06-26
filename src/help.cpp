@@ -80,7 +80,7 @@ void Help(char *name)
 	std::cerr << "\n";
 
 	std::cerr << "USAGE: " << "\n";
-	const char *usage = "-i <arc file> -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--json] [--jsonall] [--incell] [--all]";
+	const char *usage = "-i <file> [-t <file> -m <file>] -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--json] [--jsonall] [--incell] [--all]";
 	std::string USAGE = name;
 	USAGE += " ";
 	USAGE += usage;
@@ -88,9 +88,15 @@ void Help(char *name)
 	           NULL,
 	           NULL);
 	std::cerr << "OPTIONS:" << "\n";
-	HelpOption("--input <arc file>",
-	           "-i <arc file>",
-	           "The archive file generated from Discover. ");
+	HelpOption("--input <file>",
+	           "-i <file>",
+	           "The archive file generated from Discover (without .arc), or the LAMMPS data file with the extension. ");
+	HelpOption("--trajectory <file>",
+	           "-t <file>",
+	           "The trajectory file generated from LAMMPS. ");
+	HelpOption("--molecule <file>",
+	           "-m <file>",
+	           "The molecule file used for defining molecules in LAMMPS data file. ");
 	HelpOption("--outprefix <prefix>",
 	           "-p <prefix>",
 	           "All output will have this string as a prefix to the filenames. For example, to save data as `HBonds1.dat`, use `-p HBonds` as the prefix");

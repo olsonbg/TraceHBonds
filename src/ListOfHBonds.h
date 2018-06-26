@@ -44,6 +44,8 @@ struct thbBond
 	struct thbAtom *A;      /**< Atom participating in this bond */
 	struct thbAtom *B;      /**< Atom participating in this bond */
 	int Order;              /**< Bond order */
+	unsigned int A_ID;      /**< Atom ID participating in this bond (LAMMPS) */
+	unsigned int B_ID;      /**< Atom ID participating in this bond (LAMMPS) */
 };
 
 
@@ -76,6 +78,7 @@ struct thbAtom
 	unsigned int ResidueNum;      /**< Residue number which this atom belongs*/
 	struct thbMolecule *Molecule; /**< Molecule to which this atom belongsi  */
 	std::string ForceField;       /**< Forcefield used for this atom         */
+	unsigned int AtomTypeID;      /**< Atom type, mass #, from LAMMPS */
 	/**
 	 * How many times this atom can contribute to hydrogen bonding
 	 **/

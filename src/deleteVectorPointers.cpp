@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "deleteVectorPointers.h"
 #include "ListOfHBonds.h"
+#include "ReadLAMMPS.h"
 
 // Used with remove_if()
 template <typename T> bool deleteVectorPointers( T* v ) {
@@ -34,3 +35,9 @@ template bool deleteVectorPointers<thbBond>(thbBond *);
 // Used in: TraceHBonds.cpp
 template void DeleteVectorPointers<HydrogenBond>(std::vector<HydrogenBond *>);
 template bool deleteVectorPointers<HydrogenBond>(HydrogenBond *);
+
+// Used in: ReadLAMMPS.cpp
+template void DeleteVectorPointers<MoleculeDefs>(std::vector<MoleculeDefs *>);
+template bool deleteVectorPointers<MoleculeDefs>(MoleculeDefs *);
+template void DeleteVectorPointers<AtomTypes>(std::vector<AtomTypes *>);
+template bool deleteVectorPointers<AtomTypes>(AtomTypes *);

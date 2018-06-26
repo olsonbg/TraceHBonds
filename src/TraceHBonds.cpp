@@ -30,7 +30,7 @@ bool deleteAtom( struct thbAtom *atom ) {
 	return true;
 }
 
-int doArcFile(char *ifilename,
+int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
               char *ofPrefix, char *ofSuffix,
               struct HydrogenBondMatching *match,
               double rCutoff, double angleCutoff,
@@ -53,8 +53,13 @@ int doArcFile(char *ifilename,
 	atom.reserve(50000);
 	DEBUG_MSG("Capacity/size of atom : " << atom.capacity() << "/" << atom.size());
 	// Get Atoms and their connections.
-	if ( !ConnectionsMDF( ifilename, &atom, &molecules, &bonds ) ) {
-		return 1; }
+	if ( fileTrj == NULL ) {
+		if ( !ConnectionsMDF( ifilename, &atom, &molecules, &bonds ) ) {
+			return 1; }
+	} else {
+		if ( !ReadLAMMPSConnections( ifilename, fileMols, &atom, &molecules, &bonds ) ) {
+			return 1; }
+	}
 
 	// Find the Hydrogens and Acceptors.
 	std::vector<struct thbAtom *> hydrogens;
@@ -81,10 +86,18 @@ int doArcFile(char *ifilename,
 	// Get Atom positions and cell dimensions for each frame.
 #ifdef PTHREADS
 	struct worker_data_s wd;
-	wd.jobtype     = THREAD_JOB_POSITIONS_CAR;
+
+	if ( fileTrj == NULL ) {
+		wd.jobtype     = THREAD_JOB_POSITIONS_CAR;
+		wd.filename    = ifilename;
+	}
+	else {
+		wd.jobtype     = THREAD_JOB_POSITIONS_LAMMPS;
+		wd.filename    = fileTrj;
+	}
+
 	wd.jobnum      = 1;
 	wd.num_threads = NumberOfCPUs();
-	wd.filename    = ifilename;
 	wd.atom        = &atom;
 	wd.hydrogens   = &hydrogens;
 	wd.acceptors   = &acceptors;
@@ -138,7 +151,8 @@ int doArcFile(char *ifilename,
 			if ( FramesProcessed == NumFramesInTrajectory )
 				break;
 		}
-		if ( wdOut.jobtype == THREAD_JOB_POSITIONS_CAR )
+		if ( (wdOut.jobtype == THREAD_JOB_POSITIONS_CAR) ||
+		     (wdOut.jobtype == THREAD_JOB_POSITIONS_LAMMPS) )
 		{
 			NumFramesInTrajectory = wdOut.TrjIdx;
 			if ( FramesProcessed == NumFramesInTrajectory )

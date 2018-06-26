@@ -29,18 +29,19 @@
  * Indicate type of job this worker thread should perform
  */
 //**@{*/
-const unsigned int THREAD_JOB_HBS           =  1; /**< HBs().                     */
-const unsigned int THREAD_JOB_RMDUPS        =  2; /**< RemoveDuplicatesThread().  */
-const unsigned int THREAD_JOB_TRACE         =  3; /**< TraceThread().             */
-const unsigned int THREAD_JOB_CORR          =  4; /**< CorrelationsThread().      */
-const unsigned int THREAD_JOB_LIFETIME      =  5; /**< LifetimeThread().          */
-const unsigned int THREAD_JOB_POSITIONS_CAR =  6; /**< PositionsCAR().            */
-const unsigned int THREAD_JOB_HBS2          =  7; /**< HBs().                     */
-const unsigned int THREAD_JOB_CORR_TABLE    =  8; /**< CorrelationsTableThread(). */
-const unsigned int THREAD_JOB_SIZEHIST      =  9; /**< makeHistograms().          */
-const unsigned int THREAD_JOB_NEIGHBORHIST  = 10; /**< getNeighbors().            */
-const unsigned int THREAD_JOB_PAUSE         = 90; /**< Pause thread.              */
-const unsigned int THREAD_JOB_EXIT          = 99; /**< Exit thread.               */
+const unsigned int THREAD_JOB_HBS              =  1; /**< HBs().                     */
+const unsigned int THREAD_JOB_RMDUPS           =  2; /**< RemoveDuplicatesThread().  */
+const unsigned int THREAD_JOB_TRACE            =  3; /**< TraceThread().             */
+const unsigned int THREAD_JOB_CORR             =  4; /**< CorrelationsThread().      */
+const unsigned int THREAD_JOB_LIFETIME         =  5; /**< LifetimeThread().          */
+const unsigned int THREAD_JOB_POSITIONS_CAR    =  6; /**< PositionsCAR().            */
+const unsigned int THREAD_JOB_HBS2             =  7; /**< HBs().                     */
+const unsigned int THREAD_JOB_CORR_TABLE       =  8; /**< CorrelationsTableThread(). */
+const unsigned int THREAD_JOB_SIZEHIST         =  9; /**< makeHistograms().          */
+const unsigned int THREAD_JOB_NEIGHBORHIST     = 10; /**< getNeighbors().            */
+const unsigned int THREAD_JOB_POSITIONS_LAMMPS = 11; /**< ReadLAMMPSPositions().     */
+const unsigned int THREAD_JOB_PAUSE            = 90; /**< Pause thread.              */
+const unsigned int THREAD_JOB_EXIT             = 99; /**< Exit thread.               */
 //**@}*/
 
 /**

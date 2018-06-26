@@ -672,8 +672,7 @@ def main():
 
     # Remove any materials which may be left
     for material in bpy.data.materials:
-        material.user_clear()
-        bpy.data.materials.remove(material)
+        bpy.data.materials.remove(material, do_unlink=True)
 
     # Empty object used as parent for chains.
     bpy.ops.object.empty_add(type='CUBE', radius=0.1, location=(0, 0, 0))

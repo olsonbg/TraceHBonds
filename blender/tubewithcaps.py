@@ -93,16 +93,28 @@ class TubeWithCaps(object):
 
         # v1, v2, v3, and v4 should be same length
         for i in range(len(v1)):
-            # v1 and v2 run in opposite directions, so use j for v2 and i for
-            # v1.
+            # Slight differences between blender versions. I do not know at
+            # which version this difference happens, so for now I assume
+            # 2.76.0.
+            #
+            #  v2.72: v1 and v2 run in opposite directions, so use j
+            #         for v2 and i for v1.
+            #
+            #  v2.79: v4 and v3 run in opposite directions, so use j
+            #         for v4 and i for v3
+            #
             j = len(v1)-i-1+1
             if i == 0:
                 j = 0
 
             # Put the vertices which should be merged at the same location so
             # that remove_doubles will have no problem finding them
-            v2[j].co = v1[i].co
-            v4[i].co = v3[i].co
+            if bpy.app.version < (2, 76, 0):
+                v2[j].co = v1[i].co
+                v4[i].co = v3[i].co
+            else:
+                v2[i].co = v1[i].co
+                v4[j].co = v3[i].co
 
         bmesh.ops.remove_doubles(bm, verts=v1+v2)
         bmesh.ops.remove_doubles(bm, verts=v3+v4)

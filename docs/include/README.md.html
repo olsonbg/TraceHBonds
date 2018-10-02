@@ -53,6 +53,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
         margin: 0 auto;
         padding: 30px;
     }
+    @media print {
+      .markdown-body {
+        font-size: 12px;
+      }
+    }
 </style>
 <article class="markdown-body">
 <h1 id="tracehbonds">TraceHBonds</h1>
@@ -79,20 +84,22 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul>
 <h1 id="installation">Installation</h1>
 <p>To compile the program</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">mkdir</span> build
-<span class="kw">cd</span> build
-<span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release ..
-<span class="kw">make</span>
-<span class="kw">src/TraceHBonds</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="fu">mkdir</span> build
+<span class="bu">cd</span> build
+<span class="fu">cmake</span> -DCMAKE_BUILD_TYPE=release ..
+<span class="fu">make</span>
+<span class="ex">src/TraceHBonds</span></code></pre></div>
 <p>To generate the documentation as html, which will be available at <code>docs/html/index.html</code>, use</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">make</span> docs</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="fu">make</span> docs</code></pre></div>
 <p>To cross-compile, use your toolchain cmake file as:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">cmake</span> -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<span class="kw">&lt;</span>Toolchain cmake file<span class="kw">&gt;</span> ..</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="fu">cmake</span> -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<span class="op">&lt;</span>Toolchain cmake file<span class="op">&gt;</span> ..</code></pre></div>
 <h1 id="usage">Usage</h1>
-<p>A typical command line would look like this:</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">TraceHBonds</span> --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
+<p>A typical command line would look like this when using CAR/MDF files:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">TraceHBonds</span> --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
+<p>or this when using LAMMPS trajectory files:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">TraceHBonds</span> --input molecule.data --trajectory molecule.lammpstrj --molecule molecule.dat -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
 <p>Below is a table of all options available from the command line. The long form options are preceded with <code>--</code>, and short form a single <code>-</code>. For options with both a long and short form, either one may be used on the command line.</p>
-<table>
+<table style="width:100%;">
 <thead>
 <tr class="header">
 <th align="left">Long form</th>
@@ -104,11 +111,25 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">input</td>
+<td align="left">input <a name="input-t"></a></td>
 <td align="center">i</td>
 <td align="left">string</td>
 <td align="center">yes</td>
-<td align="left">The archive file generated from Discover.</td>
+<td align="left">The archive file generated from Discover (without .arc), or the LAMMPS data file with the extension.</td>
+</tr>
+<tr class="even">
+<td align="left"><a href="#trajectory">trajectory</a> <a name="trajectory-t"></a></td>
+<td align="center">t</td>
+<td align="left">string</td>
+<td align="center">no</td>
+<td align="left">The trajectory file generated from LAMMPS, required when load LAMMPS data.</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href="#molecule">molecule</a> <a name="molecule-t"></a></td>
+<td align="center">m</td>
+<td align="left">string</td>
+<td align="center">no</td>
+<td align="left">The molecule file used for defining molecules in LMMPS data file.</td>
 </tr>
 <tr class="even">
 <td align="left">outprefix</td>
@@ -139,14 +160,14 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <td align="left">Set the cutoff angle, in degrees, for the determination of a hydrogen bond (e.g. <code>-a 90.0</code>).</td>
 </tr>
 <tr class="even">
-<td align="left">hydrogen</td>
+<td align="left">hydrogen <a name="hydrogen-t"></a></td>
 <td align="center">H</td>
 <td align="left">string</td>
 <td align="center">yes</td>
 <td align="left">Set the force field of donor hydrogens for hydrogen bonding (e.g. <code>-H h1o</code>). More than one force field may be used by specifying this option multiple times. <strong>NOTE</strong> the short option is a capital 'H.'</td>
 </tr>
 <tr class="odd">
-<td align="left">acceptor</td>
+<td align="left">acceptor <a name="acceptor-t"></a></td>
 <td align="center">A</td>
 <td align="left">string</td>
 <td align="center">yes</td>
@@ -252,6 +273,33 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </tr>
 </tbody>
 </table>
+<h1 id="input">Input</h1>
+<p>The standard CAR/MDF and LAMMPS trajectory files are recognized. If compiled with support for <code>LZMA</code>, <code>GZIP</code>, and/or <code>BZIP2</code>, compressed files may be read and written.</p>
+<h2 id="lammps">LAMMPS</h2>
+<h3 id="data-file---input">Data file (--input)</h3>
+<p>The <a href="#input-t">--input</a> option, when loading a LAMMPS file, defines the name of the data file. The masses section of the data file must have a comment, it will be used as the forefield type used for atom selection with the <a href="#hydrogen-t">--hydrogen</a> and <a href="#acceptor-t">--acceptor</a> flags.</p>
+<p>And example masses section of a LAMMPS data file:</p>
+<pre><code>Masses
+
+   1  15.999400 # o
+   2  12.011150 # c2
+   3  12.011150 # c
+   4   1.007970 # h
+   5  12.011150 # cPrime
+   6  12.011150 # c3
+   7  15.999400 # oPrime
+   8  15.999400 # oh
+   9   1.007970 # ho</code></pre>
+<h3 id="trajectory---trajectory"><a name="trajectory"</a>Trajectory (--trajectory)</h3>
+<p>The <a href="#trajectory-t">--trajectory</a> option defines the name of a LAMMPS trajectory file. The trajectory file must be saved by a dump custom or custom/gz command with atom attributes starting with 'id mol x y z', any other atom attribute may follow.</p>
+<h3 id="molecule---molecule"><a name="molecule"></a>Molecule (--molecule)</h3>
+<p>The <a href="#molecule-t">--molecule</a> option is used when loading LAMMPS trajectory and data files, and loads a file that defines which atoms belong to which molecule. While the LAMMPS data file has a column, <code>Molecule-Id</code> for defining molecules, the <code>msi2lmp</code> script uses residue IDs there. This file is required when using LAMMPS files, whether <code>msi2lmp</code> is used or not.</p>
+<p>The example file below defines 4 molecules and their associated atoms. The atoms must be in sequence for each molecule.</p>
+<pre><code># Molecule FirstAtom LastAtom
+     1      1    248
+     2    249    496
+     3    497    744
+     4    745    992</code></pre>
 <h1 id="output">Output</h1>
 <p>Depending upon the command line options, many data files may be generated. The description of all calculations are listed below</p>
 <ul>
@@ -379,10 +427,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p class="caption">Figure 1: Hydrogen bond strings, colored by chain length. Rendered with Blender</p>
 </div>
 <p>The image was created by Blender using</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">blender</span> -P blender/hbchain.py -- -f output/HBonds1.json</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">blender</span> -P blender/hbchain.py -- -f output/HBonds1.json</code></pre></div>
 <p>where <code>output/HBonds1.json</code> is the output of <code>TraceHBonds</code> with the appropriate options.</p>
 <p>For help with the Blender script, try</p>
-<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">blender</span> -P hbchain.py -- --help</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">blender</span> -P hbchain.py -- --help</code></pre></div>
 <h4 id="using-pov-ray"><a name="povray"></a>Using POV-Ray</h4>
 <p>The program <a href="http://www.povray.org">POV-Ray</a> can be used to convert the output of <a href="#sizehist-t">--sizehist</a> <a href="#povray-t">--povray</a> to an image or even a movie of the image rotating. Here is an example image using the <a href="povray/prettybox.pov">prettybox.pov</a> script in the <a href="povray/">povray</a> directory:</p>
 <div class="figure">
@@ -405,6 +453,16 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The table in this file consists of a Count, Average, and StdDev column for each frame of the trajectory, so the table can have many columns if a trajectory with many frames is used. It's not uncommon to read 100, 1000, or more frames. Sample output is shown below, in table format for easy viewing. <strong>Note</strong>: Only the first 2 off 1000 frames of a large trajectory file are shown, and the first 13 of 27 atoms in chain for this particular sample trajectory file.</p>
 <p>n.n. = Nearest neighbor, and f is the frame number.</p>
 <table>
+<colgroup>
+<col width="19%" />
+<col width="13%" />
+<col width="8%" />
+<col width="12%" />
+<col width="12%" />
+<col width="8%" />
+<col width="12%" />
+<col width="12%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Atoms in chain</th>

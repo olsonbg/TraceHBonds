@@ -45,10 +45,16 @@ cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_TOOLCHAIN_FILE=<Toolchain cmake file> .
 
 # Usage
 
-A typical command line would look like this:
+A typical command line would look like this when using CAR/MDF files:
 
 ```bash
 TraceHBonds --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all
+```
+
+or this when using LAMMPS trajectory files:
+
+```bash
+TraceHBonds --input molecule.data --trajectory molecule.lammpstrj --molecule molecule.dat -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all
 ```
 
 Below is a table of all options available from the command line. The long
@@ -60,13 +66,15 @@ command line.
 
 |Long form                                                   | Short form |Option Type    | Required? | Description |
 |:-----------------------------------------------------------|:----------:|:--------------|:---------:|:------------|
-|input                                                       |   i        | string        | yes       | The archive file generated from Discover. |
+|input                          <a name="input-t"></a>       |   i        | string        | yes       | The archive file generated from Discover (without .arc), or the LAMMPS data file with the extension. |
+|[trajectory](#trajectory)      <a name="trajectory-t"></a>  |   t        | string        | no        | The trajectory file generated from LAMMPS, required when load LAMMPS data. |
+|[molecule](#molecule)          <a name="molecule-t"></a>    |   m        | string        | no        | The molecule file used for defining molecules in LMMPS data file. |
 |outprefix                                                   |   p        | string        | yes       | All output will have this string as a prefix to the filenames. For example, to save data as `HBonds1.dat`, use `-p HBonds` as the prefix|
 |outsuffix                                                   |   s        | string        | yes       | All output will have this string as a suffix to the filenames. For example, to save data as 'HBonds1.dat', use `-s .dat` as the suffix|
 |rcutoff                                                     |   r        | real number   | yes       | Set the cutoff length, in angstroms, for the determination of a hydrogen bond (e.g. `-r 2.5`). |
 |anglecutoff                                                 |   a        | real number   | yes       | Set the cutoff angle, in degrees, for the determination of a hydrogen bond (e.g. `-a 90.0`).|
-|hydrogen                                                    |   H        | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. `-H h1o`). More than one force field may be used by specifying this option multiple times.  **NOTE** the short option is a capital 'H.'|
-|acceptor                                                    |   A        | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. `-A o2h -A o1=`). **NOTE** the short option is a capital 'A.'|
+|hydrogen                       <a name="hydrogen-t"></a>    |   H        | string        | yes       | Set the force field of donor hydrogens for hydrogen bonding (e.g. `-H h1o`). More than one force field may be used by specifying this option multiple times.  **NOTE** the short option is a capital 'H.'|
+|acceptor                       <a name="acceptor-t"></a>    |   A        | string        | yes       | Set the force field of acceptor atoms for hydrogen bonding. More than one force field may be used by specifying this option multiple times (e.g. `-A o2h -A o1=`). **NOTE** the short option is a capital 'A.'|
 |bins                                                        |   b        | integer       | no        | Minimum number of bins to show in histograms (e.g. `-b 20`).|
 |[povray](#povray)              <a name="povray-t"></a>      |            |               | no        | Output in povray format, relevant for [--sizehist](#sizehist-t) only.|
 |[json](#blender)               <a name="json-t"></a>        |            |               | no        | Output in json format, relevant for [--sizehist](#sizehist-t) only. Useful for processing with python, and blender scripts in the blender/ directory|
@@ -81,6 +89,63 @@ command line.
 |[neighborhist](#neighborhist)  <a name="neighborhist-t"></a>|            |               | no        | Save neighbor length lists. |
 |all                                                         |            |               | no        | Do all calculations and save all data. |
 |help                                                        |   h        |               | no        | This help screen |
+
+# Input
+
+The standard CAR/MDF and LAMMPS trajectory files are recognized. If
+compiled with support for `LZMA`, `GZIP`, and/or `BZIP2`, compressed files
+may be read and written.
+
+## LAMMPS
+
+### Data file (--input)
+
+The [--input](#input-t) option, when loading a LAMMPS file, defines the name
+of the data file. The masses section of the data file must have a comment,
+it will be used as the forefield type used for atom selection with the
+[--hydrogen](#hydrogen-t) and [--acceptor](#acceptor-t) flags.
+
+And example masses section of a LAMMPS data file:
+
+~~~~~~~~~~~~~
+Masses
+
+   1  15.999400 # o
+   2  12.011150 # c2
+   3  12.011150 # c
+   4   1.007970 # h
+   5  12.011150 # cPrime
+   6  12.011150 # c3
+   7  15.999400 # oPrime
+   8  15.999400 # oh
+   9   1.007970 # ho
+~~~~~~~~~~~~~
+
+### <a name="trajectory"</a>Trajectory (--trajectory)
+
+The [--trajectory](#trajectory-t) option defines the name of a LAMMPS
+trajectory file. The trajectory file must be saved by a dump custom or
+custom/gz command with atom attributes starting with 'id mol x y z', any
+other atom attribute may follow.
+
+### <a name="molecule"></a>Molecule (--molecule)
+
+The [--molecule](#molecule-t) option is used when loading LAMMPS trajectory
+and data files, and loads a file that defines which atoms belong to which
+molecule. While the LAMMPS data file has a column, `Molecule-Id` for
+defining molecules, the `msi2lmp` script uses residue IDs there. This file
+is required when using LAMMPS files, whether `msi2lmp` is used or not. 
+
+The example file below defines 4 molecules and their associated atoms. The
+atoms must be in sequence for each molecule.
+
+~~~~~~~~~~~~~
+# Molecule FirstAtom LastAtom
+     1      1    248
+     2    249    496
+     3    497    744
+     4    745    992
+~~~~~~~~~~~~~
 
 # Output
 

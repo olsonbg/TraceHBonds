@@ -550,7 +550,6 @@ bool ReadLAMMPSFrame(boost::iostreams::filtering_stream<boost::iostreams::input>
 
 
 bool ReadLAMMPSConnections( char *fileData,
-                            // char *fileTrj,
                             char *fileMols,
                             std::vector<struct thbAtom     *> *atom,
                             std::vector<struct thbMolecule *> *molecules,
@@ -686,43 +685,3 @@ bool ReadLAMMPSPositions(const char *fileTrj,
 	return(true);
 }
 
-// int doLAMMPSFile(char *fileData, char *fileTrj, char *fileMols,
-//                  char *ofPrefix, char *ofSuffix,
-//                  struct HydrogenBondMatching *match,
-//                  double rCutoff, double angleCutoff,
-//                  int NumBins, unsigned int flags)
-// {
-//     std::vector<struct thbAtom     *> atom;
-//     std::vector<struct thbMolecule *> molecules;
-//     std::vector<struct thbBond     *> bonds;
-
-//     if ( !ReadLAMMPSConnections( fileData, fileMols,
-//                                  &atom, &molecules, &bonds ) ) {
-//         DeleteVectorPointers( bonds ); bonds.clear();
-//         DeleteVectorPointers( molecules ); molecules.clear();
-//         DeleteVectorPointers( atom ); atom.clear();
-//         return(false);
-//     }
-
-//     std::cout << "atoms : " << atom.size() << "\n";
-//     std::cout << "mols  : " << molecules.size() << "\n";
-//     std::cout << "bonds : " << bonds.size() << "\n";
-
-
-//     DeleteVectorPointers( bonds ); bonds.clear();
-//     DeleteVectorPointers( molecules ); molecules.clear();
-
-//     struct PBC Cell;
-
-//     if ( !ReadLAMMPSPositions(fileTrj, &atom, &Cell,
-//                               NULL, NULL, 1.0, 1.0, false) ) {
-//         DeleteVectorPointers( atom ); atom.clear();
-//         return(false);
-//     }
-
-//     std::cout << " coordinates: " << atom.at(0)->p.size() << "\n";
-
-//     DeleteVectorPointers( atom ); atom.clear();
-
-//     return(true);
-// }

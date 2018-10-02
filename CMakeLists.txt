@@ -19,8 +19,8 @@ set(CMAKE_CXX_FLAGS_DEBUG
 
 
 # The version number.
-set (TraceHBonds_VERSION_MAJOR 1)
-set (TraceHBonds_VERSION_MINOR 9)
+set (TraceHBonds_VERSION_MAJOR 2)
+set (TraceHBonds_VERSION_MINOR 0)
 
 # configure a header file to pass some of the CMake settings
 # to the source code

@@ -2,7 +2,7 @@ TraceHBonds
 =====
 
 A program for finding strings of hydrogen bonded atoms in a trajectory file
-generated from the _Discover_ molecular dynamics program.
+generated from the _Discover_ and _LAMMPS_ molecular dynamics program.
 
 ![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings")
 
@@ -10,6 +10,9 @@ generated from the _Discover_ molecular dynamics program.
 
   * [Installation](#installation)
   * [Usage](#usage)
+  * [Input](#input)
+      * [Discover](#discover)
+      * [LAMMPS](#lammps)
   * [Output](#output)
       * [Hydrogen bond strings](#sizehist)
           * [Generating Images](#generating-images)
@@ -51,7 +54,7 @@ A typical command line would look like this when using CAR/MDF files:
 TraceHBonds --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all
 ```
 
-or this when using LAMMPS trajectory files:
+or this when using _LAMMPS trajectory files:
 
 ```bash
 TraceHBonds --input molecule.data --trajectory molecule.lammpstrj --molecule molecule.dat -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all
@@ -66,8 +69,8 @@ command line.
 
 |Long form                                                   | Short form |Option Type    | Required? | Description |
 |:-----------------------------------------------------------|:----------:|:--------------|:---------:|:------------|
-|input                          <a name="input-t"></a>       |   i        | string        | yes       | The archive file generated from Discover (without .arc), or the LAMMPS data file with the extension. |
-|[trajectory](#trajectory)      <a name="trajectory-t"></a>  |   t        | string        | no        | The trajectory file generated from LAMMPS, required when load LAMMPS data. |
+|input                          <a name="input-t"></a>       |   i        | string        | yes       | The archive file generated from _Discover_ (without .arc), or the _LAMMPS data file with the extension. |
+|[trajectory](#trajectory)      <a name="trajectory-t"></a>  |   t        | string        | no        | The trajectory file generated from _LAMMPS, required when load _LAMMPS data. |
 |[molecule](#molecule)          <a name="molecule-t"></a>    |   m        | string        | no        | The molecule file used for defining molecules in LMMPS data file. |
 |outprefix                                                   |   p        | string        | yes       | All output will have this string as a prefix to the filenames. For example, to save data as `HBonds1.dat`, use `-p HBonds` as the prefix|
 |outsuffix                                                   |   s        | string        | yes       | All output will have this string as a suffix to the filenames. For example, to save data as 'HBonds1.dat', use `-s .dat` as the suffix|
@@ -92,20 +95,24 @@ command line.
 
 # Input
 
-The standard CAR/MDF and LAMMPS trajectory files are recognized. If
-compiled with support for `LZMA`, `GZIP`, and/or `BZIP2`, compressed files
+The standard _CAR/MDF_ and _LAMMPS_ trajectory files are recognized. If
+compiled with support for _LZMA_, _GZIP_, and/or _BZIP2_, compressed files
 may be read and written.
+
+## Discover
+
+The standard _CAR/MDF_ files are read.
 
 ## LAMMPS
 
 ### Data file (--input)
 
-The [--input](#input-t) option, when loading a LAMMPS file, defines the name
+The [--input](#input-t) option, when loading a _LAMMPS_ file, defines the name
 of the data file. The masses section of the data file must have a comment,
 it will be used as the forefield type used for atom selection with the
 [--hydrogen](#hydrogen-t) and [--acceptor](#acceptor-t) flags.
 
-And example masses section of a LAMMPS data file:
+And example masses section of a _LAMMPS data file:
 
 ~~~~~~~~~~~~~
 Masses
@@ -121,20 +128,20 @@ Masses
    9   1.007970 # ho
 ~~~~~~~~~~~~~
 
-### <a name="trajectory"</a>Trajectory (--trajectory)
+### <a name="trajectory"></a>Trajectory (--trajectory)
 
-The [--trajectory](#trajectory-t) option defines the name of a LAMMPS
+The [--trajectory](#trajectory-t) option defines the name of a _LAMMPS
 trajectory file. The trajectory file must be saved by a dump custom or
 custom/gz command with atom attributes starting with 'id mol x y z', any
 other atom attribute may follow.
 
 ### <a name="molecule"></a>Molecule (--molecule)
 
-The [--molecule](#molecule-t) option is used when loading LAMMPS trajectory
+The [--molecule](#molecule-t) option is used when loading _LAMMPS trajectory
 and data files, and loads a file that defines which atoms belong to which
-molecule. While the LAMMPS data file has a column, `Molecule-Id` for
+molecule. While the _LAMMPS data file has a column, `Molecule-Id` for
 defining molecules, the `msi2lmp` script uses residue IDs there. This file
-is required when using LAMMPS files, whether `msi2lmp` is used or not. 
+is required when using _LAMMPS files, whether `msi2lmp` is used or not. 
 
 The example file below defines 4 molecules and their associated atoms. The
 atoms must be in sequence for each molecule.

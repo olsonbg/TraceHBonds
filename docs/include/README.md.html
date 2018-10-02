@@ -61,7 +61,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </style>
 <article class="markdown-body">
 <h1 id="tracehbonds">TraceHBonds</h1>
-<p>A program for finding strings of hydrogen bonded atoms in a trajectory file generated from the <em>Discover</em> molecular dynamics program.</p>
+<p>A program for finding strings of hydrogen bonded atoms in a trajectory file generated from the <em>Discover</em> and <em>LAMMPS</em> molecular dynamics program.</p>
 <div class="figure">
 <img src="images/HydrogenBondStringsB.png?raw=true" title="Hydrogen Bond strings" alt="Hydrogen bond strings, colored by chain length" />
 <p class="caption">Hydrogen bond strings, colored by chain length</p>
@@ -70,6 +70,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <ul>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#usage">Usage</a></li>
+<li><a href="#input">Input</a>
+<ul>
+<li><a href="#discover">Discover</a></li>
+<li><a href="#lammps">LAMMPS</a></li>
+</ul></li>
 <li><a href="#output">Output</a>
 <ul>
 <li><a href="#sizehist">Hydrogen bond strings</a>
@@ -96,7 +101,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h1 id="usage">Usage</h1>
 <p>A typical command line would look like this when using CAR/MDF files:</p>
 <div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">TraceHBonds</span> --input molecule.arc -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
-<p>or this when using LAMMPS trajectory files:</p>
+<p>or this when using _LAMMPS trajectory files:</p>
 <div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">TraceHBonds</span> --input molecule.data --trajectory molecule.lammpstrj --molecule molecule.dat -p HBonds -s .dat -H h1o -A o2h -r 2.5 -a 90.0 --verbose --all</code></pre></div>
 <p>Below is a table of all options available from the command line. The long form options are preceded with <code>--</code>, and short form a single <code>-</code>. For options with both a long and short form, either one may be used on the command line.</p>
 <table style="width:100%;">
@@ -115,14 +120,14 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <td align="center">i</td>
 <td align="left">string</td>
 <td align="center">yes</td>
-<td align="left">The archive file generated from Discover (without .arc), or the LAMMPS data file with the extension.</td>
+<td align="left">The archive file generated from <em>Discover</em> (without .arc), or the _LAMMPS data file with the extension.</td>
 </tr>
 <tr class="even">
 <td align="left"><a href="#trajectory">trajectory</a> <a name="trajectory-t"></a></td>
 <td align="center">t</td>
 <td align="left">string</td>
 <td align="center">no</td>
-<td align="left">The trajectory file generated from LAMMPS, required when load LAMMPS data.</td>
+<td align="left">The trajectory file generated from _LAMMPS, required when load _LAMMPS data.</td>
 </tr>
 <tr class="odd">
 <td align="left"><a href="#molecule">molecule</a> <a name="molecule-t"></a></td>
@@ -274,11 +279,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </tbody>
 </table>
 <h1 id="input">Input</h1>
-<p>The standard CAR/MDF and LAMMPS trajectory files are recognized. If compiled with support for <code>LZMA</code>, <code>GZIP</code>, and/or <code>BZIP2</code>, compressed files may be read and written.</p>
+<p>The standard <em>CAR/MDF</em> and <em>LAMMPS</em> trajectory files are recognized. If compiled with support for <em>LZMA</em>, <em>GZIP</em>, and/or <em>BZIP2</em>, compressed files may be read and written.</p>
+<h2 id="discover">Discover</h2>
+<p>The standard <em>CAR/MDF</em> files are read.</p>
 <h2 id="lammps">LAMMPS</h2>
 <h3 id="data-file---input">Data file (--input)</h3>
-<p>The <a href="#input-t">--input</a> option, when loading a LAMMPS file, defines the name of the data file. The masses section of the data file must have a comment, it will be used as the forefield type used for atom selection with the <a href="#hydrogen-t">--hydrogen</a> and <a href="#acceptor-t">--acceptor</a> flags.</p>
-<p>And example masses section of a LAMMPS data file:</p>
+<p>The <a href="#input-t">--input</a> option, when loading a <em>LAMMPS</em> file, defines the name of the data file. The masses section of the data file must have a comment, it will be used as the forefield type used for atom selection with the <a href="#hydrogen-t">--hydrogen</a> and <a href="#acceptor-t">--acceptor</a> flags.</p>
+<p>And example masses section of a _LAMMPS data file:</p>
 <pre><code>Masses
 
    1  15.999400 # o
@@ -290,10 +297,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
    7  15.999400 # oPrime
    8  15.999400 # oh
    9   1.007970 # ho</code></pre>
-<h3 id="trajectory---trajectory"><a name="trajectory"</a>Trajectory (--trajectory)</h3>
-<p>The <a href="#trajectory-t">--trajectory</a> option defines the name of a LAMMPS trajectory file. The trajectory file must be saved by a dump custom or custom/gz command with atom attributes starting with 'id mol x y z', any other atom attribute may follow.</p>
+<h3 id="trajectory---trajectory"><a name="trajectory"></a>Trajectory (--trajectory)</h3>
+<p>The <a href="#trajectory-t">--trajectory</a> option defines the name of a _LAMMPS trajectory file. The trajectory file must be saved by a dump custom or custom/gz command with atom attributes starting with 'id mol x y z', any other atom attribute may follow.</p>
 <h3 id="molecule---molecule"><a name="molecule"></a>Molecule (--molecule)</h3>
-<p>The <a href="#molecule-t">--molecule</a> option is used when loading LAMMPS trajectory and data files, and loads a file that defines which atoms belong to which molecule. While the LAMMPS data file has a column, <code>Molecule-Id</code> for defining molecules, the <code>msi2lmp</code> script uses residue IDs there. This file is required when using LAMMPS files, whether <code>msi2lmp</code> is used or not.</p>
+<p>The <a href="#molecule-t">--molecule</a> option is used when loading _LAMMPS trajectory and data files, and loads a file that defines which atoms belong to which molecule. While the _LAMMPS data file has a column, <code>Molecule-Id</code> for defining molecules, the <code>msi2lmp</code> script uses residue IDs there. This file is required when using _LAMMPS files, whether <code>msi2lmp</code> is used or not.</p>
 <p>The example file below defines 4 molecules and their associated atoms. The atoms must be in sequence for each molecule.</p>
 <pre><code># Molecule FirstAtom LastAtom
      1      1    248

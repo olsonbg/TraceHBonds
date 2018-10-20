@@ -1,0 +1,14 @@
+dist: trusty
+sudo: false
+language: cpp
+addons:
+  apt:
+    packages:
+      - libboost-iostreams-dev
+      - doxygen
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ..
+script:
+  - make && make docs

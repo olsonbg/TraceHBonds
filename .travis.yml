@@ -6,10 +6,9 @@ addons:
     packages:
       - libboost-iostreams-dev
       - doxygen
-      - graphviz
 before_script:
   - mkdir build
   - cd build
   - cmake ..
 script:
-  - make && make docs
+  - make

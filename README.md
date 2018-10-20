@@ -4,6 +4,8 @@ TraceHBonds
 A program for finding strings of hydrogen bonded atoms in a trajectory file
 generated from the _Discover_ and _LAMMPS_ molecular dynamics program.
 
+[![Build Status](https://travis-ci.com/olsonbg/TraceHBonds.svg?branch=master)](https://travis-ci.com/olsonbg/TraceHBonds)
+
 ![Hydrogen bond strings, colored by chain length](/images/HydrogenBondStringsB.png?raw=true "Hydrogen Bond strings")
 
 # Contents

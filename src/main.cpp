@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
 			{"incell"      , no_argument, &flag[8],  (unsigned int)Flags::INCELL       },
 			{"jsonall"     , no_argument, &flag[9],  (unsigned int)Flags::JSONALL      },
 			{"all"         , no_argument, &flag[10], (unsigned int)Flags::ALL          },
+			{"list"        , no_argument, &flag[11],  (unsigned int)Flags::LIST       },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
@@ -147,7 +148,7 @@ int main(int argc, char *argv[])
 	}
 	// Set the flags;
 	for ( unsigned int i=0; i < (unsigned int)Flags::COUNT; i++ ) {
-		flags |= flag[i]; 
+		flags |= flag[i];
 	}
 
 	if ( flags & Flags::VERBOSE ) THB_VERBOSE=true;
@@ -186,6 +187,7 @@ int main(int argc, char *argv[])
 	if ( flags & Flags::NEIGHBOR_HIST) VERBOSE_MSG("\t- Consolidated chain lengths");
 	if ( flags & Flags::LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
 	if ( flags & Flags::ANGLES)        VERBOSE_MSG("\tHydrogen bond angles");
+	if ( flags & Flags::LIST)          VERBOSE_MSG("\tHydrogen bond list");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS

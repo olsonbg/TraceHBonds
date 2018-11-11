@@ -19,7 +19,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -fdata-sections -ffu
 
 # The version number.
 set (TraceHBonds_VERSION_MAJOR 2)
-set (TraceHBonds_VERSION_MINOR 0)
+set (TraceHBonds_VERSION_MINOR 1)
 
 # configure a header file to pass some of the CMake settings
 # to the source code

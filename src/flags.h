@@ -25,9 +25,11 @@ enum class Flags : unsigned int {
 	JSON          = 1 << 8, /**< Output in JSON format                     */
 	INCELL        = 1 << 9, /**< All chains start inside PBC cell          */
 	JSONALL       = 1 <<10, /**< Include all atoms in output, implies JSON, and not INCELL */
+	LIST          = 1 <<11, /**< Generate list of hydrogen bonds          */
+
 	/** Do all possible calculations */
-	ALL           = (SIZE_HIST|LENGTHS|NEIGHBOR_HIST|LIFETIME|ANGLES),
-	COUNT         = 13
+	ALL           = (SIZE_HIST|LENGTHS|NEIGHBOR_HIST|LIFETIME|ANGLES|LIST),
+	COUNT         = 14
 };
 
 unsigned int operator& (unsigned int l, Flags r);

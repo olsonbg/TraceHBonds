@@ -70,7 +70,7 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 	VERBOSE_MSG("");
 	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
-	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS|Flags::ANGLES)) == 0 )
+	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS|Flags::ANGLES|Flags::LIST)) == 0 )
 	{
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
@@ -262,6 +262,33 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 		}
 	}
 
+	// Save Hydrogen bond list.
+	if ( flags & Flags::LIST )
+	{
+		std::stringstream ofilename;
+
+		ofilename << ofPrefix << "-list" << ofSuffix;
+
+		std::ofstream out(ofilename.str().c_str(),std::ios::out);
+
+		if ( out.is_open() )
+		{
+			VERBOSE_MSG("\tSaving Hydrogen bond list");
+
+			for( unsigned int i=0; i < hb.size(); i++ ) {
+				out << hb.at(i)->TrajIdx
+				    << "\t" << hb.at(i)->donor->Molecule->Name
+				    << "\t" << hb.at(i)->donor->Name
+				    << "\t" << hb.at(i)->hydrogen->Molecule->Name
+				    << "\t" << hb.at(i)->hydrogen->Name
+				    << "\t" << hb.at(i)->acceptor->Molecule->Name
+				    << "\t" << hb.at(i)->acceptor->Name
+				    << "\n";
+			}
+
+			VERBOSE_MSG("\t\tSaved " << ofilename.str() << ".");
+		}
+	}
 
 	if ( flags & (Flags::SIZE_HIST|Flags::NEIGHBOR_HIST) ) {
 

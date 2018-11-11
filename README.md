@@ -21,6 +21,7 @@ generated from the _Discover_ and _LAMMPS_ molecular dynamics program.
       * [Neighbor distance in chains](#neighborhist)
       * [Hydrogen bond lengths](#lengths)
       * [Hydrogen bond angles](#angles)
+      * [Hydrogen bond list](#list)
       * [Hydrogen bond lifetime correlations](#lifetime)
 
 # Installation
@@ -89,7 +90,8 @@ command line.
 |brief                                                       |            |               | no        | Show brief messages while running. |
 |[lifetime](#lifetime)          <a name="lifetime-t"></a>    |            |               | no        | Calculate hydrogen bond lifetime correlations. |
 |[lengths](#lengths)            <a name="lengths-t"></a>     |            |               | no        | Save length of all hydrogen bonds.|
-|[angles](#angles)              <a name="angles-t"></a>      |            |               |           | Save angle of all hydrogen bonds. |
+|[angles](#angles)              <a name="angles-t"></a>      |            |               | no        | Save angle of all hydrogen bonds. |
+|[list](#list)                  <a name="list-t"></a>        |            |               | no        | Save list of all hydrogen bonds. |
 |[sizehist](#sizehist)          <a name="sizehist-t"></a>    |            |               | no        | Save hydrogen bond strings and histograms. |
 |[neighborhist](#neighborhist)  <a name="neighborhist-t"></a>|            |               | no        | Save neighbor length lists. |
 |all                                                         |            |               | no        | Do all calculations and save all data. |
@@ -169,6 +171,8 @@ The description of all calculations are listed below
     - [List of Files Created](#lengths-files)
   - [Hydrogen bond angles (--angles)](#angles)
     - [List of Files Created](#angles-files)
+  - [Hydrogen bond list (--list)](#list)
+    - [List of Files Created](#list-files)
   - [Hydrogen bond lifetime correlations (--lifetime)](#lifetime)
     - [List of Files Created](#lifetime-files)
 
@@ -485,6 +489,27 @@ in every frame.
 ### Description of file
 
 Single column of data listing the hydrogen bond angles in degrees.
+
+## <a name="list"></a>Hydrogen bond list (--list)
+
+The [--list](#list-t) option calculates the list of all hydrogen bonds,
+in every frame.
+
+### <a name="list-files"></a>File Created
+
+  - \<prefix\>-list\<suffix\>
+
+### Description of file
+
+Seven (7) column data, in tab delimited format. The columns are:
+
+ 1. Frame number, starting with 0.
+ 1. Molecule of atom connected to donor hydrogen.
+ 1. Name of atom connected to donor hydrogen.
+ 1. Molecule of donor hydrogen atom.
+ 1. Name of donor hydrogen atom.
+ 1. Molecule of acceptor atom.
+ 1. Name of acceptor atom.
 
 ## <a name="lifetime"></a> Hydrogen bond lifetime correlations (--lifetime)
 

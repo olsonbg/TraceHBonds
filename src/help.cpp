@@ -80,7 +80,7 @@ void Help(char *name)
 	std::cerr << "\n";
 
 	std::cerr << "USAGE: " << "\n";
-	const char *usage = "-i <file> [-t <file> -m <file>] -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--sizehist] [--neighborhist] [--json] [--jsonall] [--incell] [--all]";
+	const char *usage = "-i <file> [-t <file> -m <file>] -p <prefix> -s <suffix> -r <distance cutoff> -a <angle cutoff> -H <hydrogen forcefield> -A <acceptor forcefield> [-b <number>] [--verbose] [--brief] [--povray] [--lifetime] [--lengths] [--angles] [--list] [--sizehist] [--neighborhist] [--json] [--jsonall] [--incell] [--all]";
 	std::string USAGE = name;
 	USAGE += " ";
 	USAGE += usage;
@@ -145,6 +145,9 @@ void Help(char *name)
 	HelpOption("--angles",
 	           NULL,
 	           "Save angle of all hydrogen bonds.");
+	HelpOption("--list",
+	           NULL,
+	           "Save list of all hydrogen bonds.");
 	HelpOption("--sizehist",
 	           NULL,
 	           "Save hydrogen bond strings and histograms.");

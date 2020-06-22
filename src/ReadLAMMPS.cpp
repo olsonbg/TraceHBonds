@@ -585,7 +585,7 @@ bool ReadLAMMPSConnections( char *fileData,
 		DeleteVectorPointers( moldefs ); moldefs.clear();
 		return(false);
 	} else {
-		VERBOSE_MSG("Reading LAMMPS data file from " << fileMols);
+		VERBOSE_MSG("Reading LAMMPS data file from " << fileData);
 
 		if ( !ReadLAMMPSData(&inData, atom, bonds) ) {
 			ifpData.close();

@@ -194,6 +194,10 @@ bool ReadLAMMPSAssignMolecules(std::vector<struct thbAtom      *> *atom,
 		for(unsigned int i=(*it)->atomFirst; i <= (*it)->atomLast; ++i)
 		{
 			A = ReadLAMMPSAtomWithID(atom, i);
+			if ( A == NULL ) {
+				std::cerr << "Error, could not find atom with ID = " << i << " when assigning molecules!\n";
+				return(false);
+			}
 			NewMolecule->atoms.push_back(A);
 			A->Molecule = NewMolecule;
 		}
@@ -298,7 +302,7 @@ bool ReadLAMMPSData(boost::iostreams::filtering_stream<boost::iostreams::input> 
 				std::cerr << "Error on line " << lineno << ". Expected integer for # of atoms.\n";
 				return(false);
 			}
-			std::cout << "Atoms Line: " << line << "\n";
+			std::cout << "Atoms: " << line << "\n";
 			atom->reserve(val);
 		} else if ( strstr(line, "bonds") != NULL ) {
 			n = sscanf( line, "%u", &val );
@@ -306,7 +310,7 @@ bool ReadLAMMPSData(boost::iostreams::filtering_stream<boost::iostreams::input> 
 				std::cerr << "Error on line " << lineno << ". Expected integer for # of bonds\n";
 				return(false);
 			}
-			std::cout << "Bonds Line: " << line << "\n";
+			std::cout << "Bonds: " << line << "\n";
 			bonds->reserve(val);
 
 		} else if ( strstr(line, "atom types") != NULL ) {
@@ -315,7 +319,7 @@ bool ReadLAMMPSData(boost::iostreams::filtering_stream<boost::iostreams::input> 
 				std::cerr << "Error on line " << lineno << ". Expected integer for # of bond types\n";
 				return(false);
 			}
-			std::cout << "Atom types line: " << line << "\n";
+			std::cout << "Atom types: " << line << "\n";
 			atomtype.reserve(val);
 			DEBUG_MSG("Capacity/size of atomtypes: " << atomtype.capacity() << "/" << atomtype.size());
 		} else if ( strstr(line, "Masses") != NULL ) {

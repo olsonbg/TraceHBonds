@@ -32,8 +32,6 @@ Lifetime(std::vector< std::vector<bool> >*b,  HBVecIter *TrjIdx_iter )
 	iter_begin = TrjIdx_iter->at( 0 ).begin;
 	iter_end   = TrjIdx_iter->at( 0 ).end;
 
-	HBVec::iterator iter_hbmain = iter_begin;
-
 	// Initialize all elements to false.
 	b->assign(MaxNumHBsInFrame, std::vector<bool>(NumFrames,false));
 

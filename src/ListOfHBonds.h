@@ -76,7 +76,7 @@ struct thbAtom
 	std::string Name;             /**< Unique name of atom                   */
 	std::string Residue;          /**< Residue this atom belongs to          */
 	unsigned int ResidueNum;      /**< Residue number which this atom belongs*/
-	struct thbMolecule *Molecule; /**< Molecule to which this atom belongsi  */
+	struct thbMolecule *Molecule; /**< Molecule to which this atom belongs   */
 	std::string ForceField;       /**< Forcefield used for this atom         */
 	unsigned int AtomTypeID;      /**< Atom type, mass #, from LAMMPS */
 	/**

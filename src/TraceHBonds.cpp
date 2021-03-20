@@ -58,6 +58,7 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 			return 1; }
 	} else {
 		if ( !ReadLAMMPSConnections( ifilename, fileMols, &atom, &molecules, &bonds ) ) {
+			VERBOSE_MSG("Failed reading connections from LAMMPS file.");
 			return 1; }
 	}
 

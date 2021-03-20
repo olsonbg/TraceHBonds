@@ -172,8 +172,19 @@ struct thbAtom *ReadLAMMPSAtomWithID(std::vector<struct thbAtom *> *atom,
 
 bool ReadLAMMPSBondsToMolecule(std::vector<struct thbBond      *> *bonds) {
 
-	for(auto it = std::begin(*bonds) ; it < std::end(*bonds); ++it)
+	DEBUG_MSG("Starting ReadLAMMPSBondsToMolecule()");
+	for(auto it = std::begin(*bonds) ; it < std::end(*bonds); ++it) {
+		if ( (*it)->A->Molecule == NULL )
+		{
+			std::cout << "Error: No molecule defined for atom "
+				      << (*it)->A->ID
+				      << "!\n";
+			return(false);
+		}
+
 		(*it)->A->Molecule->bonds.push_back(*it);
+	}
+	DEBUG_MSG("Ending ReadLAMMPSBondsToMolecule()");
 
     return(true);
 }
@@ -185,6 +196,7 @@ bool ReadLAMMPSAssignMolecules(std::vector<struct thbAtom      *> *atom,
 	struct thbMolecule *NewMolecule;
 	struct thbAtom *A;
 
+	DEBUG_MSG("Starting ReadLAMMPSAssignMolecules()");
 	for(auto it = std::begin(*moldefs) ; it < std::end(*moldefs); ++it)
 	{
 		NewMolecule = new struct thbMolecule;
@@ -205,6 +217,7 @@ bool ReadLAMMPSAssignMolecules(std::vector<struct thbAtom      *> *atom,
 		molecules->push_back(NewMolecule);
 	}
 
+	DEBUG_MSG("Ending ReadLAMMPSAssignMolecules()");
 	return(true);
 }
 
@@ -576,6 +589,7 @@ bool ReadLAMMPSConnections( char *fileData,
 			ifpMols.close();
 			return(false);
 		}
+		VERBOSE_MSG("Read " << moldefs.size() << " molecule configuations");
 		ifpMols.close();
 	}
 

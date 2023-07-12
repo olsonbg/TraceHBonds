@@ -35,6 +35,8 @@ from diverging_map import ColorMapCreator
 import time
 start_time = time.time()
 
+from progress.bar import Bar
+
 NumFrames = 120
 Scale = 5.0
 Radius = 0.1
@@ -61,7 +63,7 @@ def draw_box(box, scale):
     bpy.context.object.name = 'RotationBox'
     rotation_box = bpy.data.objects['RotationBox']
 
-    bpy.ops.mesh.primitive_cube_add(radius=PBC_2[0], location=(PBC_2))
+    bpy.ops.mesh.primitive_cube_add(size=PBC_2[0], location=(PBC_2))
     bpy.ops.object.modifier_add(type='WIREFRAME')
     bpy.context.object.modifiers["Wireframe"].use_relative_offset = True
     bpy.context.object.modifiers["Wireframe"].use_even_offset = False
@@ -70,9 +72,9 @@ def draw_box(box, scale):
     # Add camera, looking down the z axis. RotationBox will be the parent, so
     # location is relative to 'RotationBox'
     camera_co = (0.0, 2.0*PBC_2[1], 10.0*PBC_2[2])
-    # Angle the camera to it looks at the center of the PBC box (RotationBox)
+    # Angle the camera so it looks at the center of the PBC box (RotationBox)
     angle = -1.0 * math.atan(camera_co[1]/camera_co[2])
-    bpy.ops.object.camera_add(view_align=True,
+    bpy.ops.object.camera_add(align='VIEW',
                               location=camera_co,
                               rotation=(angle, 0, 0))
     bpy.context.object.name = 'Camera'
@@ -80,22 +82,23 @@ def draw_box(box, scale):
 
     # Add light source
 
-    # Create new lamp datablock
-    lamp_data = bpy.data.lamps.new(name="lamp-center", type='SUN')
+    lamp_data = bpy.data.lights.new(name="lamp-moving", type='SUN')
 
     # Create new object with our lamp datablock
-    lamp_object = bpy.data.objects.new(name="lamp-center",
+    lamp_object = bpy.data.objects.new(name="lamp-moving",
                                        object_data=lamp_data)
     lamp_data.use_nodes = True
 
     #  Link lamp object to the scene so it'll appear in this scene
-    bpy.context.scene.objects.link(lamp_object)
+    #  bpy.context.scene.objects.link(lamp_object)
+    bpy.context.collection.objects.link(lamp_object)
 
     lamp_object.location = (0, 0, 10.1 * PBC_2[2])
 
-    bpy.data.objects['lamp-center'].parent = rotation_box
+    bpy.data.objects['lamp-moving'].parent = rotation_box
 
-    nodes = bpy.data.lamps['lamp-center'].node_tree.nodes
+    nodes = lamp_data.node_tree.nodes
+
     # clear all nodes to start clean
     for node in nodes:
         nodes.remove(node)
@@ -103,7 +106,7 @@ def draw_box(box, scale):
     # create emission node
     node_emission = nodes.new(type='ShaderNodeEmission')
     node_emission.inputs[0].default_value = (1, 1, 1, 1)  # While RGBA
-    node_emission.inputs[1].default_value = 3.0  # Strength
+    node_emission.inputs[1].default_value = 1.0  # Strength
     node_emission.location = 0, 0
 
     # create output node
@@ -111,7 +114,7 @@ def draw_box(box, scale):
     node_output.location = 200, 0
 
     # Link nodes
-    links = bpy.data.lamps['lamp-center'].node_tree.links
+    links = lamp_data.node_tree.links
     links.new(node_emission.outputs[0], node_output.inputs[0])
 
 
@@ -184,14 +187,15 @@ def element_sphere(obname, element, scale):
 
     # For ball and stick divide by 5.0
     bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, 0),
-                                         size=e_size/scale/5.0)
+                                         radius=e_size/scale/5.0)
     sphere = bpy.context.object
     sphere.name = obname
     bpy.ops.object.shade_smooth()
     sphere.data.materials.append(mat)
-    sphere.select = False
+    #  sphere.select = False
+    sphere.select_set(False)
 
-    bpy.context.scene.objects.unlink(sphere)
+    #  bpy.context.scene.objects.unlink(sphere)
     return(sphere)
 
 
@@ -204,21 +208,22 @@ def element_cylinder(name, bondradius, scale):
     cylinder.name = name
     cylinder.rotation_mode = 'QUATERNION'
     cylinder.data.materials.append(bpy.data.materials['BondMaterial'])
-    cylinder.select = False
-
-    bpy.context.scene.objects.unlink(cylinder)
+    #  cylinder.select = False
+    cylinder.select_set(False)
+    #  bpy.context.scene.objects.unlink(cylinder)
 
     return(cylinder)
 
 
-def draw_structure(data, scale):
+def draw_structure(structure_coll, data, scale):
     # Store objects here, then link them to the scene at the end of this
     # function.
     obs = list()
 
     # Empty object used as parent for chemical structure.
     ob_structure = bpy.data.objects.new('Structure', None)
-    ob_structure.hide        = False
+    #  ob_structure.hide        = False
+    ob_structure.hide_set(False)
     ob_structure.hide_render = False
     ob_structure.hide_select = False
     obs.append(ob_structure)
@@ -243,8 +248,17 @@ def draw_structure(data, scale):
         ob_element = None
         ob_bonds = None
         ob_bondtype = None
+        mol_coll = None  # Collection for this molecule
 
         if 'name' in mol:
+            mol_coll = bpy.data.collections.new(mol['name'])
+            structure_coll.children.link(mol_coll)
+
+            # Set this as active collection
+            layer_collection = bpy.context.view_layer.layer_collection
+            layerColl = recurLayerCollection(layer_collection, mol['name'])
+            bpy.context.view_layer.active_layer_collection = layerColl
+
             # Empty object used as parent for molecules.
             ob_molecule = bpy.data.objects.new(mol['name'], None)
             ob_molecule.parent = ob_structure
@@ -379,24 +393,42 @@ def draw_structure(data, scale):
 
     # Cleanup
     bpy.ops.object.select_all(action='DESELECT')
+
     #  Select objects to delete
     for ob_name in ob_bondtypes:
-        ob_bondtypes[ob_name].select = True
+        #  ob_bondtypes[ob_name].select = True
+        ob_bondtypes[ob_name].select_set(True)
 
     for ob_name in ob_elements:
-        ob_elements[ob_name].select = True
+        #  ob_elements[ob_name].select = True
+        ob_elements[ob_name].select_set(True)
 
-    bpy.ops.object.delete()
 
-    print("Linking objects to scene")
+    #  bpy.ops.object.delete()
+
+    #  print("Linking objects to scene")
+    #  for ob in obs:
+    #      bpy.context.scene.objects.link(ob)
+    #  print("Updating scene")
     for ob in obs:
-        bpy.context.scene.objects.link(ob)
-    print("Updating scene")
+        print("{}: {}".format(ob.name, ob.location))
 
-    bpy.context.scene.update()
+    #  bpy.context.scene.update()
 
 
-def draw_hbchain(chain, i, radius, scale):
+#Recursivly transverse layer_collection for a particular name
+# From: https://blender.stackexchange.com/a/127700
+def recurLayerCollection(layerColl, collName):
+    found = None
+    if (layerColl.name == collName):
+        return layerColl
+    for layer in layerColl.children:
+        found = recurLayerCollection(layer, collName)
+        if found:
+            return found
+
+
+def draw_hbchain(coll, chain, i, radius, scale):
     coordinates = list()
     numatoms = len(chain)
 
@@ -404,27 +436,28 @@ def draw_hbchain(chain, i, radius, scale):
         coordinates.append([x/scale for x in atom["location"]])
 
     tubeName   = 'Chain{0:04d}'.format(i)
-    groupName  = 'GroupLength{0:02d}'.format(numatoms)
-    lengthName = 'Length{0:02d}'.format(numatoms)
+    collName  = 'Length{0:02d}'.format(numatoms)
 
-    # If groupName doesn't exist, then neither does the empty LengthName
-    if groupName not in bpy.data.groups:
-        bpy.ops.group.create(name=groupName)
-        # Make empty as parent for chains of this length
-        bpy.ops.object.empty_add(type='CUBE', radius=0.1, location=(0, 0, 0))
-        bpy.context.object.name = lengthName
-        bpy.context.object.parent = bpy.data.objects['Chains']
+    # If collName doesn't exist, then neither does the empty LengthName
+    if collName not in coll.children:
+        length_coll = bpy.data.collections.new(collName)
+        # Add to the Chains collection
+        coll.children.link(length_coll)
 
-    group     = bpy.data.groups[groupName]
-    ob_length = bpy.data.objects[lengthName]
+    # Set this as active collection
+    layer_collection = bpy.context.view_layer.layer_collection
+    layerColl = recurLayerCollection(layer_collection, collName)
+    bpy.context.view_layer.active_layer_collection = layerColl
 
     tube = TubeWithCaps(tubeName, radius, coordinates)
     ob_tube = tube.make()
 
-    ob_tube.parent = ob_length
-    group.objects.link(ob_tube)
-
     bpy.ops.object.select_all(action='DESELECT')
+
+    # Set 'Collection' as the active collection.
+    layer_collection = bpy.context.view_layer.layer_collection
+    layerColl = recurLayerCollection(layer_collection, 'Collection')
+    bpy.context.view_layer.active_layer_collection = layerColl
     return numatoms
 
 
@@ -510,18 +543,18 @@ def generate_colormap(num_low, num_high):
 
 
 # Make materials for objects:
-#   1 per group
+#   1 per collection
 #   1 for PBC box
 #
 def generate_materials(white_index):
     import re
 
-    # The number of materials to generatre depends on the maximum chainlength
+    # The number of materials to generate depends on the maximum chainlength
     mat_count = 0
-    for group in bpy.data.groups:
-        if group.name.startswith("GroupLength"):
+    for coll in bpy.data.collections:
+        if coll.name.startswith("Length"):
             regex = re.compile(r'\d+')
-            j = int(regex.search(group.name).group(0))
+            j = int(regex.search(coll.name).group(0))
             i = int((j - 1)/2)
             if i > mat_count:
                 mat_count = i
@@ -533,13 +566,13 @@ def generate_materials(white_index):
 
     # Generate textures
     for i in range(mat_count):
-        mat_name = "GroupLength{0:02d}".format(2*i+3)
+        mat_name = "Length{0:02d}".format(2*i+3)
         mat = bpy.data.materials.new(mat_name)
         material_nodes(mat, colormap[i])
 
     # Also add a material for the PBC box
     mat = bpy.data.materials.new("PBCMaterial")
-    mat.diffuse_color = 0.0, 0.0, 0.0
+    mat.diffuse_color = 0.0, 0.0, 0.0, 0.0
     # Don't want the PBC box to shine much at all when directly in the light
     mat.specular_intensity = 0.02
 
@@ -548,12 +581,14 @@ def generate_materials(white_index):
 # Assign generated materials to objects
 #
 def assignMaterials():
-    # Assign a texture to each chain length group
+    # Assign a texture to each chain length collection
 
-    for group in bpy.data.groups:
-        mat = bpy.data.materials[group.name]
-        #  print("Group: {0:s}".format(group.name))
-        for object in group.objects:
+    for coll in bpy.data.collections:
+        if not coll.name.startswith("Length"):
+            continue
+
+        mat = bpy.data.materials[coll.name]
+        for object in coll.objects:
             #  print("  Chain: {0:s}".format(object.name))
             if object.data is not None:
                 if len(object.material_slots) < 1:
@@ -663,7 +698,13 @@ def main():
     scene.cycles.samples = 200
     scene.cycles.preview_samples = 20
     scene.cycles.blur_glossy = 0.50
-    scene.world.horizon_color = (101/255.0, 123/255.0, 131/255.0)
+
+    # Accessing the world node tree for background
+    worldBackground=bpy.data.worlds['World'].node_tree.nodes['Background']
+    worldBackground.inputs[0].default_value=(18.8/255.0,
+                                             18.8/255.0,
+                                             18.8/255.0,
+                                             0.0)
 
     # Start with an empty scene
     bpy.ops.object.select_all(action='DESELECT')
@@ -674,20 +715,37 @@ def main():
     for material in bpy.data.materials:
         bpy.data.materials.remove(material, do_unlink=True)
 
-    # Empty object used as parent for chains.
-    bpy.ops.object.empty_add(type='CUBE', radius=0.1, location=(0, 0, 0))
-    bpy.context.object.name = 'Chains'
+    # Get the 'Collection' collection, this will be the 'main_coll'.
+    main_coll = False
+    for coll in bpy.data.collections:
+        if coll.name == "Collection":
+            main_coll = coll
+            break
 
-    print("Drawing hydrogen bond chains.")
+    if main_coll:
+        chain_coll = bpy.data.collections.new('Chains')
+        main_coll.children.link(chain_coll)
+    else:
+        print("Can not find main collection.")
+        return
+
+
     i = 0
-    for data in hb_data:
-        if "hbchain" in data:
-            #  print("Drawing chain {0:d}.".format(i))
-            draw_hbchain(data["hbchain"], i, args.radius, args.scale)
-            i = i+1
-        elif "PBC" in data:
-            # Add PBC box, camera, and light source
-            draw_box(data["PBC"], args.scale)
+    numData = len(hb_data)
+
+    with Bar('Drawing elements', max=numData) as bar:
+        for data in hb_data:
+            if "hbchain" in data:
+                draw_hbchain(chain_coll,
+                             data["hbchain"],
+                             i,
+                             args.radius,
+                             args.scale)
+                i = i+1
+            elif "PBC" in data:
+                # Add PBC box, camera, and light source
+                draw_box(data["PBC"], args.scale)
+            bar.next()
 
     print("Number of chains: {0:d}.".format(i))
 
@@ -699,20 +757,20 @@ def main():
         print("Loading data.")
         json_data = open(args.chemfile).read()
         chem_data = json.loads(json_data)
+
+        structure_coll = bpy.data.collections.new('Structure')
+        main_coll.children.link(structure_coll)
+
         print("Drawing chemical structure.")
         for data in chem_data:
             if "molecules" in data:
-                # Draw to full chemical structure
-                draw_structure(data["molecules"], args.scale)
+                # Draw the full chemical structure
+                draw_structure(structure_coll, data["molecules"], args.scale)
 
+    print("Setting up animation.")
     setupAnimation(args.frames)
 
-    # Turn off relationship lines in all views
-    for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
-            area.spaces[0].show_relationship_lines = False
-
-    bpy.data.objects["RotationBox"].hide        = True
+    bpy.data.objects["RotationBox"].hide_set(True)
     bpy.data.objects["RotationBox"].hide_render = True
 
 

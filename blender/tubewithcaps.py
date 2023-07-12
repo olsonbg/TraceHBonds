@@ -39,10 +39,9 @@ class TubeWithCaps(object):
 
     # Hemisphere on positive z.
     def makeHemisphere(self, objname, segments):
-
         ob = bpy.ops.mesh.primitive_uv_sphere_add(segments=segments,
                                                   location=(0, 0, 0),
-                                                  size=self.radius)
+                                                  radius=self.radius)
         bpy.ops.object.shade_smooth()
         bpy.context.object.name = objname
 
@@ -60,20 +59,6 @@ class TubeWithCaps(object):
 
         return bpy.data.objects[objname]
 
-    def make_caps(self, num_hemisphere_verts):
-        segments = num_hemisphere_verts
-        startCap = self.makeHemisphere(self.startCapName, segments)
-
-        # Make a copy for the endCap
-        endCap          = startCap.copy()
-        endCap.location = startCap.location
-        endCap.data     = startCap.data.copy()  # duplicate mesh
-        endCap.name     = self.endCapName
-
-        bpy.context.scene.objects.link(endCap)
-
-        return startCap, endCap
-
     def merge_verts(self, tube):
         bm = bmesh.new()
 
@@ -84,40 +69,10 @@ class TubeWithCaps(object):
         # should be on the ends of the tube, and the caps
         tube_end_verts = self.verts_withNconnections(bm, 3)
 
-        num_verts = int(len(tube_end_verts)/4)
+        # TODO: Do not hardcode number (0.001). Find a way to figure out
+        # a good value for this.
+        bmesh.ops.remove_doubles(bm, verts=tube_end_verts, dist=0.001)
 
-        v1 = tube_end_verts[:num_verts]
-        v2 = tube_end_verts[3*num_verts:4*num_verts]
-        v3 = tube_end_verts[num_verts:2*num_verts]
-        v4 = tube_end_verts[2*num_verts:3*num_verts]
-
-        # v1, v2, v3, and v4 should be same length
-        for i in range(len(v1)):
-            # Slight differences between blender versions. I do not know at
-            # which version this difference happens, so for now I assume
-            # 2.76.0.
-            #
-            #  v2.72: v1 and v2 run in opposite directions, so use j
-            #         for v2 and i for v1.
-            #
-            #  v2.79: v4 and v3 run in opposite directions, so use j
-            #         for v4 and i for v3
-            #
-            j = len(v1)-i-1+1
-            if i == 0:
-                j = 0
-
-            # Put the vertices which should be merged at the same location so
-            # that remove_doubles will have no problem finding them
-            if bpy.app.version < (2, 76, 0):
-                v2[j].co = v1[i].co
-                v4[i].co = v3[i].co
-            else:
-                v2[i].co = v1[i].co
-                v4[j].co = v3[i].co
-
-        bmesh.ops.remove_doubles(bm, verts=v1+v2)
-        bmesh.ops.remove_doubles(bm, verts=v3+v4)
         bpy.ops.object.mode_set(mode='OBJECT')
 
     # Get all vertices which have N edges.
@@ -135,25 +90,44 @@ class TubeWithCaps(object):
         # Get all vertices which have N edges.
         verts = self.verts_withNconnections(bm, N)
 
+        #  for v in verts:
+        #      print(v.co)
+
         # Get the coordinates of the the vertices
-        verts_co = [(ob.matrix_world * v.co) for v in verts]
+        verts_co = [(ob.matrix_world @ v.co) for v in verts]
 
         return verts_co
+
+    def vertsCenter(self, verts):
+        # Get geometric center of cap and tube ends.
+        vSum = mathutils.Vector((0, 0, 0))
+        for v in verts:
+            vSum += v
+
+        return vSum/len(verts)
 
     def extrude_tube(self):
 
         polyline, curvedata = self.make_polyline()
 
         bevel_ob = self.make_bevelobject()
+        curvedata.bevel_mode = 'OBJECT'
         curvedata.bevel_object = bevel_ob
 
+
         # Convert to a mesh
-        bpy.data.objects[self.name].select = True
+        obj = bpy.context.scene.objects.get(self.name)
+        obj.select_set(True)
+
+        selection_names = [obj.name for obj in bpy.context.selected_objects]
+
+        #  bpy.context.scene.objects[self.name].select_set(True)
+        #  bpy.data.objects[self.name].select = True
         bpy.ops.object.convert(target='MESH')
 
         # Done with bevel object, so delete it.
         bpy.ops.object.select_all(action='DESELECT')
-        bevel_ob.select = True
+        bevel_ob.select_set(True)
         bpy.ops.object.delete()
 
         return polyline
@@ -166,7 +140,8 @@ class TubeWithCaps(object):
 
         objectdata = bpy.data.objects.new(self.name, curvedata)
         objectdata.location = (0, 0, 0)  # object origin
-        bpy.context.scene.objects.link(objectdata)
+        # API Change: New objects must be linked to a collection, not scene.
+        bpy.context.view_layer.active_layer_collection.collection.objects.link(objectdata)
 
         polyline = curvedata.splines.new('NURBS')
         polyline.points.add(len(self.coordinates)-1)
@@ -185,6 +160,13 @@ class TubeWithCaps(object):
 
     def aligncap(self, tube_end_co, cap, cap_normal, location):
 
+        cap_end_verts_co = self.verts_withNconnections_co(cap, 3)
+        cn = mathutils.geometry.normal(*cap_end_verts_co)
+
+        if cap_normal == mathutils.Vector((0, 0, 1)):
+            cn = -1.0 * cn
+
+
         # Get normal to tube end. Pick three points equally spaced to determine
         # normals
         one_third = int(len(tube_end_co)/3)
@@ -195,23 +177,36 @@ class TubeWithCaps(object):
         normal = mathutils.geometry.normal(*end)
         # normal_sphere = mathutils.Vector((0, 0, -1))
         to_rotate = cap_normal.rotation_difference(normal)
+        to_rotate = cn.rotation_difference(normal)
         cap.rotation_mode = 'QUATERNION'
         # Rotate the cap so that it is at the same angle as the tube ends
         cap.rotation_quaternion = to_rotate
 
-        # Move cap to the tube end
-        cap.location = location
-
         # Apply transforms for later calculations.
         bpy.ops.object.transform_apply(scale=True)
+        
+
+
+        # Get new cap verts
+        capverts = self.verts_withNconnections_co(cap, 3)
+
+        capCenter = self.vertsCenter(capverts)
+        tubeCenter = self.vertsCenter(tube_end_co)
 
         # Rotate cap to align vertices with tube vertices. The vertices will
         # be very close to aligned, but not perfectly.
-        capverts = self.verts_withNconnections_co(cap, 3)
-        v1 = capverts[0]    - mathutils.Vector(location)
-        v2 = tube_end_co[0] - mathutils.Vector(location)
+        v1 = capverts[0]    - capCenter
+        v2 = tube_end_co[0] - tubeCenter
+
+        #  if cap_normal == mathutils.Vector((0, 0, 1)):
+        #      v1 = -1.0 * v1
+
         anglediff = v1.rotation_difference(v2)
+
         cap.delta_rotation_quaternion = -1.0*anglediff
+
+        # Move cap to the tube end
+        cap.location = location
 
     def make(self):
         #  bpy.data.objects["ChainBevel"].select = False
@@ -227,8 +222,9 @@ class TubeWithCaps(object):
         tube_start_co = tube_end_verts_co[:num_verts]
         tube_end_co   = tube_end_verts_co[num_verts:]
 
-        # Make hemispheres with same number of segments as the tube
-        capStart, capEnd = self.make_caps(num_verts)
+        # Make hemispheres with same number of segments as the tube ends
+        capStart = self.makeHemisphere(self.startCapName, num_verts)
+        capEnd = self.makeHemisphere(self.endCapName, num_verts)
 
         self.aligncap(tube_start_co,
                       capStart,
@@ -242,10 +238,11 @@ class TubeWithCaps(object):
 
         # Join caps and tube
         # The active object will be the name of the joined objects.
-        capEnd.select   = True
-        tube.select     = True
-        capStart.select = True
-        bpy.context.scene.objects.active = tube
+        capEnd.select_set(True)
+        tube.select_set(True)
+        capStart.select_set(True)
+        bpy.context.view_layer.objects.active = tube
+        #  bpy.context.scene.objects.active = tube
 
         bpy.ops.object.join()
 

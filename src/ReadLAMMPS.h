@@ -100,6 +100,7 @@ bool ReadLAMMPSFrameCoordinates(boost::iostreams::filtering_stream<boost::iostre
                                 std::vector<struct thbAtom   *> *atom,
                                 std::vector<Point> *Coordinates,
                                 bool SaveMemory,
+                                class Point CellDimensions,
                                 class Point Offset,
                                 unsigned int N,
                                 unsigned int *lineno);

@@ -429,6 +429,7 @@ bool ReadLAMMPSFrameCoordinates(boost::iostreams::filtering_stream<boost::iostre
                                 std::vector<struct thbAtom   *> *atom,
                                 std::vector<Point> *Coordinates,
                                 bool SaveMemory,
+                                class Point CellDimensions,
                                 class Point Offset,
                                 unsigned int N,
                                 unsigned int *lineno) {
@@ -437,6 +438,20 @@ bool ReadLAMMPSFrameCoordinates(boost::iostreams::filtering_stream<boost::iostre
 	unsigned int n;
 	unsigned int ID;
 	double x, y, z;
+	Point theOffset = Offset;
+
+	bool isScaled = false;
+
+	// If CellDimensions is not all zeros, then we must be reading a file
+	// with scaled coordinates. Also, use a 0,0,0 offset when reading
+	// scaled coordinates.
+	if ( (CellDimensions.x() != 0.0) &&
+	     (CellDimensions.y() != 0.0) &&
+	     (CellDimensions.z() != 0.0) )
+	{
+		isScaled = true;
+		theOffset = Point(0,0,0);
+	}
 
 	for (unsigned int i=0; (i < N) && !in->eof(); ++i)
 	{
@@ -451,10 +466,17 @@ bool ReadLAMMPSFrameCoordinates(boost::iostreams::filtering_stream<boost::iostre
 			return(false);
 		}
 
+		// Convert to real coordinate by multiplying by the cell dimensions.
+		if ( isScaled ) {
+			x = x*CellDimensions.x();
+			y = y*CellDimensions.y();
+			z = z*CellDimensions.z();
+		}
+
 		if ( SaveMemory )
-			Coordinates->push_back( Point(x,y,z) - Offset );
+			Coordinates->push_back( Point(x,y,z) - theOffset );
 		else
-			ReadLAMMPSAtomWithID(atom, ID)->p.push_back(Point(x,y,z) - Offset);
+			ReadLAMMPSAtomWithID(atom, ID)->p.push_back(Point(x,y,z) - theOffset);
 	}
 
 	return(true);
@@ -537,7 +559,7 @@ bool ReadLAMMPSFrame(boost::iostreams::filtering_stream<boost::iostreams::input>
 			if (n != 2)
 			{
 				std::cerr << "Error on line " << lineno
-				          << ". Expected 2 numbers.";
+				          << ". Expected 2 numbers.\n";
 				return(false);
 			}
 
@@ -549,12 +571,31 @@ bool ReadLAMMPSFrame(boost::iostreams::filtering_stream<boost::iostreams::input>
 			Cell->angles.push_back(Point(90.0, 90.0, 90.0));
 			Cell->frames++;
 
-		} else if (!strncmp(line, "ITEM: ATOMS id mol x y z", 24)) {
-			if (!ReadLAMMPSFrameCoordinates(in, atom, Coordinates, SaveMemory, PointOffset,
-			                                NumberOfAtoms, &lineno))
+		} else if (!strncmp(line, "ITEM: ATOMS", 11)) {
+
+			if (!strncmp(line, "ITEM: ATOMS id mol x y z", 24)) {
+				return(ReadLAMMPSFrameCoordinates(in,
+				                                  atom,
+				                                  Coordinates,
+				                                  SaveMemory,
+				                                  Point(0,0,0),
+				                                  PointOffset,
+				                                  NumberOfAtoms,
+				                                  &lineno));
+			} else if (!strncmp(line, "ITEM: ATOMS id mol xs ys zs", 24)) {
+				return(ReadLAMMPSFrameCoordinates(in,
+				                                  atom,
+				                                  Coordinates,
+				                                  SaveMemory,
+				                                  Cell->p.back(),
+				                                  PointOffset,
+				                                  NumberOfAtoms,
+				                                  &lineno));
+			} else {
+				std::cerr << "Error on line " << lineno
+				          << ". Expected 'id mol x y z'.\n";
 				return(false);
-			else
-				return(true);
+			}
 		}
 
 		in->getline(line,GETLINE_BUF); lineno++;
@@ -562,6 +603,7 @@ bool ReadLAMMPSFrame(boost::iostreams::filtering_stream<boost::iostreams::input>
 		line[GETLINE_BUF]='\0';
 	}
 
+	// Nothing left to read in this file, so signal done with a return false.
 	return(false);
 }
 

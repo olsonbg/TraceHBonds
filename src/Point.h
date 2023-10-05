@@ -76,8 +76,8 @@ class Point {
 		**/
 		double magnitude();
 		/**
-		 * Squared magnitude of vector pointing from \p v to \p u, where \p u
-		 * has coordinates given by x(), y(), and z().
+		 * Squared Magnitude of vector from origin to u, where \p u has
+		 * coordinates given by x(), y(), and z().
 		 *
 		 * \see distanceSquared() with \f$v=(0,0,0)\f$
 		 *

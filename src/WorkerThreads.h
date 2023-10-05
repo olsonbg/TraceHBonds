@@ -20,6 +20,7 @@
 #include "RemoveDuplicates.h"
 #include "Histograms.h"
 #include "correlation.h"
+#include "freeVolume.h"
 
 
 /**
@@ -40,7 +41,9 @@ const unsigned int THREAD_JOB_CORR_TABLE       =  8; /**< CorrelationsTableThrea
 const unsigned int THREAD_JOB_SIZEHIST         =  9; /**< makeHistograms().          */
 const unsigned int THREAD_JOB_NEIGHBORHIST     = 10; /**< getNeighbors().            */
 const unsigned int THREAD_JOB_POSITIONS_LAMMPS = 11; /**< ReadLAMMPSPositions().     */
+const unsigned int THREAD_JOB_FREEVOLUME       = 12; /**< freeVolume().              */
 const unsigned int THREAD_JOB_PAUSE            = 90; /**< Pause thread.              */
+const unsigned int THREAD_JOB_FAILURE          = 98; /**< stop on failure.           */
 const unsigned int THREAD_JOB_EXIT             = 99; /**< Exit thread.               */
 //**@}*/
 
@@ -86,6 +89,10 @@ struct worker_data_s
 
 	/** Total number of threads this jobs has been split into */
 	unsigned int num_threads;
+	//**@}*/
+
+	/** flags set from command line options. */
+	unsigned int flags;
 	//**@}*/
 
 	/**

@@ -122,7 +122,8 @@ bool ReadLAMMPSPositions(const char *fileTrj,
                          struct PBC *Cell,
                          std::vector<struct thbAtom *> *hydrogens,
                          std::vector<struct thbAtom *> *acceptors,
-                         double rCutoff, double angleCutoff, bool SaveMemory);
+                         double rCutoff, double angleCutoff, bool SaveMemory,
+                         unsigned int flags);
 
 /**
  * \brief Read LAMMPS data file.

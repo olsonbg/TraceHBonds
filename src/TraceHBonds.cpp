@@ -42,12 +42,13 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 	std::vector<struct thbBond     *> bonds;
 	unsigned int NumFramesInTrajectory = 0;
 
-	// If neither NEIGHBOR_HIST or SIZE_HIST are specifies, we can try to
-	// save some memory by storing the atom coordinates only as long as we
-	// need the.
+	// If NEIGHBOR_HIST, SIZE_HIST and FREEVOLUME are not specified, we can try
+	// to save some memory by storing the atom coordinates only as long as we
+	// need them.
 	bool SaveMemory = true;
-	if ( flags&(Flags::NEIGHBOR_HIST|Flags::SIZE_HIST) )
+	if ( flags&(Flags::NEIGHBOR_HIST|Flags::SIZE_HIST|Flags::FREEVOLUME) )
 		SaveMemory = false;
+
 	VERBOSE_MSG("SaveMemory: " << SaveMemory);
 
 	atom.reserve(50000);
@@ -69,10 +70,15 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 	acceptors.reserve(atom.size()/2);
 
 	VERBOSE_MSG("");
-	getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
 
-	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS|Flags::ANGLES|Flags::LIST)) == 0 )
+	// Do not need to get hydrogen bond elements if only calculating free
+	// volume.
+	if ( (flags&(Flags::FREEVOLUME)) == 0)
+		getHydrogenBondElements( &atom, &hydrogens, &acceptors, match );
+
+	if ( (flags & (Flags::LIFETIME|Flags::SIZE_HIST|Flags::NEIGHBOR_HIST|Flags::LENGTHS|Flags::ANGLES|Flags::LIST|Flags::FREEVOLUME)) == 0 )
 	{
+		VERBOSE_MSG("All calculation done. Ending.");
 		DeleteVectorPointers( atom ); atom.clear();
 		return(0);
 	}
@@ -106,6 +112,7 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 	wd.rCutoff     = rCutoff;
 	wd.angleCutoff = angleCutoff;
 	wd.saveMemory  = SaveMemory;
+	wd.flags       = flags;
 
 	inQueue.push(wd);
 
@@ -119,7 +126,7 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 		     (wdOut.jobtype == THREAD_JOB_HBS ) )
 		{
 			/** \todo Use a more appropriate value than 5000. Need to find
-			 * a way to estimae the number of frames
+			 * a way to estimate the number of frames
 			 **/
 			if ( NumFramesInTrajectory != 0 ) {
 				hb.reserve(NumFramesInTrajectory*wdOut.hb->size() );
@@ -159,6 +166,16 @@ int doArcFile(char *ifilename, char *fileTrj, char *fileMols,
 			if ( FramesProcessed == NumFramesInTrajectory )
 				break;
 		}
+		if ( wdOut.jobtype == THREAD_JOB_FREEVOLUME )
+		{
+			FramesProcessed++;
+
+			if ( FramesProcessed == NumFramesInTrajectory )
+				break;
+		}
+		
+		if ( wdOut.jobtype == THREAD_JOB_FAILURE )
+			 break;
 	}
 	VERBOSE_MSG("");
 #else

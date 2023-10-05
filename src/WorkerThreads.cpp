@@ -87,8 +87,13 @@ void *MyThread::run()
 				ReadLAMMPSPositions( wd.filename, wd.atom, wd.Cell,
 				                     wd.hydrogens, wd.acceptors,
 				                     wd.rCutoff, wd.angleCutoff,
-				                     wd.saveMemory);
+				                     wd.saveMemory, wd.flags);
 				wd.TrjIdx = wd.Cell->frames;
+				break;
+			case THREAD_JOB_FREEVOLUME:
+				freeVolume( wd.atom, wd.cell, wd.TrjIdx );
+				break;
+			case THREAD_JOB_FAILURE:
 				break;
 			case THREAD_JOB_EXIT:
 				return NULL;

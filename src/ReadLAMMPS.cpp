@@ -3,6 +3,7 @@
 #include "MessageDefines.h"
 #include "deleteVectorPointers.h"
 #include "OpenFile.h"
+#include "WorkerThreads.h"
 #include "ReadLAMMPS.h"
 
 #define GETLINE_BUF    1023
@@ -688,7 +689,8 @@ bool ReadLAMMPSPositions(const char *fileTrj,
                          struct PBC *Cell,
                          std::vector<struct thbAtom *> *hydrogens,
                          std::vector<struct thbAtom *> *acceptors,
-                         double rCutoff, double angleCutoff, bool SaveMemory) {
+                         double rCutoff, double angleCutoff, bool SaveMemory,
+                         unsigned int flags) {
 
 	// Open LAMMPS trajectory file
 	std::ifstream ifpTrj;
@@ -705,33 +707,43 @@ bool ReadLAMMPSPositions(const char *fileTrj,
 	while ( 1 ) {
 
 		struct worker_data_s wd;
+
+		// Set the job type.
 		if ( SaveMemory ) {
 			wd.coordinates = new std::vector<Point>;
 			wd.coordinates->reserve(atom->size());
+			wd.jobtype = THREAD_JOB_HBS2;
 		} else {
 			wd.coordinates = NULL;
+			wd.jobtype = THREAD_JOB_HBS;
 		}
+
+		if ( (flags&Flags::FREEVOLUME) )
+			wd.jobtype = THREAD_JOB_FREEVOLUME;
 
 		/** Read next frame */
 		if ( !ReadLAMMPSFrame(&inTrj, atom, Cell, wd.coordinates, SaveMemory) ) {
 			if ( SaveMemory ) { delete wd.coordinates; }
+			// Done reading trajectory file, break out of this while()
 			break;
+			// // Something went wrong reading the frame. Send a FAILURE
+			// // job to start the shutdown procedure for the jobs.
+			// std::cout << "JOB_FAILURE\n\n";
+			// wd.jobtype = THREAD_JOB_FAILURE;
 		}
 
 		// Do not update message more often then once per second.
 		if ( difftime(time(NULL), timer) > 1.0 )
 		{
-			VERBOSE_RMSG("Frames : " << Cell->frames);
+			VERBOSE_RMSG("Frames Read: " << Cell->frames);
 			timer = time(NULL);
 		}
 
-		if ( SaveMemory ) {
-			wd.jobtype = THREAD_JOB_HBS2;
+		if ( (flags&Flags::FREEVOLUME) )
+			wd.atom = atom;
 
-		} else {
-			wd.jobtype = THREAD_JOB_HBS;
-		}
 
+		wd.flags = flags;
 		wd.jobnum = Cell->frames;
 		wd.num_threads = NumberOfCPUs();
 		wd.cell = Cell->p.back();
@@ -745,10 +757,13 @@ bool ReadLAMMPSPositions(const char *fileTrj,
 
 		inQueue.push(wd);
 
+		if (wd.jobtype == THREAD_JOB_FAILURE)
+			break;
 	}
 
 	ifpTrj.close();
 
+	VERBOSE_MSG("Frames Read: " << Cell->frames);
 	return(true);
 }
 

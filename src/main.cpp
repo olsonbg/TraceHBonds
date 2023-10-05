@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
 			{"jsonall"     , no_argument, &flag[9],  (unsigned int)Flags::JSONALL      },
 			{"all"         , no_argument, &flag[10], (unsigned int)Flags::ALL          },
 			{"list"        , no_argument, &flag[11],  (unsigned int)Flags::LIST       },
+			{"freevolume"  , no_argument, &flag[12],  (unsigned int)Flags::FREEVOLUME },
 			/* These options don’t set a flag.
 			   We distinguish them by their indices. */
 			{"input",       required_argument, 0, 'i'},
@@ -136,19 +137,25 @@ int main(int argc, char *argv[])
 	}
 	// Done reading command line arguments
 
-	if ( match.Hydrogens.size() == 0 ) {
-		Help(argv[0]);
-		BRIEF_MSG("\nError: Must specify at least one type of Hydrogen.");
-		return EXIT_FAILURE;
-	}
-	if ( match.Acceptors.size() == 0 ) {
-		Help(argv[0]);
-		BRIEF_MSG("\nError: Must specify at least one type of Acceptor.");
-		return EXIT_FAILURE;
-	}
 	// Set the flags;
 	for ( unsigned int i=0; i < (unsigned int)Flags::COUNT; i++ ) {
 		flags |= flag[i];
+	}
+
+	// If a free volume calculation has been requested, then this will
+	// be the only calculation performed so we do not need acceptors and donors.
+	if ( (flags & Flags::FREEVOLUME) == 0 )
+	{
+		if ( match.Hydrogens.size() == 0 ) {
+			Help(argv[0]);
+			BRIEF_MSG("\nError: Must specify at least one type of Hydrogen.");
+			return EXIT_FAILURE;
+		}
+		if ( match.Acceptors.size() == 0 ) {
+			Help(argv[0]);
+			BRIEF_MSG("\nError: Must specify at least one type of Acceptor.");
+			return EXIT_FAILURE;
+		}
 	}
 
 	if ( flags & Flags::VERBOSE ) THB_VERBOSE=true;
@@ -188,6 +195,7 @@ int main(int argc, char *argv[])
 	if ( flags & Flags::LENGTHS)       VERBOSE_MSG("\tHydrogen - Acceptor distances");
 	if ( flags & Flags::ANGLES)        VERBOSE_MSG("\tHydrogen bond angles");
 	if ( flags & Flags::LIST)          VERBOSE_MSG("\tHydrogen bond list");
+	if ( flags & Flags::FREEVOLUME)    VERBOSE_MSG("\tFree Volume Measurement");
 	VERBOSE_MSG("\t--------------------\n");
 
 #ifdef PTHREADS
@@ -216,6 +224,7 @@ int main(int argc, char *argv[])
 	struct worker_data_s wd;
 	wd.jobtype = THREAD_JOB_EXIT;
 	wd.jobnum  = 0;
+	wd.flags = flags;
 	wd.hydrogens = NULL;
 	wd.acceptors = NULL;
 	wd.hb = NULL;

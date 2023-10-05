@@ -161,13 +161,20 @@ struct AtomTypes *ReadLAMMPSAtomTypeWithID(std::vector<struct AtomTypes *> *atom
 }
 
 struct thbAtom *ReadLAMMPSAtomWithID(std::vector<struct thbAtom *> *atom,
-                           unsigned int ID) {
+                                     unsigned int ID) {
 
-	// std::vector<struct theAtom *>::iterator iter = atom->begin();
-	for(auto it = std::begin(*atom) ; it < std::end(*atom); ++it)
-		if ( (*it)->ID == ID ) return((*it));
+	// Use find_if with a lambda function to find where ->ID == ID.
+	auto it = std::find_if(std::begin(*atom),
+	                       std::end(*atom),
+	                       [ID](struct thbAtom *a) { return a->ID == ID; });
 
-    return(NULL);
+	if (it != std::end(*atom))
+	{
+		// std::cout << "f: " << (*it)->ID << " - " << ID << "\n";
+		return(*it);
+	}
+
+	return(NULL);
 }
 
 bool ReadLAMMPSBondsToMolecule(std::vector<struct thbBond      *> *bonds) {

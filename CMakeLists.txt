@@ -11,7 +11,7 @@ message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 PROJECT(TraceHBonds)
 
 # This gets prepdended to all CXX_FLAGS_* strings.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat -Wstrict-aliasing -Wshadow -Wpacked -Wmissing-noreturn -march=native -pipe -std=c++11 -O3" )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat -Wstrict-aliasing -Wshadow -Wpacked -Wmissing-noreturn -march=native -pipe -O3 -flto=auto" )
 
 # Use this for debugging with valgrind.
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--print-gc-sections -ggdb -Wl,-Map=output.map -Wl,--cref -O2")
